@@ -17,12 +17,11 @@
       --muted:rgba(255,255,255,.72);
       --muted-2:rgba(255,255,255,.52);
       --window:#e7ddb3;
-      --window-2:#d8cda0;
       --badge:#081731;
       --accent:#ff6b6b;
       --accent-2:#ff8d8d;
       --ok:#34d399;
-      --warn:#f59e0b;
+      --ok-2:#6ee7b7;
       --shadow:0 18px 40px rgba(0,0,0,.28);
       --radius:24px;
       --max:980px;
@@ -65,8 +64,11 @@
     .open-space{height:40px;flex:1 1 auto;border-radius:16px;border:2px dashed rgba(231,221,179,.55);background:rgba(231,221,179,.08);display:flex;align-items:center;justify-content:center;color:rgba(231,221,179,.8);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em}
 
     .ext-area{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:54px}
-    .ext{width:16px;height:32px;border-radius:14px;background:linear-gradient(180deg,var(--accent-2),var(--accent));position:relative;box-shadow:0 2px 10px rgba(255,107,107,.35)}
-    .ext::before{content:"";position:absolute;width:8px;height:5px;top:-3px;left:4px;border-radius:3px;background:#ffd5d5;opacity:.75}
+    .ext{width:16px;height:32px;border-radius:14px;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.22);cursor:pointer;transition:.18s transform,.18s filter,.18s box-shadow}
+    .ext:hover{transform:translateY(-1px);filter:brightness(1.05)}
+    .ext::before{content:"";position:absolute;width:8px;height:5px;top:-3px;left:4px;border-radius:3px;background:#ecfeff;opacity:.7}
+    .ext.ok{background:linear-gradient(180deg,var(--ok-2),var(--ok));box-shadow:0 2px 10px rgba(52,211,153,.35)}
+    .ext.alert{background:linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 2px 10px rgba(255,107,107,.35)}
     .floor-meta{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
     .meta-pill{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12px;color:var(--muted)}
 
@@ -149,8 +151,8 @@
 
       <section class="hero">
         <div class="hero-head">
-          <h2 class="hero-title">Seleciona o piso e o ponto do extintor</h2>
-          <p class="hero-sub">Os pisos da garagem aparecem como <span class="code">p-1</span>, <span class="code">p-2</span> e <span class="code">p-3</span>.</p>
+          <h2 class="hero-title">Toque direto no extintor para reportar</h2>
+          <p class="hero-sub">Verde = sem alertas registados · Vermelho = ocorrência já reportada.</p>
         </div>
 
         <div class="building-wrap">
@@ -169,13 +171,13 @@
           <div class="location-head">
             <div>
               <h2 id="selectedFloorTitle">Piso selecionado</h2>
-              <p id="selectedFloorDesc">Escolhe um ponto para reportar.</p>
+              <p id="selectedFloorDesc">Toca no extintor do prédio ou escolhe aqui em baixo.</p>
             </div>
             <div class="selected-badge" id="selectedCountBadge">0 ponto(s)</div>
           </div>
           <div class="location-grid" id="locationGrid"></div>
           <div class="actions">
-            <button class="btn btn-primary" id="openReportBtn" disabled>Reportar ocorrência</button>
+            <button class="btn btn-primary" id="openReportBtn" disabled>Abrir reporte</button>
             <button class="btn btn-secondary" id="copyQrUrlBtn">Copiar URL do ponto</button>
           </div>
           <div class="status" id="mainStatus"></div>
@@ -183,7 +185,7 @@
 
         <aside class="card">
           <h3>Preparado para Google Sheets + Drive</h3>
-          <p style="margin-bottom:14px">Este HTML já está montado para GitHub Pages. Só tens de ligar o endpoint do Apps Script e a base de dados do condomínio.</p>
+          <p style="margin-bottom:14px">O formulário abre em modal. O único campo manual é o nome; o resto vai pré-preenchido com base no ponto selecionado.</p>
           <div class="field" style="margin-bottom:10px">
             <label>Apps Script endpoint</label>
             <input id="backendUrlInput" type="text" placeholder="https://script.google.com/macros/s/SEU_DEPLOY/exec" />
@@ -197,7 +199,7 @@
             <input id="adminEmailInput" type="email" placeholder="administrador@exemplo.pt" />
           </div>
           <button class="btn btn-secondary" id="saveConfigBtn">Guardar configuração local</button>
-          <p class="footer-note">A configuração fica guardada no navegador para testes locais.</p>
+          <p class="footer-note">No telemóvel, o botão de fotografia tenta abrir a câmara via <span class="code">capture="environment"</span>. Em muitos Android resulta; nalguns iPhone pode aparecer escolher entre câmara e galeria.</p>
         </aside>
       </div>
     </div>
@@ -208,22 +210,16 @@
       <div class="modal-head">
         <div>
           <h3>Reportar extintor</h3>
-          <p>O local fica pré-preenchido. Só precisas de confirmar, tirar foto e enviar.</p>
+          <p>Quase tudo vai preenchido automaticamente. Só falta o teu nome, motivo e foto.</p>
         </div>
         <button class="icon-btn" id="closeDialogBtn" aria-label="Fechar">✕</button>
       </div>
       <div class="modal-body">
         <form id="reportForm">
           <div class="form-grid">
-            <div class="inline-grid">
-              <div class="field">
-                <label for="nomeInput">Nome</label>
-                <input id="nomeInput" name="nome" type="text" placeholder="Ex.: Filipe" required />
-              </div>
-              <div class="field">
-                <label for="contactoInput">Contacto (opcional)</label>
-                <input id="contactoInput" name="contacto" type="text" placeholder="Telemóvel ou email" />
-              </div>
+            <div class="field">
+              <label for="nomeInput">Nome</label>
+              <input id="nomeInput" name="nome" type="text" placeholder="Ex.: Filipe" required />
             </div>
 
             <div class="inline-grid">
@@ -237,35 +233,34 @@
               </div>
             </div>
 
-            <div class="inline-grid">
-              <div class="field">
-                <label for="localizacaoInput">Localização</label>
-                <input id="localizacaoInput" name="localizacao" type="text" readonly />
-              </div>
-              <div class="field">
-                <label for="tipoInput">Tipo de ocorrência</label>
-                <select id="tipoInput" name="tipo">
-                  <option value="Extintor em falta">Extintor em falta</option>
-                  <option value="Extintor danificado">Extintor danificado</option>
-                  <option value="Suporte vazio">Suporte vazio</option>
-                  <option value="Sinalização danificada">Sinalização danificada</option>
-                </select>
-              </div>
+            <div class="field">
+              <label for="localizacaoInput">Localização</label>
+              <input id="localizacaoInput" name="localizacao" type="text" readonly />
             </div>
 
             <div class="field">
-              <label for="obsInput">Observação</label>
-              <textarea id="obsInput" name="observacao" placeholder="Ex.: suporte vazio, sem sinais visíveis de dano, etc."></textarea>
+              <label for="tipoInput">Motivo</label>
+              <select id="tipoInput" name="tipo">
+                <option value="Extintor em falta">Extintor em falta</option>
+                <option value="Extintor danificado">Extintor danificado</option>
+                <option value="Suporte vazio">Suporte vazio</option>
+                <option value="Sinalização danificada">Sinalização danificada</option>
+              </select>
             </div>
 
             <div class="field">
               <label for="photoInput">Fotografia</label>
               <input id="photoInput" name="photo" type="file" accept="image/*" capture="environment" required />
-              <div class="help">No telemóvel, a câmara pode abrir diretamente.</div>
+              <div class="help">No Android costuma abrir logo a câmara traseira. Dependendo do navegador/dispositivo, pode abrir o seletor entre câmara e galeria.</div>
             </div>
 
             <div class="preview" id="photoPreviewWrap">
               <img id="photoPreview" alt="Pré-visualização da foto" />
+            </div>
+
+            <div class="field">
+              <label for="obsInput">Observação (opcional)</label>
+              <textarea id="obsInput" name="observacao" placeholder="Ex.: suporte vazio, sem sinais de dano visíveis."></textarea>
             </div>
 
             <div class="modal-actions">
@@ -280,13 +275,13 @@
   </dialog>
 
   <script>
-    const APP_STORAGE_KEY = 'condominio_extintores_config_v1';
+    const APP_STORAGE_KEY = 'condominio_extintores_config_v2';
+    const ALERT_STORAGE_KEY = 'condominio_extintores_alerts_v1';
 
     const DEFAULT_CONFIG = {
       condominio: 'Condomínio',
       adminEmail: '',
       backendUrl: '',
-      useMockSubmit: true,
     };
 
     const FLOORS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 0, -1, -2, -3];
@@ -338,6 +333,7 @@
 
     const state = {
       config: loadConfig(),
+      reportedAlerts: loadAlerts(),
       selectedFloor: 0,
       selectedPointId: null,
       photoBase64: '',
@@ -387,6 +383,20 @@
       }catch{
         return { ...DEFAULT_CONFIG };
       }
+    }
+
+    function loadAlerts(){
+      try{
+        const raw = localStorage.getItem(ALERT_STORAGE_KEY);
+        const arr = raw ? JSON.parse(raw) : [];
+        return Array.isArray(arr) ? arr : [];
+      }catch{
+        return [];
+      }
+    }
+
+    function saveAlerts(){
+      localStorage.setItem(ALERT_STORAGE_KEY, JSON.stringify(state.reportedAlerts));
     }
 
     function saveConfig(){
@@ -474,8 +484,18 @@
         extArea.className = 'ext-area';
         const extCount = extinguisherCountForFloor(floor);
         for (let i = 0; i < extCount; i++){
-          const ext = document.createElement('span');
-          ext.className = 'ext';
+          const point = pointsForFloor(floor)[i];
+          const ext = document.createElement('button');
+          ext.type = 'button';
+          ext.className = 'ext ' + (isPointReported(point.id) ? 'alert' : 'ok');
+          ext.title = point.title;
+          ext.addEventListener('click', () => {
+            state.selectedFloor = floor;
+            state.selectedPointId = point.id;
+            renderBuilding();
+            renderPoints();
+            openReportDialog();
+          });
           extArea.appendChild(ext);
         }
 
@@ -485,6 +505,17 @@
         row.appendChild(main);
         buildingEl.appendChild(row);
       });
+    }
+
+    function isPointReported(pointId){
+      return state.reportedAlerts.includes(pointId);
+    }
+
+    function markPointReported(pointId){
+      if (!isPointReported(pointId)){
+        state.reportedAlerts.push(pointId);
+        saveAlerts();
+      }
     }
 
     function selectDefaultPoint(){
@@ -522,7 +553,7 @@
             <strong>${escapeHtml(point.title)}</strong>
             <span>${escapeHtml(point.location)}</span>
           </div>
-          <div>${point.isCentralFogo ? '🔥' : '🧯'}</div>
+          <div>${isPointReported(point.id) ? '🔴' : point.isCentralFogo ? '🔥' : '🟢'}</div>
         `;
         btn.addEventListener('click', () => {
           state.selectedPointId = point.id;
@@ -540,6 +571,7 @@
       setFormValue('pisoInput', point.floorDisplayName);
       setFormValue('pontoInput', point.id);
       setFormValue('localizacaoInput', point.location);
+      setFormValue('tipoInput', 'Extintor em falta');
       clearStatus(formStatus);
       dialogEl.showModal();
     }
@@ -577,8 +609,11 @@
 
       try{
         const res = await submitPayload(payload);
+        markPointReported(point.id);
+        renderBuilding();
+        renderPoints();
         showStatus(formStatus, 'ok', res?.message || 'Ocorrência enviada com sucesso.');
-        showStatus(mainStatus, 'ok', `Ocorrência registada para ${point.id}.`);
+        showStatus(mainStatus, 'ok', `Ocorrência registada para ${point.id}. O extintor ficou marcado a vermelho.`);
         reportForm.reset();
         state.photoBase64 = '';
         state.photoMimeType = '';
@@ -599,7 +634,6 @@
         condominio: state.config.condominio,
         admin_email_ui: state.config.adminEmail,
         nome: document.getElementById('nomeInput').value.trim(),
-        contacto: document.getElementById('contactoInput').value.trim(),
         tipo: document.getElementById('tipoInput').value,
         observacao: document.getElementById('obsInput').value.trim(),
         piso: point.floor,
@@ -617,7 +651,7 @@
     async function submitPayload(payload){
       const url = state.config.backendUrl?.trim();
       if (!url){
-        await fakeDelay(600);
+        await fakeDelay(500);
         return { ok: true, message: 'Mock submit OK. Falta configurar o Apps Script.' };
       }
 
