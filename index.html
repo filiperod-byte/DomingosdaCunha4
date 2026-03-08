@@ -10,9 +10,7 @@
       --bg:#10223f;
       --bg-2:#172b4f;
       --card:#203458;
-      --card-2:#243a61;
       --line:rgba(255,255,255,.12);
-      --line-2:rgba(255,255,255,.22);
       --text:#f6f7fb;
       --muted:rgba(255,255,255,.72);
       --muted-2:rgba(255,255,255,.52);
@@ -23,106 +21,226 @@
       --ok:#34d399;
       --ok-2:#6ee7b7;
       --shadow:0 18px 40px rgba(0,0,0,.28);
-      --radius:24px;
       --max:980px;
       --tap:56px;
     }
 
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:linear-gradient(180deg,var(--bg),#0b1730 75%);color:var(--text);font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    html,body{
+      margin:0;
+      padding:0;
+      background:linear-gradient(180deg,var(--bg),#0b1730 75%);
+      color:var(--text);
+      font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
+    }
     button,input,textarea,select{font:inherit}
     img{max-width:100%;display:block}
     .app{min-height:100dvh;padding:16px 14px 32px}
     .shell{max-width:var(--max);margin:0 auto}
     .topbar{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:14px}
     .brand{display:flex;align-items:center;gap:10px}
-    .brand-badge{width:42px;height:42px;border-radius:14px;background:rgba(255,255,255,.08);display:grid;place-items:center;border:1px solid var(--line)}
+    .brand-badge{
+      width:42px;height:42px;border-radius:14px;
+      background:rgba(255,255,255,.08);
+      display:grid;place-items:center;border:1px solid var(--line)
+    }
     .brand h1{margin:0;font-size:20px;line-height:1.1}
     .brand p{margin:2px 0 0;color:var(--muted-2);font-size:12px}
-    .chip{display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);color:var(--muted);font-size:12px}
+    .chip{
+      display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;
+      border-radius:999px;background:rgba(255,255,255,.06);
+      border:1px solid var(--line);color:var(--muted);font-size:12px
+    }
 
-    .hero{background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));border:1px solid var(--line);border-radius:32px;box-shadow:var(--shadow);overflow:hidden}
+    .hero{
+      background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:32px;
+      box-shadow:var(--shadow);
+      overflow:hidden
+    }
     .hero-head{padding:18px 18px 10px;text-align:center}
     .hero-title{margin:0;font-size:18px;font-weight:800}
     .hero-sub{margin:6px 0 0;font-size:13px;color:var(--muted)}
 
     .building-wrap{padding:8px 10px 18px}
-    .building{background:linear-gradient(180deg,#334a71,#22375c);border:1px solid var(--line);border-radius:34px;padding:16px 12px 14px;position:relative}
-    .building::before{content:"";position:absolute;inset:8px;border-radius:28px;border:1px solid rgba(255,255,255,.06);pointer-events:none}
+    .building{
+      background:linear-gradient(180deg,#334a71,#22375c);
+      border:1px solid var(--line);
+      border-radius:34px;
+      padding:16px 12px 14px;
+      position:relative
+    }
+    .building::before{
+      content:"";
+      position:absolute;inset:8px;border-radius:28px;
+      border:1px solid rgba(255,255,255,.06);
+      pointer-events:none
+    }
 
-    .floor-row{display:grid;grid-template-columns:74px 1fr;gap:12px;align-items:center;margin:10px 0}
-    .floor-btn{height:40px;border:none;border-radius:14px;background:var(--badge);color:#7fd9ff;font-weight:800;font-size:24px;letter-spacing:.02em;display:flex;align-items:center;justify-content:center;cursor:pointer;transition:.18s transform,.18s background,.18s box-shadow}
+    .floor-row{
+      display:grid;
+      grid-template-columns:74px 1fr;
+      gap:12px;
+      align-items:center;
+      margin:10px 0
+    }
+    .floor-btn{
+      height:40px;border:none;border-radius:14px;
+      background:var(--badge);color:#7fd9ff;font-weight:800;
+      font-size:24px;letter-spacing:.02em;
+      display:flex;align-items:center;justify-content:center;
+      cursor:pointer;transition:.18s transform,.18s background,.18s box-shadow
+    }
     .floor-btn .small{font-size:18px}
     .floor-btn:hover{transform:translateY(-1px)}
-    .floor-btn.active{background:#0c1d3a;box-shadow:0 0 0 2px rgba(127,217,255,.22), 0 8px 18px rgba(0,0,0,.18)}
+    .floor-btn.active{
+      background:#0c1d3a;
+      box-shadow:0 0 0 2px rgba(127,217,255,.22), 0 8px 18px rgba(0,0,0,.18)
+    }
 
-    .floor-main{min-height:52px;background:#162744;border-radius:18px;padding:8px 10px;display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;border:1px solid rgba(255,255,255,.07)}
+    .floor-main{
+      min-height:52px;background:#162744;border-radius:18px;padding:8px 10px;
+      display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
+      border:1px solid rgba(255,255,255,.07)
+    }
     .fractions{display:flex;gap:8px;align-items:center;min-width:0}
     .fraction{height:40px;border-radius:16px;background:var(--window);box-shadow:inset 0 -2px 0 rgba(0,0,0,.08)}
     .fraction.w3{flex:1 1 0}
     .fraction.w2{width:46%}
-    .open-space{height:40px;flex:1 1 auto;border-radius:16px;border:2px dashed rgba(231,221,179,.55);background:rgba(231,221,179,.08);display:flex;align-items:center;justify-content:center;color:rgba(231,221,179,.8);font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.12em}
+    .open-space{
+      height:40px;flex:1 1 auto;border-radius:16px;
+      border:2px dashed rgba(231,221,179,.55);
+      background:rgba(231,221,179,.08);
+      display:flex;align-items:center;justify-content:center;
+      color:rgba(231,221,179,.8);font-size:11px;font-weight:700;
+      text-transform:uppercase;letter-spacing:.12em
+    }
 
     .ext-area{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:54px}
-    .ext{width:16px;height:32px;border-radius:14px;position:relative;box-shadow:0 2px 10px rgba(0,0,0,.22);cursor:pointer;transition:.18s transform,.18s filter,.18s box-shadow}
+    .ext{
+      width:16px;height:32px;border-radius:14px;position:relative;
+      box-shadow:0 2px 10px rgba(0,0,0,.22);
+      cursor:pointer;transition:.18s transform,.18s filter,.18s box-shadow;
+      border:none
+    }
     .ext:hover{transform:translateY(-1px);filter:brightness(1.05)}
-    .ext::before{content:"";position:absolute;width:8px;height:5px;top:-3px;left:4px;border-radius:3px;background:#ecfeff;opacity:.7}
+    .ext::before{
+      content:"";
+      position:absolute;width:8px;height:5px;top:-3px;left:4px;
+      border-radius:3px;background:#ecfeff;opacity:.7
+    }
     .ext.ok{background:linear-gradient(180deg,var(--ok-2),var(--ok));box-shadow:0 2px 10px rgba(52,211,153,.35)}
     .ext.alert{background:linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 2px 10px rgba(255,107,107,.35)}
-    .floor-meta{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
-    .meta-pill{padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.06);border:1px solid var(--line);font-size:12px;color:var(--muted)}
+
+    .floor-meta{
+      margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;justify-content:center
+    }
+    .meta-pill{
+      padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.06);
+      border:1px solid var(--line);font-size:12px;color:var(--muted)
+    }
 
     .panel-grid{display:grid;grid-template-columns:1fr;gap:14px;margin-top:16px}
-    .card{background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:24px;padding:16px;box-shadow:var(--shadow)}
+    .card{
+      background:rgba(255,255,255,.04);
+      border:1px solid var(--line);
+      border-radius:24px;
+      padding:16px;
+      box-shadow:var(--shadow)
+    }
     .card h2,.card h3{margin:0 0 6px}
     .card p{margin:0;color:var(--muted)}
 
-    .location-head{display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:14px}
-    .selected-badge{padding:8px 12px;border-radius:999px;background:rgba(52,211,153,.12);color:#bbf7d0;border:1px solid rgba(52,211,153,.18);font-size:12px;font-weight:700}
+    .location-head{
+      display:flex;align-items:start;justify-content:space-between;gap:12px;margin-bottom:14px
+    }
+    .selected-badge{
+      padding:8px 12px;border-radius:999px;background:rgba(52,211,153,.12);
+      color:#bbf7d0;border:1px solid rgba(52,211,153,.18);font-size:12px;font-weight:700
+    }
 
     .location-grid{display:grid;grid-template-columns:1fr;gap:10px}
-    .location-btn{width:100%;text-align:left;background:#1b2e50;border:1px solid rgba(255,255,255,.08);color:var(--text);border-radius:18px;padding:14px;display:flex;align-items:center;justify-content:space-between;gap:10px;cursor:pointer;transition:.18s transform,.18s border-color,.18s background}
+    .location-btn{
+      width:100%;text-align:left;background:#1b2e50;border:1px solid rgba(255,255,255,.08);
+      color:var(--text);border-radius:18px;padding:14px;
+      display:flex;align-items:center;justify-content:space-between;gap:10px;
+      cursor:pointer;transition:.18s transform,.18s border-color,.18s background
+    }
     .location-btn:hover{transform:translateY(-1px);border-color:rgba(255,255,255,.16)}
-    .location-btn.active{background:#223a63;border-color:rgba(127,217,255,.36);box-shadow:0 0 0 2px rgba(127,217,255,.14)}
+    .location-btn.active{
+      background:#223a63;border-color:rgba(127,217,255,.36);
+      box-shadow:0 0 0 2px rgba(127,217,255,.14)
+    }
     .location-btn .left strong{display:block;font-size:16px}
     .location-btn .left span{display:block;font-size:12px;color:var(--muted-2);margin-top:3px}
 
     .actions{display:grid;gap:10px;margin-top:14px}
-    .btn{height:var(--tap);padding:0 16px;border:none;border-radius:18px;cursor:pointer;font-weight:800;transition:.18s transform,.18s opacity,.18s background}
+    .btn{
+      height:var(--tap);padding:0 16px;border:none;border-radius:18px;
+      cursor:pointer;font-weight:800;transition:.18s transform,.18s opacity,.18s background
+    }
     .btn:hover{transform:translateY(-1px)}
-    .btn-primary{background:linear-gradient(180deg,#ff7d7d,#ff6161);color:white;box-shadow:0 10px 22px rgba(255,107,107,.24)}
-    .btn-secondary{background:rgba(255,255,255,.08);color:var(--text);border:1px solid var(--line)}
+    .btn-primary{
+      background:linear-gradient(180deg,#ff7d7d,#ff6161);
+      color:white;box-shadow:0 10px 22px rgba(255,107,107,.24)
+    }
+    .btn-secondary{
+      background:rgba(255,255,255,.08);color:var(--text);border:1px solid var(--line)
+    }
     .btn:disabled{opacity:.5;cursor:not-allowed;transform:none}
 
-    .status{margin-top:12px;padding:12px 14px;border-radius:16px;font-size:13px;display:none}
+    .status{
+      margin-top:12px;padding:12px 14px;border-radius:16px;font-size:13px;display:none
+    }
     .status.show{display:block}
     .status.ok{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.18);color:#bbf7d0}
     .status.err{background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.18);color:#ffd5d5}
 
     dialog{width:min(720px,calc(100vw - 20px));border:none;padding:0;background:transparent}
     dialog::backdrop{background:rgba(0,0,0,.62);backdrop-filter:blur(4px)}
-    .modal{background:linear-gradient(180deg,#203458,#182a49);border:1px solid var(--line);border-radius:28px;overflow:hidden;box-shadow:0 30px 70px rgba(0,0,0,.42)}
-    .modal-head{padding:18px 18px 10px;border-bottom:1px solid var(--line);display:flex;align-items:start;justify-content:space-between;gap:12px}
+    .modal{
+      background:linear-gradient(180deg,#203458,#182a49);
+      border:1px solid var(--line);
+      border-radius:28px;overflow:hidden;
+      box-shadow:0 30px 70px rgba(0,0,0,.42)
+    }
+    .modal-head{
+      padding:18px 18px 10px;border-bottom:1px solid var(--line);
+      display:flex;align-items:start;justify-content:space-between;gap:12px
+    }
     .modal-head h3{margin:0;font-size:20px}
     .modal-head p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .icon-btn{width:40px;height:40px;border-radius:14px;border:1px solid var(--line);background:rgba(255,255,255,.05);color:white;cursor:pointer}
+    .icon-btn{
+      width:40px;height:40px;border-radius:14px;border:1px solid var(--line);
+      background:rgba(255,255,255,.05);color:white;cursor:pointer
+    }
     .modal-body{padding:16px}
 
     .form-grid{display:grid;grid-template-columns:1fr;gap:12px}
     .field{display:grid;gap:6px}
     .field label{font-size:13px;color:var(--muted);font-weight:700}
-    .field input,.field textarea,.field select{width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);border-radius:16px;color:var(--text);padding:14px 14px;outline:none}
+    .field input,.field textarea,.field select{
+      width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);
+      border-radius:16px;color:var(--text);padding:14px 14px;outline:none
+    }
     .field input[readonly]{color:rgba(255,255,255,.84);background:rgba(255,255,255,.035)}
     .field textarea{min-height:100px;resize:vertical}
     .inline-grid{display:grid;grid-template-columns:1fr;gap:12px}
     .help{font-size:12px;color:var(--muted-2)}
-    .preview{display:none;border-radius:18px;border:1px solid rgba(255,255,255,.09);overflow:hidden;background:#0b1730}
+    .preview{
+      display:none;border-radius:18px;border:1px solid rgba(255,255,255,.09);
+      overflow:hidden;background:#0b1730
+    }
     .preview.show{display:block}
     .preview img{width:100%;max-height:260px;object-fit:cover}
     .modal-actions{display:grid;gap:10px;margin-top:14px}
 
     .footer-note{margin-top:14px;font-size:12px;color:var(--muted-2);text-align:center}
-    .code{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px}
+    .code{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px
+    }
 
     @media (min-width: 720px){
       .app{padding:20px 20px 40px}
@@ -146,7 +264,7 @@
             <p>Reporte rápido de extintores</p>
           </div>
         </div>
-        <div class="chip" id="backendChip">GitHub UI · Sheets/Drive ready</div>
+        <div class="chip" id="backendChip">A ligar ao backend...</div>
       </div>
 
       <section class="hero">
@@ -184,22 +302,24 @@
         </section>
 
         <aside class="card">
-          <h3>Preparado para Google Sheets + Drive</h3>
-          <p style="margin-bottom:14px">O formulário abre em modal. O único campo manual é o nome; o resto vai pré-preenchido com base no ponto selecionado.</p>
-          <div class="field" style="margin-bottom:10px">
-            <label>Apps Script endpoint</label>
-            <input id="backendUrlInput" type="text" placeholder="https://script.google.com/macros/s/SEU_DEPLOY/exec" />
-          </div>
+          <h3>Ligação ativa</h3>
+          <p style="margin-bottom:14px">Esta versão já usa o backend fixo no código e vai buscar o estado real dos extintores ao Apps Script.</p>
+
           <div class="field" style="margin-bottom:10px">
             <label>Condomínio</label>
-            <input id="condominioInput" type="text" value="Condomínio" />
+            <input id="condominioInput" type="text" value="Rua Domingos da Cunha 4" />
           </div>
+
           <div class="field" style="margin-bottom:10px">
-            <label>Email do administrador (opcional para UI)</label>
-            <input id="adminEmailInput" type="email" placeholder="administrador@exemplo.pt" />
+            <label>Email do administrador</label>
+            <input id="adminEmailInput" type="email" placeholder="teuemail@exemplo.pt" />
           </div>
+
           <button class="btn btn-secondary" id="saveConfigBtn">Guardar configuração local</button>
-          <p class="footer-note">No telemóvel, o botão de fotografia tenta abrir a câmara via <span class="code">capture="environment"</span>. Em muitos Android resulta; nalguns iPhone pode aparecer escolher entre câmara e galeria.</p>
+          <p class="footer-note">
+            O backend já está embutido no código. No telemóvel, o botão de fotografia tenta abrir a câmara via
+            <span class="code">capture="environment"</span>.
+          </p>
         </aside>
       </div>
     </div>
@@ -251,7 +371,7 @@
             <div class="field">
               <label for="photoInput">Fotografia</label>
               <input id="photoInput" name="photo" type="file" accept="image/*" capture="environment" required />
-              <div class="help">No Android costuma abrir logo a câmara traseira. Dependendo do navegador/dispositivo, pode abrir o seletor entre câmara e galeria.</div>
+              <div class="help">Em muitos telemóveis abre logo a câmara traseira. Nalguns pode aparecer escolha entre câmara e galeria.</div>
             </div>
 
             <div class="preview" id="photoPreviewWrap">
@@ -265,7 +385,7 @@
 
             <div class="modal-actions">
               <button class="btn btn-primary" type="submit" id="submitBtn">Enviar alerta</button>
-              <button class="btn btn-secondary" type="button" id="testPayloadBtn">Ver payload</button>
+              <button class="btn btn-secondary" type="button" id="refreshStateBtn">Atualizar estados</button>
             </div>
             <div class="status" id="formStatus"></div>
           </div>
@@ -275,13 +395,18 @@
   </dialog>
 
   <script>
-    const APP_STORAGE_KEY = 'condominio_extintores_config_v2';
-    const ALERT_STORAGE_KEY = 'condominio_extintores_alerts_v1';
+    /******************************************************************
+     * CONFIG FIXA
+     ******************************************************************/
+    const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxgAehbnaj2kGv-3K6PDRzPXHbiFF4nCimJ6Adje4-d917-MFhcHE9xjLOb-8cwqKdzQw/exec';
+    // Exemplo:
+    // const BACKEND_URL = 'https://script.google.com/macros/s/AKfycbxxxxxxxxxxxxxxxxxxxx/exec';
+
+    const APP_STORAGE_KEY = 'condominio_extintores_config_v3';
 
     const DEFAULT_CONFIG = {
-      condominio: 'Condomínio',
+      condominio: 'Rua Domingos da Cunha 4',
       adminEmail: '',
-      backendUrl: '',
     };
 
     const FLOORS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 0, -1, -2, -3];
@@ -333,7 +458,7 @@
 
     const state = {
       config: loadConfig(),
-      reportedAlerts: loadAlerts(),
+      reportedAlerts: [],
       selectedFloor: 0,
       selectedPointId: null,
       photoBase64: '',
@@ -356,8 +481,7 @@
     const photoPreviewWrap = document.getElementById('photoPreviewWrap');
     const photoPreview = document.getElementById('photoPreview');
     const formStatus = document.getElementById('formStatus');
-    const testPayloadBtn = document.getElementById('testPayloadBtn');
-    const backendUrlInput = document.getElementById('backendUrlInput');
+    const refreshStateBtn = document.getElementById('refreshStateBtn');
     const condominioInput = document.getElementById('condominioInput');
     const adminEmailInput = document.getElementById('adminEmailInput');
     const saveConfigBtn = document.getElementById('saveConfigBtn');
@@ -365,7 +489,7 @@
 
     init();
 
-    function init(){
+    async function init(){
       hydrateConfigUI();
       applyUrlParams();
       renderBuilding();
@@ -373,6 +497,7 @@
       renderPoints();
       bindEvents();
       refreshBackendChip();
+      await syncStateFromBackend();
     }
 
     function loadConfig(){
@@ -385,32 +510,18 @@
       }
     }
 
-    function loadAlerts(){
-      try{
-        const raw = localStorage.getItem(ALERT_STORAGE_KEY);
-        const arr = raw ? JSON.parse(raw) : [];
-        return Array.isArray(arr) ? arr : [];
-      }catch{
-        return [];
-      }
-    }
-
-    function saveAlerts(){
-      localStorage.setItem(ALERT_STORAGE_KEY, JSON.stringify(state.reportedAlerts));
-    }
-
     function saveConfig(){
       localStorage.setItem(APP_STORAGE_KEY, JSON.stringify(state.config));
     }
 
     function hydrateConfigUI(){
-      backendUrlInput.value = state.config.backendUrl || '';
-      condominioInput.value = state.config.condominio || 'Condomínio';
+      condominioInput.value = state.config.condominio || DEFAULT_CONFIG.condominio;
       adminEmailInput.value = state.config.adminEmail || '';
     }
 
     function refreshBackendChip(){
-      backendChip.textContent = state.config.backendUrl ? 'Backend configurado' : 'GitHub UI · Sheets/Drive ready';
+      const ok = BACKEND_URL && BACKEND_URL !== 'COLE_AQUI_O_URL_DA_WEBAPP';
+      backendChip.textContent = ok ? 'Backend configurado' : 'Falta configurar backend';
     }
 
     function applyUrlParams(){
@@ -434,10 +545,12 @@
       closeDialogBtn.addEventListener('click', () => dialogEl.close());
       photoInput.addEventListener('change', handlePhotoChange);
       reportForm.addEventListener('submit', handleSubmit);
-      testPayloadBtn.addEventListener('click', previewPayload);
+      refreshStateBtn.addEventListener('click', syncStateFromBackend);
       saveConfigBtn.addEventListener('click', handleSaveConfig);
+
       dialogEl.addEventListener('click', (e) => {
-        const rect = dialogEl.querySelector('.modal').getBoundingClientRect();
+        const modal = dialogEl.querySelector('.modal');
+        const rect = modal.getBoundingClientRect();
         const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
         if (!inside) dialogEl.close();
       });
@@ -445,6 +558,7 @@
 
     function renderBuilding(){
       buildingEl.innerHTML = '';
+
       FLOORS.forEach((floor) => {
         const row = document.createElement('div');
         row.className = 'floor-row';
@@ -482,9 +596,9 @@
 
         const extArea = document.createElement('div');
         extArea.className = 'ext-area';
-        const extCount = extinguisherCountForFloor(floor);
-        for (let i = 0; i < extCount; i++){
-          const point = pointsForFloor(floor)[i];
+        const points = pointsForFloor(floor);
+
+        points.forEach((point) => {
           const ext = document.createElement('button');
           ext.type = 'button';
           ext.className = 'ext ' + (isPointReported(point.id) ? 'alert' : 'ok');
@@ -497,7 +611,7 @@
             openReportDialog();
           });
           extArea.appendChild(ext);
-        }
+        });
 
         main.appendChild(fractions);
         main.appendChild(extArea);
@@ -512,9 +626,8 @@
     }
 
     function markPointReported(pointId){
-      if (!isPointReported(pointId)){
+      if (!isPointReported(pointId)) {
         state.reportedAlerts.push(pointId);
-        saveAlerts();
       }
     }
 
@@ -535,12 +648,14 @@
     function renderPoints(){
       const points = pointsForFloor(state.selectedFloor);
       const selectedPoint = getSelectedPoint();
+
       selectedFloorTitleEl.textContent = floorDisplayName(state.selectedFloor);
       selectedFloorDescEl.textContent = state.selectedFloor < 0
         ? 'Garagem com 3 pontos possíveis para reporte.'
         : state.selectedFloor === 0
           ? 'Piso 0 com 1 ponto associado à central de fogo.'
           : 'Seleciona o ponto do extintor deste piso.';
+
       selectedCountBadgeEl.textContent = `${points.length} ponto(s)`;
       locationGridEl.innerHTML = '';
 
@@ -568,6 +683,7 @@
     function openReportDialog(){
       const point = getSelectedPoint();
       if (!point) return;
+
       setFormValue('pisoInput', point.floorDisplayName);
       setFormValue('pontoInput', point.id);
       setFormValue('localizacaoInput', point.location);
@@ -584,6 +700,7 @@
     async function handlePhotoChange(e){
       const file = e.target.files?.[0];
       if (!file) return;
+
       state.photoMimeType = file.type || 'image/jpeg';
       state.photoBase64 = await fileToBase64(file);
       photoPreview.src = state.photoBase64;
@@ -593,17 +710,20 @@
     async function handleSubmit(e){
       e.preventDefault();
       clearStatus(formStatus);
+
       const point = getSelectedPoint();
       if (!point){
         showStatus(formStatus, 'err', 'Não há ponto selecionado.');
         return;
       }
+
       if (!state.photoBase64){
         showStatus(formStatus, 'err', 'Tens de anexar uma fotografia.');
         return;
       }
 
       const payload = buildPayload(point);
+
       submitBtn.disabled = true;
       submitBtn.textContent = 'A enviar...';
 
@@ -612,12 +732,15 @@
         markPointReported(point.id);
         renderBuilding();
         renderPoints();
+
         showStatus(formStatus, 'ok', res?.message || 'Ocorrência enviada com sucesso.');
         showStatus(mainStatus, 'ok', `Ocorrência registada para ${point.id}. O extintor ficou marcado a vermelho.`);
+
         reportForm.reset();
         state.photoBase64 = '';
         state.photoMimeType = '';
         photoPreviewWrap.classList.remove('show');
+
         setTimeout(() => dialogEl.close(), 900);
       }catch(err){
         showStatus(formStatus, 'err', err.message || 'Erro ao enviar ocorrência.');
@@ -649,13 +772,11 @@
     }
 
     async function submitPayload(payload){
-      const url = state.config.backendUrl?.trim();
-      if (!url){
-        await fakeDelay(500);
-        return { ok: true, message: 'Mock submit OK. Falta configurar o Apps Script.' };
+      if (!BACKEND_URL || BACKEND_URL === 'COLE_AQUI_O_URL_DA_WEBAPP') {
+        throw new Error('Falta configurar o BACKEND_URL no código.');
       }
 
-      const response = await fetch(url, {
+      const response = await fetch(BACKEND_URL, {
         method: 'POST',
         headers: { 'Content-Type': 'text/plain;charset=utf-8' },
         body: JSON.stringify(payload),
@@ -663,30 +784,58 @@
 
       const text = await response.text();
       let data = {};
-      try { data = JSON.parse(text); } catch { data = { ok: response.ok, message: text || 'Sem resposta JSON.' }; }
+
+      try {
+        data = JSON.parse(text);
+      } catch {
+        data = { ok: response.ok, message: text || 'Sem resposta JSON.' };
+      }
+
       if (!response.ok || data.ok === false){
         throw new Error(data.message || 'Falha no backend Apps Script.');
       }
+
       return data;
     }
 
-    function previewPayload(){
-      const point = getSelectedPoint();
-      if (!point){
-        showStatus(formStatus, 'err', 'Seleciona primeiro um ponto.');
-        return;
+    async function syncStateFromBackend(){
+      try{
+        if (!BACKEND_URL || BACKEND_URL === 'COLE_AQUI_O_URL_DA_WEBAPP') {
+          showStatus(mainStatus, 'err', 'Falta configurar o BACKEND_URL no código.');
+          return;
+        }
+
+        showStatus(mainStatus, 'ok', 'A atualizar estado dos extintores...');
+
+        const response = await fetch(BACKEND_URL, { method: 'GET' });
+        const text = await response.text();
+
+        let data = {};
+        try {
+          data = JSON.parse(text);
+        } catch {
+          throw new Error('Resposta inválida do backend.');
+        }
+
+        if (!data.ok){
+          throw new Error(data.message || 'Erro ao obter estados.');
+        }
+
+        const estadoMap = data.estado || {};
+        state.reportedAlerts = Object.keys(estadoMap).filter((k) => estadoMap[k]);
+
+        renderBuilding();
+        renderPoints();
+        showStatus(mainStatus, 'ok', 'Estado atualizado com sucesso.');
+      }catch(err){
+        showStatus(mainStatus, 'err', err.message || 'Erro ao atualizar estados.');
       }
-      const payload = buildPayload(point);
-      console.log('Payload preview', payload);
-      showStatus(formStatus, 'ok', 'Payload enviado para a consola do browser.');
     }
 
     function handleSaveConfig(){
-      state.config.backendUrl = backendUrlInput.value.trim();
-      state.config.condominio = condominioInput.value.trim() || 'Condomínio';
+      state.config.condominio = condominioInput.value.trim() || 'Rua Domingos da Cunha 4';
       state.config.adminEmail = adminEmailInput.value.trim();
       saveConfig();
-      refreshBackendChip();
       showStatus(mainStatus, 'ok', 'Configuração local guardada.');
     }
 
@@ -696,9 +845,11 @@
         showStatus(mainStatus, 'err', 'Seleciona primeiro um ponto.');
         return;
       }
+
       const url = new URL(window.location.href);
       url.searchParams.set('floor', String(point.floor));
       url.searchParams.set('point', point.id);
+
       await navigator.clipboard.writeText(url.toString());
       showStatus(mainStatus, 'ok', `URL copiada para ${point.id}.`);
     }
@@ -729,10 +880,6 @@
         .replace(/>/g, '&gt;')
         .replace(/"/g, '&quot;')
         .replace(/'/g, '&#039;');
-    }
-
-    function fakeDelay(ms){
-      return new Promise((resolve) => setTimeout(resolve, ms));
     }
   </script>
 </body>
