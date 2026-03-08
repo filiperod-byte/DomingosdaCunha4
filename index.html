@@ -412,7 +412,7 @@
     const FLOORS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 0, -1, -2, -3];
 
     function floorLabel(floor){
-      return floor < 0 ? `p${floor}` : String(floor);
+      return floor < 0 ? `P${floor}` : String(floor);
     }
 
     function floorDisplayName(floor){
@@ -583,7 +583,7 @@
         if (floor < 0){
           const open = document.createElement('div');
           open.className = 'open-space';
-          open.textContent = 'Espaço aberto';
+          open.textContent = 'Garagem';
           fractions.appendChild(open);
         } else {
           const fractionCount = fractionCountForFloor(floor);
