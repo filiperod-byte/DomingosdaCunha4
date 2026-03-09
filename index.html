@@ -2,826 +2,598 @@
 <html lang="pt-PT">
 <head>
   <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <title>Condomínio · Reporte de Extintores</title>
-  <meta name="theme-color" content="#10223f" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Reporte de Extintores</title>
+  <meta name="theme-color" content="#0f172a" />
   <style>
     :root{
-      --bg:#10223f;
-      --card:#203458;
-      --line:rgba(255,255,255,.12);
-      --text:#f6f7fb;
-      --muted:rgba(255,255,255,.72);
-      --muted-2:rgba(255,255,255,.52);
-      --window:#e7ddb3;
-      --badge:#081731;
-      --accent:#ff6b6b;
-      --accent-2:#ff8d8d;
-      --ok:#34d399;
-      --ok-2:#6ee7b7;
-      --shadow:0 18px 40px rgba(0,0,0,.28);
-      --max:980px;
-      --tap:56px;
+      --bg:#0b1220;
+      --panel:#111827;
+      --panel-2:#172033;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --line:rgba(255,255,255,.10);
+      --ok:#16a34a;
+      --ok-soft:rgba(22,163,74,.18);
+      --alert:#dc2626;
+      --alert-soft:rgba(220,38,38,.16);
+      --accent:#38bdf8;
+      --shadow:0 14px 40px rgba(0,0,0,.28);
+      --radius:18px;
     }
 
     *{box-sizing:border-box}
-    html,body{
-      margin:0;
-      padding:0;
-      background:linear-gradient(180deg,var(--bg),#0b1730 75%);
-      color:var(--text);
-      font-family:Inter,ui-sans-serif,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
-    }
-    button,input,textarea,select{font:inherit}
-    img{max-width:100%;display:block}
-    .hidden{display:none !important}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#08101d 0%, #0c1526 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    button,input,select,textarea{font:inherit}
+    body{min-height:100vh}
 
-    .app{min-height:100dvh;padding:16px 14px 32px}
-    .shell{max-width:var(--max);margin:0 auto}
+    .app{
+      width:min(100%, 760px);
+      margin:0 auto;
+      padding:16px 14px 28px;
+    }
 
     .topbar{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:14px
-    }
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:10px
-    }
-    .brand-badge{
-      width:42px;height:42px;border-radius:14px;
-      background:rgba(255,255,255,.08);
-      display:grid;place-items:center;border:1px solid var(--line);
-      user-select:none;cursor:pointer
-    }
-    .brand h1{margin:0;font-size:20px;line-height:1.1}
-    .brand p{margin:2px 0 0;color:var(--muted-2);font-size:12px}
-    .chip{
-      display:inline-flex;align-items:center;gap:8px;height:36px;padding:0 12px;
-      border-radius:999px;background:rgba(255,255,255,.06);
-      border:1px solid var(--line);color:var(--muted);font-size:12px
+      position:sticky;
+      top:0;
+      z-index:5;
+      backdrop-filter: blur(12px);
+      background:rgba(8,16,29,.72);
+      border-bottom:1px solid rgba(255,255,255,.06);
+      margin:-16px -14px 14px;
+      padding:16px 14px 12px;
     }
 
-    .hero{
-      background:linear-gradient(180deg,rgba(255,255,255,.05),rgba(255,255,255,.02));
+    .title{
+      margin:0;
+      font-size:1.35rem;
+      font-weight:800;
+      letter-spacing:.2px;
+    }
+
+    .subtitle{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:.94rem;
+      line-height:1.4;
+    }
+
+    .legend{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:12px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      padding:8px 12px;
       border:1px solid var(--line);
-      border-radius:32px;
+      border-radius:999px;
+      background:rgba(255,255,255,.04);
+      font-size:.88rem;
+      color:var(--text);
+    }
+
+    .dot{
+      width:12px;
+      height:12px;
+      border-radius:999px;
+      display:inline-block;
+      box-shadow:0 0 0 3px rgba(255,255,255,.06) inset;
+    }
+
+    .dot.ok{background:var(--ok)}
+    .dot.alert{background:var(--alert)}
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
       box-shadow:var(--shadow);
-      overflow:hidden
     }
-    .hero-head{padding:18px 18px 10px;text-align:center}
-    .hero-title{margin:0;font-size:18px;font-weight:800}
-    .hero-sub{margin:6px 0 0;font-size:13px;color:var(--muted)}
 
-    .building-wrap{padding:8px 10px 18px}
-    .building{
-      background:linear-gradient(180deg,#334a71,#22375c);
-      border:1px solid var(--line);
-      border-radius:34px;
-      padding:16px 12px 14px;
-      position:relative
+    .building-card{
+      padding:12px;
+      overflow:hidden;
     }
-    .building::before{
-      content:"";
-      position:absolute;inset:8px;border-radius:28px;
-      border:1px solid rgba(255,255,255,.06);
-      pointer-events:none
+
+    .building-head{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:10px;
+      margin-bottom:12px;
+      padding:4px 4px 10px;
+    }
+
+    .building-head strong{
+      font-size:1rem;
+    }
+
+    .building-note{
+      font-size:.84rem;
+      color:var(--muted);
+    }
+
+    .building{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
     }
 
     .floor-row{
       display:grid;
-      grid-template-columns:74px 1fr;
-      gap:12px;
+      grid-template-columns:66px 1fr;
+      gap:10px;
+      align-items:stretch;
+    }
+
+    .floor-label{
+      display:flex;
       align-items:center;
-      margin:10px 0
-    }
-    .floor-btn{
-      height:40px;border:none;border-radius:14px;
-      background:var(--badge);color:#7fd9ff;font-weight:800;
-      font-size:24px;letter-spacing:.02em;
-      display:flex;align-items:center;justify-content:center;
-      cursor:pointer;transition:.18s transform,.18s background,.18s box-shadow
-    }
-    .floor-btn .small{font-size:18px}
-    .floor-btn:hover{transform:translateY(-1px)}
-    .floor-btn.active{
-      background:#0c1d3a;
-      box-shadow:0 0 0 2px rgba(127,217,255,.22), 0 8px 18px rgba(0,0,0,.18)
-    }
-
-    .floor-main{
-      min-height:52px;background:#162744;border-radius:18px;padding:8px 10px;
-      display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center;
-      border:1px solid rgba(255,255,255,.07)
-    }
-    .fractions{display:flex;gap:8px;align-items:center;min-width:0}
-    .fraction{height:40px;border-radius:16px;background:var(--window);box-shadow:inset 0 -2px 0 rgba(0,0,0,.08)}
-    .fraction.w3{flex:1 1 0}
-    .fraction.w2{width:46%}
-    .open-space{
-      height:40px;flex:1 1 auto;border-radius:16px;
-      border:2px dashed rgba(231,221,179,.55);
-      background:rgba(231,221,179,.08);
-      display:flex;align-items:center;justify-content:center;
-      color:rgba(231,221,179,.8);font-size:11px;font-weight:700;
-      text-transform:uppercase;letter-spacing:.12em
-    }
-
-    .ext-area{display:flex;align-items:center;justify-content:flex-end;gap:8px;min-width:54px}
-    .ext{
-      width:16px;height:32px;border-radius:14px;position:relative;
-      box-shadow:0 2px 10px rgba(0,0,0,.22);
-      cursor:pointer;transition:.18s transform,.18s filter,.18s box-shadow;
-      border:none
-    }
-    .ext:hover{transform:translateY(-1px);filter:brightness(1.05)}
-    .ext::before{
-      content:"";
-      position:absolute;width:8px;height:5px;top:-3px;left:4px;
-      border-radius:3px;background:#ecfeff;opacity:.7
-    }
-    .ext.ok{background:linear-gradient(180deg,var(--ok-2),var(--ok));box-shadow:0 2px 10px rgba(52,211,153,.35)}
-    .ext.alert{background:linear-gradient(180deg,var(--accent-2),var(--accent));box-shadow:0 2px 10px rgba(255,107,107,.35)}
-
-    .status{
-      margin-top:12px;padding:12px 14px;border-radius:16px;font-size:13px;display:none
-    }
-    .status.show{display:block}
-    .status.ok{background:rgba(52,211,153,.12);border:1px solid rgba(52,211,153,.18);color:#bbf7d0}
-    .status.err{background:rgba(255,107,107,.12);border:1px solid rgba(255,107,107,.18);color:#ffd5d5}
-
-    dialog{width:min(720px,calc(100vw - 20px));border:none;padding:0;background:transparent}
-    dialog::backdrop{background:rgba(0,0,0,.62);backdrop-filter:blur(4px)}
-    .modal{
-      background:linear-gradient(180deg,#203458,#182a49);
-      border:1px solid var(--line);
-      border-radius:28px;overflow:hidden;
-      box-shadow:0 30px 70px rgba(0,0,0,.42)
-    }
-    .modal-head{
-      padding:18px 18px 10px;border-bottom:1px solid var(--line);
-      display:flex;align-items:start;justify-content:space-between;gap:12px
-    }
-    .modal-head h3{margin:0;font-size:20px}
-    .modal-head p{margin:6px 0 0;color:var(--muted);font-size:13px}
-    .icon-btn{
-      width:40px;height:40px;border-radius:14px;border:1px solid var(--line);
-      background:rgba(255,255,255,.05);color:white;cursor:pointer
-    }
-    .modal-body{padding:16px}
-
-    .form-grid{display:grid;grid-template-columns:1fr;gap:12px}
-    .field{display:grid;gap:6px}
-    .field label{font-size:13px;color:var(--muted);font-weight:700}
-    .field input,.field textarea,.field select{
-      width:100%;background:rgba(255,255,255,.05);border:1px solid rgba(255,255,255,.11);
-      border-radius:16px;color:var(--text);padding:14px 14px;outline:none
-    }
-    .field input[readonly]{color:rgba(255,255,255,.84);background:rgba(255,255,255,.035)}
-    .field textarea{min-height:100px;resize:vertical}
-    .inline-grid{display:grid;grid-template-columns:1fr;gap:12px}
-    .help{font-size:12px;color:var(--muted-2)}
-    .preview{
-      display:none;border-radius:18px;border:1px solid rgba(255,255,255,.09);
-      overflow:hidden;background:#0b1730
-    }
-    .preview.show{display:block}
-    .preview img{width:100%;max-height:260px;object-fit:cover}
-    .modal-actions{display:grid;gap:10px;margin-top:14px}
-
-    .backoffice{
-      margin-top:16px;
+      justify-content:center;
+      border-radius:14px;
       background:rgba(255,255,255,.04);
       border:1px solid var(--line);
-      border-radius:24px;
-      padding:16px;
-      box-shadow:var(--shadow)
-    }
-    .backoffice h3{margin:0 0 6px}
-    .backoffice p{margin:0 0 14px;color:var(--muted)}
-    .bo-grid{display:grid;gap:12px}
-    .bo-actions{display:grid;gap:10px;margin-top:12px}
-    .footer-note{margin-top:14px;font-size:12px;color:var(--muted-2)}
-    .code{
-      font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
-      background:rgba(255,255,255,.06);padding:2px 6px;border-radius:8px
+      color:#f8fafc;
+      font-weight:800;
+      min-height:74px;
     }
 
-    @media (min-width: 720px){
-      .app{padding:20px 20px 40px}
-      .hero-head{padding:22px 22px 12px}
-      .inline-grid{grid-template-columns:1fr 1fr}
-      .modal-actions{grid-template-columns:1fr 1fr}
-      .bo-actions{grid-template-columns:1fr 1fr}
+    .floor-body{
+      border-radius:16px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg,var(--panel),var(--panel-2));
+      overflow:hidden;
+      position:relative;
+    }
+
+    .floor-inner{
+      min-height:74px;
+      display:grid;
+      grid-template-columns:1fr auto;
+      align-items:center;
+      gap:12px;
+      padding:10px 12px;
+    }
+
+    .fractions{
+      display:grid;
+      gap:8px;
+      width:100%;
+    }
+
+    .fractions.cols-2{grid-template-columns:repeat(2,1fr)}
+    .fractions.cols-3{grid-template-columns:repeat(3,1fr)}
+
+    .window{
+      height:42px;
+      border-radius:12px;
+      border:1px solid rgba(255,255,255,.08);
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.14), rgba(255,255,255,.05));
+      position:relative;
+      overflow:hidden;
+    }
+
+    .window::before,
+    .window::after{
+      content:"";
+      position:absolute;
+      background:rgba(255,255,255,.10);
+    }
+
+    .window::before{
+      left:50%;
+      top:0;
+      bottom:0;
+      width:1px;
+      transform:translateX(-50%);
+    }
+
+    .window::after{
+      top:50%;
+      left:0;
+      right:0;
+      height:1px;
+      transform:translateY(-50%);
+    }
+
+    .garage-zone{
+      width:100%;
+      min-height:54px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.16);
+      background:
+        repeating-linear-gradient(
+          90deg,
+          rgba(255,255,255,.02) 0,
+          rgba(255,255,255,.02) 26px,
+          rgba(255,255,255,.05) 26px,
+          rgba(255,255,255,.05) 30px
+        );
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:var(--muted);
+      font-size:.86rem;
+      letter-spacing:.1px;
+      text-transform:uppercase;
+    }
+
+    .extinguishers{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:flex-end;
+      gap:10px;
+      min-width:92px;
+    }
+
+    .ext-btn{
+      appearance:none;
+      border:none;
+      width:48px;
+      height:48px;
+      border-radius:16px;
+      font-weight:800;
+      color:#fff;
+      cursor:pointer;
+      transition:transform .15s ease, box-shadow .15s ease, opacity .15s ease;
+      box-shadow:0 10px 20px rgba(0,0,0,.24);
+      position:relative;
+      padding:0;
+    }
+
+    .ext-btn:hover{transform:translateY(-1px)}
+    .ext-btn:active{transform:translateY(1px)}
+    .ext-btn.ok{background:linear-gradient(180deg,#22c55e,#15803d)}
+    .ext-btn.alert{background:linear-gradient(180deg,#ef4444,#b91c1c)}
+    .ext-btn span{
+      font-size:.80rem;
+      line-height:1;
+      display:block;
+    }
+
+    .ext-btn::after{
+      content:"🧯";
+      position:absolute;
+      inset:auto auto 4px 50%;
+      transform:translateX(-50%);
+      font-size:.85rem;
+      opacity:.92;
+    }
+
+    .helper{
+      margin-top:12px;
+      padding:12px 14px;
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.45;
+    }
+
+    .overlay{
+      position:fixed;
+      inset:0;
+      background:rgba(2,6,23,.66);
+      backdrop-filter:blur(8px);
+      display:none;
+      align-items:flex-end;
+      justify-content:center;
+      z-index:20;
+      padding:12px;
+    }
+
+    .overlay.show{display:flex}
+
+    .modal{
+      width:min(100%,720px);
+      background:linear-gradient(180deg,#0f172a 0%, #111827 100%);
+      border:1px solid var(--line);
+      border-radius:24px 24px 18px 18px;
+      box-shadow:var(--shadow);
+      overflow:hidden;
+      max-height:min(92vh,900px);
+      display:flex;
+      flex-direction:column;
+    }
+
+    .modal-head{
+      padding:16px 16px 12px;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:flex-start;
+      justify-content:space-between;
+      gap:12px;
+    }
+
+    .modal-title{
+      margin:0;
+      font-size:1.1rem;
+      font-weight:800;
+    }
+
+    .modal-subtitle{
+      margin:6px 0 0;
+      color:var(--muted);
+      font-size:.92rem;
+      line-height:1.4;
+    }
+
+    .icon-btn{
+      width:40px;
+      height:40px;
+      border-radius:14px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      cursor:pointer;
+      font-size:1.1rem;
+    }
+
+    .modal-body{
+      padding:14px 16px 18px;
+      overflow:auto;
+    }
+
+    .alert-box{
+      display:none;
+      margin-bottom:12px;
+      padding:12px 14px;
+      border-radius:14px;
+      background:var(--alert-soft);
+      border:1px solid rgba(220,38,38,.28);
+      color:#fecaca;
+      font-size:.92rem;
+    }
+
+    .alert-box.show{display:block}
+
+    .form-grid{
+      display:grid;
+      gap:12px;
+    }
+
+    .field label{
+      display:block;
+      margin-bottom:8px;
+      font-weight:700;
+      font-size:.94rem;
+    }
+
+    .field input[type="text"],
+    .field select,
+    .field textarea{
+      width:100%;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      border-radius:14px;
+      padding:13px 14px;
+      outline:none;
+    }
+
+    .field textarea{
+      min-height:100px;
+      resize:vertical;
+    }
+
+    .field input::placeholder,
+    .field textarea::placeholder{
+      color:#94a3b8;
+    }
+
+    .photo-box{
+      border:1px dashed rgba(255,255,255,.18);
+      border-radius:16px;
+      padding:12px;
+      background:rgba(255,255,255,.03);
+    }
+
+    .photo-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+    }
+
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius:14px;
+      padding:13px 15px;
+      cursor:pointer;
+      font-weight:800;
+      transition:transform .15s ease, opacity .15s ease;
+    }
+
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{
+      background:linear-gradient(180deg,#38bdf8,#0284c7);
+      color:#fff;
+    }
+    .btn-secondary{
+      background:rgba(255,255,255,.06);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.10);
+    }
+    .btn-danger{
+      background:linear-gradient(180deg,#f97316,#ea580c);
+      color:#fff;
+    }
+
+    .photo-meta{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:.88rem;
+      line-height:1.4;
+      word-break:break-word;
+    }
+
+    .modal-actions{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:10px;
+      margin-top:14px;
+    }
+
+    .hidden{
+      display:none !important;
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:20px;
+      transform:translateX(-50%) translateY(30px);
+      width:min(calc(100% - 28px), 520px);
+      padding:14px 16px;
+      border-radius:16px;
+      background:rgba(15,23,42,.92);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:var(--shadow);
+      opacity:0;
+      pointer-events:none;
+      transition:all .2s ease;
+      z-index:40;
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    .loading{
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      gap:10px;
+      padding:16px;
+      color:var(--muted);
+      font-size:.95rem;
+    }
+
+    .spinner{
+      width:18px;
+      height:18px;
+      border-radius:999px;
+      border:2px solid rgba(255,255,255,.18);
+      border-top-color:#fff;
+      animation:spin .9s linear infinite;
+    }
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media (min-width: 768px){
+      .app{padding-top:20px}
+      .topbar{padding:18px 20px 14px}
+      .building-card{padding:16px}
+      .modal{border-radius:24px}
+      .overlay{align-items:center}
+      .floor-row{grid-template-columns:80px 1fr}
     }
   </style>
 </head>
 <body>
   <div class="app">
-    <div class="shell">
-      <div class="topbar">
-        <div class="brand">
-          <div class="brand-badge" id="secretTapArea" title="Zona do logo">🧯</div>
-          <div>
-            <h1 id="brandTitle">Condomínio</h1>
-            <p>Reporte rápido de extintores</p>
-          </div>
+    <div class="topbar">
+      <h1 class="title">Reporte de Extintores</h1>
+      <p class="subtitle">Toque no extintor com problema para abrir o reporte.</p>
+      <div class="legend">
+        <span class="pill"><span class="dot ok"></span> Sem alerta</span>
+        <span class="pill"><span class="dot alert"></span> Reportado</span>
+      </div>
+    </div>
+
+    <section class="card building-card">
+      <div class="building-head">
+        <div>
+          <strong id="buildingName">Condomínio</strong>
+          <div class="building-note">Vista simples do edifício</div>
         </div>
-        <div class="chip" id="backendChip">A ligar ao backend...</div>
+        <div class="building-note" id="lastRefresh">A atualizar…</div>
       </div>
 
-      <section class="hero">
-        <div class="hero-head">
-          <h2 class="hero-title">Toque direto no extintor para reportar</h2>
-          <p class="hero-sub">Verde = sem alertas registados · Vermelho = ocorrência já reportada.</p>
-        </div>
+      <div id="buildingLoading" class="loading">
+        <div class="spinner"></div>
+        <span>A carregar estado dos extintores…</span>
+      </div>
 
-        <div class="building-wrap">
-          <div class="building" id="building"></div>
-          <div class="status" id="mainStatus"></div>
-        </div>
-      </section>
+      <div id="building" class="building hidden"></div>
 
-      <section id="backofficePanel" class="backoffice hidden">
-        <h3>Back Office</h3>
-        <p>Área de gestão oculta. Abre com 5 toques no ícone 🧯.</p>
-
-        <div class="bo-grid">
-          <div class="field">
-            <label for="condominioInput">Condomínio</label>
-            <input id="condominioInput" type="text" />
-          </div>
-
-          <div class="field">
-            <label for="adminEmailInput">Email do administrador</label>
-            <input id="adminEmailInput" type="email" />
-          </div>
-
-          <div class="field">
-            <label for="backendUrlInput">Backend URL (só leitura)</label>
-            <input id="backendUrlInput" type="text" readonly />
-          </div>
-        </div>
-
-        <div class="bo-actions">
-          <button class="btn btn-secondary" id="saveConfigBtn">Guardar configuração local</button>
-          <button class="btn btn-secondary" id="syncBtn">Atualizar estados</button>
-          <button class="btn btn-secondary" id="copyQrUrlBtn">Copiar URL do ponto atual</button>
-          <button class="btn btn-secondary" id="clearAdminCacheBtn">Limpar cache local admin</button>
-        </div>
-
-        <p class="footer-note">
-          O utilizador normal só vê o prédio. Esta área é apenas de gestão.
-        </p>
-      </section>
-    </div>
+      <div class="helper">
+        Só são pedidos os dados essenciais. Piso, ponto e localização seguem automaticamente no envio.
+      </div>
+    </section>
   </div>
 
-  <dialog id="reportDialog">
-    <div class="modal">
+  <div id="reportOverlay" class="overlay" aria-hidden="true">
+    <div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
       <div class="modal-head">
         <div>
-          <h3>Reportar extintor</h3>
-          <p>Quase tudo vai preenchido automaticamente. Só falta o teu nome, motivo e foto.</p>
+          <h2 id="modalTitle" class="modal-title">Reportar extintor</h2>
+          <p id="modalSubtitle" class="modal-subtitle">Preencha os dados essenciais.</p>
         </div>
-        <button class="icon-btn" id="closeDialogBtn" aria-label="Fechar">✕</button>
+        <button id="closeModalBtn" class="icon-btn" type="button" aria-label="Fechar">✕</button>
       </div>
+
       <div class="modal-body">
-        <form id="reportForm">
+        <div id="alreadyReportedBox" class="alert-box">
+          Este extintor já tem uma ocorrência aberta. Pode submeter informação adicional, se necessário.
+        </div>
+
+        <form id="reportForm" novalidate>
+          <input type="hidden" id="hiddenFloor" name="floor" />
+          <input type="hidden" id="hiddenPoint" name="point" />
+          <input type="hidden" id="hiddenLocation" name="location" />
+
           <div class="form-grid">
             <div class="field">
-              <label for="nomeInput">Nome</label>
-              <input id="nomeInput" name="nome" type="text" placeholder="Ex.: Filipe" required />
-            </div>
-
-            <div class="inline-grid">
-              <div class="field">
-                <label for="pisoInput">Piso</label>
-                <input id="pisoInput" name="piso" type="text" readonly />
-              </div>
-              <div class="field">
-                <label for="pontoInput">Ponto</label>
-                <input id="pontoInput" name="ponto" type="text" readonly />
-              </div>
+              <label for="reporterName">Nome</label>
+              <input type="text" id="reporterName" name="name" maxlength="80" placeholder="O seu nome" required />
             </div>
 
             <div class="field">
-              <label for="localizacaoInput">Localização</label>
-              <input id="localizacaoInput" name="localizacao" type="text" readonly />
-            </div>
-
-            <div class="field">
-              <label for="tipoInput">Motivo</label>
-              <select id="tipoInput" name="tipo">
-                <option value="Extintor em falta">Extintor em falta</option>
-                <option value="Extintor danificado">Extintor danificado</option>
-                <option value="Suporte vazio">Suporte vazio</option>
-                <option value="Sinalização danificada">Sinalização danificada</option>
+              <label for="reportReason">Motivo</label>
+              <select id="reportReason" name="reason" required>
+                <option value="">Selecionar motivo</option>
               </select>
             </div>
 
             <div class="field">
-              <label for="photoInput">Fotografia</label>
-              <input id="photoInput" name="photo" type="file" accept="image/*" capture="environment" required />
-              <div class="help">Em muitos telemóveis abre logo a câmara traseira. Nalguns pode aparecer escolha entre câmara e galeria.</div>
-            </div>
+              <label>Fotografia</label>
+              <div class="photo-box">
+                <div class="photo-actions">
+                  <button class="btn btn-secondary" type="button" id="openCameraBtn">Abrir câmara</button>
+                  <button class="btn btn-secondary" type="button" id="pickFileBtn">Escolher ficheiro</button>
+                </div>
+                <div id="photoMeta" class="photo-meta">Sem fotografia selecionada.</div>
 
-            <div class="preview" id="photoPreviewWrap">
-              <img id="photoPreview" alt="Pré-visualização da foto" />
+                <input class="hidden" type="file" id="cameraInput" accept="image/*" capture="environment" />
+                <input class="hidden" type="file" id="fileInput" accept="image/*" />
+              </div>
             </div>
 
             <div class="field">
-              <label for="obsInput">Observação (opcional)</label>
-              <textarea id="obsInput" name="observacao" placeholder="Ex.: suporte vazio, sem sinais de dano visíveis."></textarea>
+              <label for="reportNote">Observação (opcional)</label>
+              <textarea id="reportNote" name="notes" maxlength="500" placeholder="Ex.: extintor em falta, danificado, selo ausente, suporte vazio…"></textarea>
             </div>
+          </div>
 
-            <div class="modal-actions">
-              <button class="btn btn-primary" type="submit" id="submitBtn">Enviar alerta</button>
-              <button class="btn btn-secondary" type="button" id="refreshStateBtn">Atualizar estados</button>
-            </div>
-
-            <div class="status" id="formStatus"></div>
+          <div class="modal-actions">
+            <button type="button" id="cancelBtn" class="btn btn-secondary">Cancelar</button>
+            <button type="submit" id="submitBtn" class="btn btn-primary">Enviar reporte</button>
           </div>
         </form>
       </div>
     </div>
-  </dialog>
+  </div>
 
-  <script>
-    const APP_STORAGE_KEY = 'condominio_extintores_config_v4';
-    const FLOORS = [10, 9, 8, 7, 6, 5, 4, 3, 2, 0, -1, -2, -3];
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
-    const state = {
-      config: null,
-      reportedAlerts: [],
-      selectedFloor: 0,
-      selectedPointId: null,
-      photoBase64: '',
-      photoMimeType: '',
-      backofficeOpen: false,
-      secretTapCount: 0,
-      secretTapTimer: null,
-    };
-
-    const buildingEl = document.getElementById('building');
-    const dialogEl = document.getElementById('reportDialog');
-    const reportForm = document.getElementById('reportForm');
-    const closeDialogBtn = document.getElementById('closeDialogBtn');
-    const submitBtn = document.getElementById('submitBtn');
-    const photoInput = document.getElementById('photoInput');
-    const photoPreviewWrap = document.getElementById('photoPreviewWrap');
-    const photoPreview = document.getElementById('photoPreview');
-    const formStatus = document.getElementById('formStatus');
-    const mainStatus = document.getElementById('mainStatus');
-    const backendChip = document.getElementById('backendChip');
-    const brandTitle = document.getElementById('brandTitle');
-
-    const backofficePanel = document.getElementById('backofficePanel');
-    const secretTapArea = document.getElementById('secretTapArea');
-    const condominioInput = document.getElementById('condominioInput');
-    const adminEmailInput = document.getElementById('adminEmailInput');
-    const backendUrlInput = document.getElementById('backendUrlInput');
-    const saveConfigBtn = document.getElementById('saveConfigBtn');
-    const syncBtn = document.getElementById('syncBtn');
-    const copyQrUrlBtn = document.getElementById('copyQrUrlBtn');
-    const clearAdminCacheBtn = document.getElementById('clearAdminCacheBtn');
-    const refreshStateBtn = document.getElementById('refreshStateBtn');
-
-    init();
-
-    async function init(){
-      try{
-        state.config = await loadConfigJson();
-        state.config = mergeWithLocalConfig(state.config);
-        hydrateBackoffice();
-        applyBrand();
-        applyUrlParams();
-        selectDefaultPoint();
-        bindEvents();
-        renderBuilding();
-        refreshBackendChip();
-        await syncStateFromBackend();
-      }catch(err){
-        showStatus(mainStatus, 'err', err.message || 'Erro ao iniciar aplicação.');
-      }
-    }
-
-    async function loadConfigJson(){
-      const res = await fetch('./config.json', { cache: 'no-store' });
-      if (!res.ok) throw new Error('Não foi possível carregar config.json');
-      return await res.json();
-    }
-
-    function mergeWithLocalConfig(baseConfig){
-      try{
-        const raw = localStorage.getItem(APP_STORAGE_KEY);
-        if (!raw) return { ...baseConfig };
-        const local = JSON.parse(raw);
-        return { ...baseConfig, ...local };
-      }catch{
-        return { ...baseConfig };
-      }
-    }
-
-    function saveLocalConfig(){
-      localStorage.setItem(APP_STORAGE_KEY, JSON.stringify({
-        condo_name: state.config.condo_name || '',
-        admin_email_ui: state.config.admin_email_ui || ''
-      }));
-    }
-
-    function clearLocalConfig(){
-      localStorage.removeItem(APP_STORAGE_KEY);
-    }
-
-    function hydrateBackoffice(){
-      condominioInput.value = state.config.condo_name || '';
-      adminEmailInput.value = state.config.admin_email_ui || '';
-      backendUrlInput.value = state.config.backend_url || '';
-    }
-
-    function applyBrand(){
-      brandTitle.textContent = state.config.condo_name || 'Condomínio';
-      document.title = `${state.config.condo_name || 'Condomínio'} · Reporte de Extintores`;
-    }
-
-    function refreshBackendChip(){
-      backendChip.textContent = state.config.backend_url ? 'Backend configurado' : 'Backend em falta';
-    }
-
-    function floorLabel(floor){
-      return floor < 0 ? `p${floor}` : String(floor);
-    }
-
-    function floorDisplayName(floor){
-      return floor < 0 ? `Garagem ${floorLabel(floor)}` : `Piso ${floor}`;
-    }
-
-    function fractionCountForFloor(floor){
-      if (floor < 0) return 0;
-      if (floor === 10) return 2;
-      return 3;
-    }
-
-    function extinguisherCountForFloor(floor){
-      return floor < 0 ? 3 : 1;
-    }
-
-    function locationNameFor(floor, pointIndex){
-      if (floor < 0) return `Zona de circulação · ${floorLabel(floor)} · ponto ${pointIndex}`;
-      if (floor === 0) return pointIndex === 1 ? 'Junto à central de fogo' : `Piso 0 · ponto ${pointIndex}`;
-      return `Corredor do piso ${floor} · ponto ${pointIndex}`;
-    }
-
-    function buildPointId(floor, pointIndex){
-      return `${floorLabel(floor).replace('-', '_')}_E${pointIndex}`;
-    }
-
-    function pointsForFloor(floor){
-      const count = extinguisherCountForFloor(floor);
-      return Array.from({ length: count }, (_, idx) => {
-        const pointIndex = idx + 1;
-        return {
-          floor,
-          floorLabel: floorLabel(floor),
-          floorDisplayName: floorDisplayName(floor),
-          pointIndex,
-          id: buildPointId(floor, pointIndex),
-          title: `Extintor ${pointIndex}`,
-          location: locationNameFor(floor, pointIndex),
-          isCentralFogo: floor === 0 && pointIndex === 1,
-        };
-      });
-    }
-
-    function applyUrlParams(){
-      const params = new URLSearchParams(window.location.search);
-      const floorParam = params.get('floor');
-      const pointParam = params.get('point');
-
-      if (floorParam !== null){
-        const parsedFloor = Number(floorParam);
-        if (FLOORS.includes(parsedFloor)) state.selectedFloor = parsedFloor;
-      }
-
-      if (pointParam){
-        state.selectedPointId = pointParam;
-      }
-    }
-
-    function selectDefaultPoint(){
-      const points = pointsForFloor(state.selectedFloor);
-      if (!points.length){
-        state.selectedPointId = null;
-        return;
-      }
-      const currentExists = points.some((p) => p.id === state.selectedPointId);
-      if (!currentExists) state.selectedPointId = points[0].id;
-    }
-
-    function getSelectedPoint(){
-      return pointsForFloor(state.selectedFloor).find((p) => p.id === state.selectedPointId) || null;
-    }
-
-    function isPointReported(pointId){
-      return state.reportedAlerts.includes(pointId);
-    }
-
-    function markPointReported(pointId){
-      if (!isPointReported(pointId)) state.reportedAlerts.push(pointId);
-    }
-
-    function bindEvents(){
-      secretTapArea.addEventListener('click', handleSecretTap);
-
-      closeDialogBtn.addEventListener('click', () => dialogEl.close());
-
-      photoInput.addEventListener('change', async (e) => {
-        const file = e.target.files?.[0];
-        if (!file) return;
-        state.photoMimeType = file.type || 'image/jpeg';
-        state.photoBase64 = await fileToBase64(file);
-        photoPreview.src = state.photoBase64;
-        photoPreviewWrap.classList.add('show');
-      });
-
-      reportForm.addEventListener('submit', handleSubmit);
-      refreshStateBtn.addEventListener('click', syncStateFromBackend);
-      syncBtn.addEventListener('click', syncStateFromBackend);
-
-      saveConfigBtn.addEventListener('click', () => {
-        state.config.condo_name = condominioInput.value.trim();
-        state.config.admin_email_ui = adminEmailInput.value.trim();
-        saveLocalConfig();
-        applyBrand();
-        showStatus(mainStatus, 'ok', 'Configuração local guardada.');
-      });
-
-      copyQrUrlBtn.addEventListener('click', copyCurrentPointUrl);
-
-      clearAdminCacheBtn.addEventListener('click', () => {
-        clearLocalConfig();
-        showStatus(mainStatus, 'ok', 'Cache local admin limpa. Reabre a página para voltar ao config.json.');
-      });
-
-      dialogEl.addEventListener('click', (e) => {
-        const modal = dialogEl.querySelector('.modal');
-        const rect = modal.getBoundingClientRect();
-        const inside = e.clientX >= rect.left && e.clientX <= rect.right && e.clientY >= rect.top && e.clientY <= rect.bottom;
-        if (!inside) dialogEl.close();
-      });
-    }
-
-    function handleSecretTap(){
-      state.secretTapCount += 1;
-
-      clearTimeout(state.secretTapTimer);
-      state.secretTapTimer = setTimeout(() => {
-        state.secretTapCount = 0;
-      }, 1400);
-
-      if (state.secretTapCount >= 5){
-        state.secretTapCount = 0;
-        state.backofficeOpen = !state.backofficeOpen;
-        backofficePanel.classList.toggle('hidden', !state.backofficeOpen);
-        showStatus(mainStatus, 'ok', state.backofficeOpen ? 'Back office aberto.' : 'Back office fechado.');
-      }
-    }
-
-    function renderBuilding(){
-      buildingEl.innerHTML = '';
-
-      FLOORS.forEach((floor) => {
-        const row = document.createElement('div');
-        row.className = 'floor-row';
-
-        const floorBtn = document.createElement('button');
-        floorBtn.type = 'button';
-        floorBtn.className = 'floor-btn' + (state.selectedFloor === floor ? ' active' : '');
-        floorBtn.innerHTML = floor < 0 ? `<span class="small">${floorLabel(floor)}</span>` : floorLabel(floor);
-        floorBtn.addEventListener('click', () => {
-          state.selectedFloor = floor;
-          selectDefaultPoint();
-          renderBuilding();
-        });
-
-        const main = document.createElement('div');
-        main.className = 'floor-main';
-
-        const fractions = document.createElement('div');
-        fractions.className = 'fractions';
-
-        if (floor < 0){
-          const open = document.createElement('div');
-          open.className = 'open-space';
-          open.textContent = 'Espaço aberto';
-          fractions.appendChild(open);
-        } else {
-          const fractionCount = fractionCountForFloor(floor);
-          for (let i = 0; i < fractionCount; i++){
-            const fraction = document.createElement('div');
-            fraction.className = 'fraction ' + (fractionCount === 2 ? 'w2' : 'w3');
-            fractions.appendChild(fraction);
-          }
-        }
-
-        const extArea = document.createElement('div');
-        extArea.className = 'ext-area';
-
-        pointsForFloor(floor).forEach((point) => {
-          const ext = document.createElement('button');
-          ext.type = 'button';
-          ext.className = 'ext ' + (isPointReported(point.id) ? 'alert' : 'ok');
-          ext.title = point.title;
-          ext.addEventListener('click', () => {
-            state.selectedFloor = floor;
-            state.selectedPointId = point.id;
-            renderBuilding();
-            openReportDialog();
-          });
-          extArea.appendChild(ext);
-        });
-
-        main.appendChild(fractions);
-        main.appendChild(extArea);
-        row.appendChild(floorBtn);
-        row.appendChild(main);
-        buildingEl.appendChild(row);
-      });
-    }
-
-    function openReportDialog(){
-      const point = getSelectedPoint();
-      if (!point) return;
-
-      setFormValue('pisoInput', point.floorDisplayName);
-      setFormValue('pontoInput', point.id);
-      setFormValue('localizacaoInput', point.location);
-      setFormValue('tipoInput', 'Extintor em falta');
-      clearStatus(formStatus);
-      dialogEl.showModal();
-    }
-
-    function setFormValue(id, value){
-      const el = document.getElementById(id);
-      if (el) el.value = value || '';
-    }
-
-    async function handleSubmit(e){
-      e.preventDefault();
-      clearStatus(formStatus);
-
-      const point = getSelectedPoint();
-      if (!point){
-        showStatus(formStatus, 'err', 'Não há ponto selecionado.');
-        return;
-      }
-
-      if (!state.photoBase64){
-        showStatus(formStatus, 'err', 'Tens de anexar uma fotografia.');
-        return;
-      }
-
-      const payload = {
-        source: 'github-pages',
-        timestamp_client: new Date().toISOString(),
-        condominio: state.config.condo_name || '',
-        admin_email_ui: state.config.admin_email_ui || '',
-        nome: document.getElementById('nomeInput').value.trim(),
-        tipo: document.getElementById('tipoInput').value,
-        observacao: document.getElementById('obsInput').value.trim(),
-        piso: point.floor,
-        piso_label: point.floorLabel,
-        piso_display: point.floorDisplayName,
-        ponto_id: point.id,
-        ponto_nome: point.title,
-        localizacao: point.location,
-        central_fogo: point.isCentralFogo,
-        photo_base64: state.photoBase64,
-        photo_mime_type: state.photoMimeType,
-      };
-
-      submitBtn.disabled = true;
-      submitBtn.textContent = 'A enviar...';
-
-      try{
-        const res = await submitPayload(payload);
-        markPointReported(point.id);
-        renderBuilding();
-
-        showStatus(formStatus, 'ok', res?.message || 'Ocorrência enviada com sucesso.');
-        showStatus(mainStatus, 'ok', `Ocorrência registada para ${point.id}.`);
-
-        reportForm.reset();
-        state.photoBase64 = '';
-        state.photoMimeType = '';
-        photoPreviewWrap.classList.remove('show');
-
-        setTimeout(() => dialogEl.close(), 900);
-      }catch(err){
-        showStatus(formStatus, 'err', err.message || 'Erro ao enviar ocorrência.');
-      }finally{
-        submitBtn.disabled = false;
-        submitBtn.textContent = 'Enviar alerta';
-      }
-    }
-
-    async function submitPayload(payload){
-      if (!state.config.backend_url){
-        throw new Error('Falta backend_url em config.json');
-      }
-
-      const response = await fetch(state.config.backend_url, {
-        method: 'POST',
-        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-        body: JSON.stringify(payload),
-      });
-
-      const text = await response.text();
-      let data = {};
-
-      try {
-        data = JSON.parse(text);
-      } catch {
-        data = { ok: response.ok, message: text || 'Sem resposta JSON.' };
-      }
-
-      if (!response.ok || data.ok === false){
-        throw new Error(data.message || 'Falha no backend Apps Script.');
-      }
-
-      return data;
-    }
-
-    async function syncStateFromBackend(){
-      try{
-        if (!state.config.backend_url){
-          showStatus(mainStatus, 'err', 'Falta backend_url em config.json');
-          return;
-        }
-
-        showStatus(mainStatus, 'ok', 'A atualizar estados...');
-
-        const response = await fetch(state.config.backend_url, { method: 'GET' });
-        const text = await response.text();
-
-        let data = {};
-        try {
-          data = JSON.parse(text);
-        } catch {
-          throw new Error('Resposta inválida do backend.');
-        }
-
-        if (!data.ok){
-          throw new Error(data.message || 'Erro ao obter estados.');
-        }
-
-        const estadoMap = data.estado || {};
-        state.reportedAlerts = Object.keys(estadoMap).filter((k) => estadoMap[k]);
-
-        renderBuilding();
-        showStatus(mainStatus, 'ok', 'Estado atualizado com sucesso.');
-      }catch(err){
-        showStatus(mainStatus, 'err', err.message || 'Erro ao atualizar estados.');
-      }
-    }
-
-    async function copyCurrentPointUrl(){
-      const point = getSelectedPoint();
-      if (!point){
-        showStatus(mainStatus, 'err', 'Seleciona primeiro um ponto.');
-        return;
-      }
-
-      const url = new URL(window.location.href);
-      url.searchParams.set('floor', String(point.floor));
-      url.searchParams.set('point', point.id);
-
-      await navigator.clipboard.writeText(url.toString());
-      showStatus(mainStatus, 'ok', `URL copiada para ${point.id}.`);
-    }
-
-    function showStatus(el, type, text){
-      el.textContent = text;
-      el.className = `status show ${type}`;
-    }
-
-    function clearStatus(el){
-      el.textContent = '';
-      el.className = 'status';
-    }
-
-    function fileToBase64(file){
-      return new Promise((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(reader.result);
-        reader.onerror = reject;
-        reader.readAsDataURL(file);
-      });
-    }
-  </script>
+  <script src="app.js" defer></script>
 </body>
 </html>
