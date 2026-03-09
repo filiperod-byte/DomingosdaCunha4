@@ -1,0 +1,642 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover" />
+  <title>Back Office - Extintores</title>
+  <meta name="theme-color" content="#0f172a" />
+  <style>
+    :root{
+      --bg:#08101d;
+      --panel:#0f172a;
+      --panel-2:#111827;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --line:rgba(255,255,255,.10);
+      --accent:#22c55e;
+      --accent-2:#38bdf8;
+      --warn:#f59e0b;
+      --danger:#ef4444;
+      --shadow:0 16px 40px rgba(0,0,0,.30);
+      --radius:18px;
+    }
+
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:linear-gradient(180deg,#06101b 0%, #0c1526 100%);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    body{min-height:100vh}
+    button,input,select,textarea{font:inherit}
+
+    .page{
+      width:min(100%, 1120px);
+      margin:0 auto;
+      padding:16px;
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.02));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
+      box-shadow:var(--shadow);
+    }
+
+    .hidden{display:none !important}
+
+    .topbar{
+      display:flex;
+      flex-wrap:wrap;
+      justify-content:space-between;
+      align-items:center;
+      gap:12px;
+      margin-bottom:14px;
+      padding:16px;
+    }
+
+    .topbar h1{
+      margin:0;
+      font-size:1.35rem;
+      font-weight:800;
+    }
+
+    .muted{
+      color:var(--muted);
+    }
+
+    .small{
+      font-size:.9rem;
+    }
+
+    .tiny{
+      font-size:.82rem;
+    }
+
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      border-radius:999px;
+      padding:8px 12px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
+      font-size:.86rem;
+      white-space:nowrap;
+    }
+
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      display:inline-block;
+    }
+
+    .dot.ok{background:#22c55e}
+    .dot.warn{background:#f59e0b}
+    .dot.danger{background:#ef4444}
+
+    .btn{
+      appearance:none;
+      border:none;
+      border-radius:14px;
+      padding:12px 14px;
+      cursor:pointer;
+      font-weight:800;
+      transition:transform .15s ease, opacity .15s ease;
+    }
+
+    .btn:hover{transform:translateY(-1px)}
+    .btn:active{transform:translateY(1px)}
+    .btn-primary{background:linear-gradient(180deg,#38bdf8,#0284c7); color:#fff}
+    .btn-success{background:linear-gradient(180deg,#22c55e,#15803d); color:#fff}
+    .btn-secondary{background:rgba(255,255,255,.06); color:#fff; border:1px solid rgba(255,255,255,.10)}
+    .btn-danger{background:linear-gradient(180deg,#ef4444,#b91c1c); color:#fff}
+    .btn-warn{background:linear-gradient(180deg,#f59e0b,#d97706); color:#fff}
+
+    .auth-wrap{
+      max-width:560px;
+      margin:42px auto 0;
+      padding:18px;
+    }
+
+    .auth-card{
+      padding:18px;
+    }
+
+    .auth-card h2{
+      margin:0 0 8px;
+      font-size:1.2rem;
+    }
+
+    .field{
+      margin-top:12px;
+    }
+
+    .field label{
+      display:block;
+      margin-bottom:8px;
+      font-size:.94rem;
+      font-weight:700;
+    }
+
+    .field input,
+    .field select,
+    .field textarea{
+      width:100%;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.10);
+      background:rgba(255,255,255,.04);
+      color:#fff;
+      padding:13px 14px;
+      outline:none;
+    }
+
+    .field textarea{
+      resize:vertical;
+      min-height:110px;
+    }
+
+    .auth-actions,
+    .stack-actions{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-top:14px;
+    }
+
+    .helper{
+      margin-top:10px;
+      color:var(--muted);
+      line-height:1.45;
+      font-size:.92rem;
+    }
+
+    .tabs{
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+      padding:8px;
+      margin-bottom:14px;
+      overflow:auto;
+    }
+
+    .tab-btn{
+      appearance:none;
+      border:none;
+      padding:11px 14px;
+      border-radius:14px;
+      background:rgba(255,255,255,.05);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.08);
+      cursor:pointer;
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .tab-btn.active{
+      background:linear-gradient(180deg,#1d4ed8,#1e40af);
+      border-color:rgba(255,255,255,.14);
+    }
+
+    .tab-panel{
+      display:none;
+      padding:16px;
+    }
+
+    .tab-panel.active{
+      display:block;
+    }
+
+    .grid{
+      display:grid;
+      gap:14px;
+    }
+
+    .grid-4{
+      grid-template-columns:repeat(1,1fr);
+    }
+
+    .stat{
+      padding:16px;
+      border-radius:16px;
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+    }
+
+    .stat-label{
+      color:var(--muted);
+      font-size:.9rem;
+    }
+
+    .stat-value{
+      margin-top:6px;
+      font-size:1.8rem;
+      font-weight:900;
+      line-height:1;
+    }
+
+    .section-title{
+      margin:0 0 12px;
+      font-size:1.04rem;
+      font-weight:800;
+    }
+
+    .list{
+      display:grid;
+      gap:10px;
+    }
+
+    .list-card{
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+      border-radius:16px;
+      padding:14px;
+    }
+
+    .list-head{
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:flex-start;
+      margin-bottom:8px;
+    }
+
+    .kv{
+      display:grid;
+      gap:5px;
+      font-size:.94rem;
+    }
+
+    .kv strong{
+      color:#fff;
+    }
+
+    .two-col{
+      display:grid;
+      gap:14px;
+      grid-template-columns:1fr;
+    }
+
+    .photo-box{
+      border:1px dashed rgba(255,255,255,.16);
+      border-radius:16px;
+      padding:12px;
+      background:rgba(255,255,255,.03);
+    }
+
+    .photo-meta{
+      margin-top:10px;
+      color:var(--muted);
+      font-size:.88rem;
+      word-break:break-word;
+    }
+
+    .status-grid{
+      display:grid;
+      gap:10px;
+      grid-template-columns:repeat(1,1fr);
+    }
+
+    .status-pill{
+      padding:12px 14px;
+      border-radius:14px;
+      border:1px solid rgba(255,255,255,.08);
+      background:rgba(255,255,255,.03);
+      display:flex;
+      justify-content:space-between;
+      gap:10px;
+      align-items:center;
+    }
+
+    .status-pill.alert{
+      background:rgba(239,68,68,.10);
+      border-color:rgba(239,68,68,.22);
+    }
+
+    .qr-toolbar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin-bottom:14px;
+      align-items:end;
+    }
+
+    .qr-grid{
+      display:grid;
+      grid-template-columns:repeat(2,1fr);
+      gap:12px;
+    }
+
+    .qr-card{
+      background:#fff;
+      color:#111827;
+      border-radius:16px;
+      padding:12px;
+      display:flex;
+      flex-direction:column;
+      align-items:center;
+      justify-content:center;
+      min-height:230px;
+    }
+
+    .qr-card img{
+      width:100%;
+      max-width:180px;
+      height:auto;
+      display:block;
+    }
+
+    .qr-label{
+      margin-top:8px;
+      text-align:center;
+      font-size:.86rem;
+      font-weight:700;
+      line-height:1.35;
+    }
+
+    .code-box{
+      background:rgba(255,255,255,.04);
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:12px;
+      color:#dbeafe;
+      font-family:ui-monospace,SFMono-Regular,Menlo,monospace;
+      font-size:.86rem;
+      word-break:break-all;
+    }
+
+    .loading{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      color:var(--muted);
+      padding:8px 0;
+    }
+
+    .spinner{
+      width:18px;
+      height:18px;
+      border-radius:999px;
+      border:2px solid rgba(255,255,255,.18);
+      border-top-color:#fff;
+      animation:spin .9s linear infinite;
+    }
+
+    .empty{
+      color:var(--muted);
+      padding:12px;
+      border-radius:14px;
+      border:1px dashed rgba(255,255,255,.12);
+      background:rgba(255,255,255,.02);
+    }
+
+    .toast{
+      position:fixed;
+      left:50%;
+      bottom:18px;
+      transform:translateX(-50%) translateY(30px);
+      width:min(calc(100% - 28px),560px);
+      padding:14px 16px;
+      border-radius:16px;
+      background:rgba(15,23,42,.94);
+      color:#fff;
+      border:1px solid rgba(255,255,255,.10);
+      box-shadow:var(--shadow);
+      opacity:0;
+      pointer-events:none;
+      transition:all .2s ease;
+      z-index:40;
+    }
+
+    .toast.show{
+      opacity:1;
+      transform:translateX(-50%) translateY(0);
+    }
+
+    @keyframes spin{to{transform:rotate(360deg)}}
+
+    @media (min-width: 768px){
+      .grid-4{grid-template-columns:repeat(4,1fr)}
+      .two-col{grid-template-columns:1.1fr .9fr}
+      .status-grid{grid-template-columns:repeat(2,1fr)}
+      .qr-grid{grid-template-columns:repeat(4,1fr)}
+    }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <section class="card topbar">
+      <div>
+        <h1>Back Office - Extintores</h1>
+        <div class="muted small">Gestão protegida por PIN</div>
+      </div>
+      <div style="display:flex; gap:8px; flex-wrap:wrap;">
+        <span id="pinStatusBadge" class="badge"><span class="dot warn"></span> PIN por validar</span>
+        <span id="backendBadge" class="badge"><span class="dot ok"></span> Backend por configurar</span>
+      </div>
+    </section>
+
+    <section id="authSection" class="auth-wrap">
+      <div id="setupCard" class="card auth-card hidden">
+        <h2>Definir PIN inicial</h2>
+        <div class="helper">
+          Na primeira utilização, o PIN global do back office é definido aqui. Depois passa a ser sempre exigido.
+        </div>
+
+        <div class="field">
+          <label for="setupPin">Novo PIN</label>
+          <input id="setupPin" type="password" inputmode="numeric" placeholder="Ex.: 1234" />
+        </div>
+
+        <div class="field">
+          <label for="setupPinConfirm">Confirmar PIN</label>
+          <input id="setupPinConfirm" type="password" inputmode="numeric" placeholder="Repetir PIN" />
+        </div>
+
+        <div class="auth-actions">
+          <button id="setupPinBtn" class="btn btn-primary" type="button">Guardar PIN</button>
+        </div>
+      </div>
+
+      <div id="loginCard" class="card auth-card hidden">
+        <h2>Introduzir PIN</h2>
+        <div class="helper">
+          O PIN é global e mantém-se até ser recuperado/resetado.
+        </div>
+
+        <div class="field">
+          <label for="loginPin">PIN</label>
+          <input id="loginPin" type="password" inputmode="numeric" placeholder="Introduzir PIN" />
+        </div>
+
+        <div class="auth-actions">
+          <button id="loginBtn" class="btn btn-primary" type="button">Entrar</button>
+          <button id="recoverPinBtn" class="btn btn-secondary" type="button">Recuperar PIN</button>
+        </div>
+
+        <div class="helper tiny">
+          Ao recuperar o PIN, é enviado email ao administrador e o PIN fica resetado para voltar a ser definido na próxima utilização.
+        </div>
+      </div>
+    </section>
+
+    <section id="adminSection" class="hidden">
+      <div class="card tabs">
+        <button class="tab-btn active" data-tab="dashboard">Dashboard / Estado</button>
+        <button class="tab-btn" data-tab="occurrences">Ocorrências</button>
+        <button class="tab-btn" data-tab="close">Fechar ocorrência</button>
+        <button class="tab-btn" data-tab="qrcodes">QR Codes</button>
+        <button class="tab-btn" data-tab="config">Configuração</button>
+      </div>
+
+      <section id="tab-dashboard" class="card tab-panel active">
+        <div class="grid grid-4">
+          <div class="stat">
+            <div class="stat-label">Total de extintores</div>
+            <div id="statTotal" class="stat-value">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Sem alerta</div>
+            <div id="statOk" class="stat-value">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Em alerta</div>
+            <div id="statAlert" class="stat-value">—</div>
+          </div>
+          <div class="stat">
+            <div class="stat-label">Ocorrências abertas</div>
+            <div id="statOpen" class="stat-value">—</div>
+          </div>
+        </div>
+
+        <div style="margin-top:16px" class="two-col">
+          <div>
+            <h3 class="section-title">Estado atual dos extintores</h3>
+            <div id="statusGrid" class="status-grid"></div>
+          </div>
+          <div>
+            <h3 class="section-title">Última atualização</h3>
+            <div id="dashboardInfo" class="list-card">
+              <div class="kv">
+                <div><strong>Backend:</strong> <span id="dashboardBackendInfo">—</span></div>
+                <div><strong>Atualizado em:</strong> <span id="dashboardRefresh">—</span></div>
+                <div><strong>Admin email:</strong> <span id="dashboardAdminEmail">—</span></div>
+              </div>
+              <div class="stack-actions">
+                <button id="refreshDashboardBtn" class="btn btn-secondary" type="button">Atualizar dados</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-occurrences" class="card tab-panel">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
+          <h3 class="section-title" style="margin:0;">Ocorrências abertas</h3>
+          <button id="refreshOccurrencesBtn" class="btn btn-secondary" type="button">Atualizar ocorrências</button>
+        </div>
+        <div id="occurrencesList" class="list"></div>
+      </section>
+
+      <section id="tab-close" class="card tab-panel">
+        <div class="two-col">
+          <div>
+            <h3 class="section-title">Fechar ocorrência</h3>
+
+            <div class="field">
+              <label for="closeOccurrenceSelect">Selecionar ocorrência</label>
+              <select id="closeOccurrenceSelect">
+                <option value="">Selecionar ocorrência aberta</option>
+              </select>
+            </div>
+
+            <div id="closeOccurrenceSummary" class="list-card muted small" style="margin-top:12px;">
+              Seleciona uma ocorrência para ver o detalhe.
+            </div>
+
+            <div class="field">
+              <label>Fotografia de fecho</label>
+              <div class="photo-box">
+                <button id="pickClosePhotoBtn" class="btn btn-secondary" type="button">Selecionar fotografia</button>
+                <div id="closePhotoMeta" class="photo-meta">Nenhuma fotografia selecionada.</div>
+                <input class="hidden" type="file" id="closePhotoInput" accept="image/*" />
+              </div>
+            </div>
+
+            <div class="field">
+              <label for="closeNote">Observação de fecho (opcional)</label>
+              <textarea id="closeNote" maxlength="500" placeholder="Ex.: extintor reposto / suporte reparado / situação normalizada"></textarea>
+            </div>
+
+            <div class="stack-actions">
+              <button id="closeOccurrenceBtn" class="btn btn-success" type="button">Fechar ocorrência</button>
+            </div>
+          </div>
+
+          <div>
+            <h3 class="section-title">Regras</h3>
+            <div class="list-card">
+              <div class="kv">
+                <div><strong>1.</strong> Selecionar ocorrência aberta</div>
+                <div><strong>2.</strong> Fotografia de fecho obrigatória</div>
+                <div><strong>3.</strong> Observação opcional</div>
+                <div><strong>4.</strong> Após fechar, o extintor volta ao estado OK</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section id="tab-qrcodes" class="card tab-panel">
+        <h3 class="section-title">Gerador de QR Codes</h3>
+
+        <div class="qr-toolbar">
+          <div class="field" style="flex:1;min-width:240px;margin:0;">
+            <label for="singleQrSelect">QR Code individual</label>
+            <select id="singleQrSelect">
+              <option value="">Selecionar ponto</option>
+            </select>
+          </div>
+          <button id="printSingleQrBtn" class="btn btn-secondary" type="button">Imprimir 1 QR</button>
+          <button id="printAllQrBtn" class="btn btn-primary" type="button">Imprimir folha A4</button>
+        </div>
+
+        <div class="helper" style="margin-bottom:14px;">
+          Os QR codes apontam diretamente para o formulário/report do ponto correto.
+        </div>
+
+        <div id="singleQrPreview" class="list-card hidden" style="margin-bottom:14px;"></div>
+
+        <div id="qrGrid" class="qr-grid"></div>
+      </section>
+
+      <section id="tab-config" class="card tab-panel">
+        <div class="grid" style="gap:14px;">
+          <div class="list-card">
+            <h3 class="section-title">Configuração atual</h3>
+            <div class="kv">
+              <div><strong>Backend URL:</strong></div>
+              <div id="configBackendUrl" class="code-box">—</div>
+              <div><strong>Email do administrador:</strong> <span id="configAdminEmail">—</span></div>
+              <div><strong>Página pública:</strong> <span id="configPublicUrl">—</span></div>
+              <div><strong>Tamanho QR:</strong> <span id="configQrSize">—</span></div>
+            </div>
+          </div>
+
+          <div class="list-card">
+            <h3 class="section-title">Ações</h3>
+            <div class="stack-actions">
+              <button id="configRecoverPinBtn" class="btn btn-warn" type="button">Recuperar PIN</button>
+              <button id="logoutBtn" class="btn btn-danger" type="button">Terminar sessão</button>
+            </div>
+            <div class="helper">
+              “Recuperar PIN” envia email ao administrador e faz reset do PIN para ser definido novamente no próximo acesso.
+            </div>
+          </div>
+        </div>
+      </section>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script src="backoffice.js" defer></script>
+</body>
+</html>
