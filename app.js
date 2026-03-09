@@ -458,13 +458,22 @@ async function apiPost(payload) {
     throw new Error("backendUrl não configurado no config.json");
   }
 
-  const response = await fetch(baseUrl, {
-    method: "POST",
-    headers: {
-      "Content-Type": "application/json"
-    },
-    body: JSON.stringify(payload)
+  const formData = new FormData();
+
+  Object.entries(payload).forEach(([key, value]) => {
+    if (value === undefined || value === null) return;
+    formData.append(key, String(value));
   });
+
+  let response;
+  try {
+    response = await fetch(baseUrl, {
+      method: "POST",
+      body: formData
+    });
+  } catch (error) {
+    throw new Error("Falha de ligação ao backend (POST bloqueado / CORS).");
+  }
 
   const text = await response.text();
 
@@ -472,7 +481,7 @@ async function apiPost(payload) {
     return JSON.parse(text);
   } catch {
     if (!response.ok) {
-      throw new Error("Resposta inválida do backend.");
+      throw new Error(`Resposta inválida do backend (${response.status})`);
     }
     return { success: true, raw: text };
   }
