@@ -1,6 +1,255 @@
 {
-  "condo_name": "Rua Domingos da Cunha 4",
-  "admin_email_ui": "filiperod@gmail.com",
-  "backend_url": "https://script.google.com/macros/s/AKfycbxgAehbnaj2kGv-3K6PDRzPXHbiFF4nCimJ6Adje4-d917-MFhcHE9xjLOb-8cwqKdzQw/exec"
-  "publicBaseUrl": "https://filiperod-byte.github.io/DomingosdaCunha4/"
+  "appName": "Extintores Report",
+  "building": {
+    "name": "Rua Domingos da Cunha 4",
+    "floors": [
+      {
+        "floor": 10,
+        "label": "10",
+        "type": "residential",
+        "fractions": 2,
+        "extinguishers": [
+          {
+            "point": "E1",
+            "label": "Extintor 1",
+            "shortLabel": "E1",
+            "location": "Patamar comum piso 10"
+          }
+        ]
+      },
+      {
+        "floor": 9,
+        "label": "9",
+        "type": "residential",
+        "fractions": 3,
+        "extinguishers": [
+          {
+            "point": "E1",
+            "label": "Extintor 1",
+            "shortLabel": "E1",
+            "location": "Patamar comum piso 9"
+          }
+        ]
+      },
+      {
+        "floor": 8,
+        "label": "8",
+        "type": "residential",
+        "fractions": 3,
+        "extinguishers": [
+          {
+            "point": "E1",
+            "label": "Extintor 1",
+            "shortLabel": "E1",
+            "location": "Patamar comum piso 8"
+          }
+        ]
+      },
+      {
+        "floor": 7,
+        "label": "7",
+        "type": "residential",
+        "fractions": 3,
+        "extinguishers": [
+          {
+            "point": "E1",
+            "label": "Extintor 1",
+            "shortLabel": "E1",
+            "location": "Patamar comum piso 7"
+          }
+        ]
+      },
+      {
+        "floor": 6,
+        "label": "6",
+        "type": "residential",
+        "fractions": 3,
+        "extinguishers": [
+          {
+            "point": "E1",
+            "label": "Extintor 1",
+            "shortLabel": "E1",
+            "location": "Patamar comum piso 6"
+          }
+        ]
+      },
+      {
+        "floor": 5,
+        "label": "5",
+        "type": "residential",
+        "fractions": 3,
+        "extinguishers": [
+          {
+            "point": "E1",
+            "label": "Extintor 1",
+            "shortLabel": "E1",
+            "location": "Patamar comum piso 5"
+          }
+        ]
+      },
+      {
+        "floor": 4,
+        "label": "4",
+        "type": "residential",
+        "fractions": 3,
+        "extinguishers": [
+          {
+            "point": "E1",
+            "label": "Extintor 1",
+            "shortLabel": "E1",
+            "location": "Patamar comum piso 4"
+          }
+        ]
+      },
+      {
+        "floor": 3,
+        "label": "3",
+        "type": "residential",
+        "fractions": 3,
+        "extinguishers": [
+          {
+            "point": "E1",
+            "label": "Extintor 1",
+            "shortLabel": "E1",
+            "location": "Patamar comum piso 3"
+          }
+        ]
+      },
+      {
+        "floor": 2,
+        "label": "2",
+        "type": "residential",
+        "fractions": 3,
+        "extinguishers": [
+          {
+            "point": "E1",
+            "label": "Extintor 1",
+            "shortLabel": "E1",
+            "location": "Patamar comum piso 2"
+          }
+        ]
+      },
+      {
+        "floor": 0,
+        "label": "0",
+        "type": "service",
+        "fractions": 3,
+        "extinguishers": [
+          {
+            "point": "CF1",
+            "label": "Central de fogo",
+            "shortLabel": "CF",
+            "location": "Piso 0 - central de fogo"
+          }
+        ]
+      },
+      {
+        "floor": -1,
+        "label": "p-1",
+        "type": "garage",
+        "fractions": 0,
+        "extinguishers": [
+          {
+            "point": "G1",
+            "label": "Extintor 1",
+            "shortLabel": "G1",
+            "location": "Garagem p-1 - zona de acesso"
+          },
+          {
+            "point": "G2",
+            "label": "Extintor 2",
+            "shortLabel": "G2",
+            "location": "Garagem p-1 - zona central"
+          },
+          {
+            "point": "G3",
+            "label": "Extintor 3",
+            "shortLabel": "G3",
+            "location": "Garagem p-1 - zona de saída"
+          }
+        ]
+      },
+      {
+        "floor": -2,
+        "label": "p-2",
+        "type": "garage",
+        "fractions": 0,
+        "extinguishers": [
+          {
+            "point": "G1",
+            "label": "Extintor 1",
+            "shortLabel": "G1",
+            "location": "Garagem p-2 - zona de acesso"
+          },
+          {
+            "point": "G2",
+            "label": "Extintor 2",
+            "shortLabel": "G2",
+            "location": "Garagem p-2 - zona central"
+          },
+          {
+            "point": "G3",
+            "label": "Extintor 3",
+            "shortLabel": "G3",
+            "location": "Garagem p-2 - zona de saída"
+          }
+        ]
+      },
+      {
+        "floor": -3,
+        "label": "p-3",
+        "type": "garage",
+        "fractions": 0,
+        "extinguishers": [
+          {
+            "point": "G1",
+            "label": "Extintor 1",
+            "shortLabel": "G1",
+            "location": "Garagem p-3 - zona de acesso"
+          },
+          {
+            "point": "G2",
+            "label": "Extintor 2",
+            "shortLabel": "G2",
+            "location": "Garagem p-3 - zona central"
+          },
+          {
+            "point": "G3",
+            "label": "Extintor 3",
+            "shortLabel": "G3",
+            "location": "Garagem p-3 - zona de saída"
+          }
+        ]
+      }
+    ]
+  },
+  "backendUrl": "https://script.google.com/macros/s/AKfycbxgAehbnaj2kGv-3K6PDRzPXHbiFF4nCimJ6Adje4-d917-MFhcHE9xjLOb-8cwqKdzQw/exec",
+  "publicBaseUrl": "https://filiperod-byte.github.io/DomingosdaCunha4/index.html",
+  "adminEmail": "filiperod@gmail.com",
+  "reportReasons": [
+    "Extintor em falta",
+    "Extintor danificado",
+    "Suporte vazio",
+    "Selo / verificação em falta",
+    "Acesso obstruído",
+    "Outro"
+  ],
+  "apiActions": {
+    "status": "status",
+    "report": "report",
+    "pinStatus": "pinStatus",
+    "setPin": "setPin",
+    "validatePin": "validatePin",
+    "resetPin": "resetPin",
+    "openOccurrences": "openOccurrences",
+    "closeOccurrence": "closeOccurrence"
+  },
+  "features": {
+    "reportPhotoRequired": false,
+    "closePhotoRequired": true
+  },
+  "qr": {
+    "sizePx": 220,
+    "printSizeCm": 8
+  }
 }
