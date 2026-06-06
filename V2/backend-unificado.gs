@@ -114,6 +114,23 @@ const REQUIRED_HEADERS = {
 
 const OPEN_STATUSES = ['ABERTA', 'OPEN', 'ALERTA', 'REPORTADO'];
 
+// Estrutura residencial usada pela Garagem.
+// Derivada do config.json dos extintores:
+// - piso 10 tem 2 frações
+// - pisos 2 a 9 têm 3 frações
+// - pisos 0, p-1, p-2 e p-3 não aceitam registo residencial
+const GARAGE_RESIDENTIAL_STRUCTURE = {
+  '10': ['A', 'B'],
+  '9': ['A', 'B', 'C'],
+  '8': ['A', 'B', 'C'],
+  '7': ['A', 'B', 'C'],
+  '6': ['A', 'B', 'C'],
+  '5': ['A', 'B', 'C'],
+  '4': ['A', 'B', 'C'],
+  '3': ['A', 'B', 'C'],
+  '2': ['A', 'B', 'C']
+};
+
 /*************************************************
  * ENTRYPOINTS WEB APP
  *************************************************/
@@ -150,6 +167,8 @@ function routeRequest_(method, e) {
 
         case 'garage.publicConfig':
         case 'garagePublicConfig':
+        case 'garage.structure':
+        case 'garageStructure':
         case 'garage.dashboard':
         case 'garageDashboard':
         case 'garage.pending':
@@ -197,6 +216,8 @@ function routeRequest_(method, e) {
       case 'garageFailedAttempt':
       case 'garage.resendPin':
       case 'garageResendPin':
+      case 'garage.recoverCode':
+      case 'garageRecoverCode':
       case 'garage.getCode':
       case 'garageGetCode':
       case 'garage.loginAdmin':
@@ -311,6 +332,10 @@ function handleGarageGet_(action) {
     case 'garagePublicConfig':
       return getPublicConfig();
 
+    case 'garage.structure':
+    case 'garageStructure':
+      return getGarageStructure_();
+
     case 'garage.dashboard':
     case 'garageDashboard':
       return getDashboardData();
@@ -366,6 +391,8 @@ function handleGaragePost_(action, payload) {
 
     case 'garage.resendPin':
     case 'garageResendPin':
+    case 'garage.recoverCode':
+    case 'garageRecoverCode':
       return reenviarPIN(payload.email);
 
     case 'garage.getCode':
@@ -1277,7 +1304,7 @@ function setupApp() {
   var defaults = [
     ['NOME_CONDOMINIO',       'Condomínio Exemplo',           'Nome do condomínio'],
     ['CODIGO_CADEADO',        '000000',                       'Código atual do cadeado'],
-    ['ADMIN_EMAIL',           'admin@email.com',              'Email do administrador'],
+    ['ADMIN_EMAIL',           CONFIG.ADMIN_EMAIL || 'admin@email.com',              'Email do administrador'],
     ['ADMIN_PIN',             '123456',                       'PIN do administrador'],
     ['TEMPO_VISIVEL_SEGUNDOS','60',                           'Segundos que o código fica visível'],
     ['PIN_DIGITOS',           '6',                            'Número de dígitos do PIN'],
@@ -1390,23 +1417,131 @@ function getPublicConfig() {
   return {
     nomeCondominio: getConfig('NOME_CONDOMINIO') || 'Condomínio',
     tempoVisivel:   parseInt(getConfig('TEMPO_VISIVEL_SEGUNDOS')) || 60,
-    adminEmail:     getConfig('ADMIN_EMAIL') || ''
+    adminEmail:     getConfig('ADMIN_EMAIL') || '',
+    structure:      getGarageStructure_().floors
   };
+}
+
+function getGarageStructure_() {
+  const floors = Object.keys(GARAGE_RESIDENTIAL_STRUCTURE)
+    .map(function (floor) {
+      return {
+        piso: floor,
+        label: floor + '.º andar',
+        fraccoes: GARAGE_RESIDENTIAL_STRUCTURE[floor]
+      };
+    })
+    .sort(function (a, b) { return Number(b.piso) - Number(a.piso); });
+
+  return {
+    ok: true,
+    success: true,
+    floors: floors
+  };
+}
+
+function normalizeGarageFloor_(value) {
+  var txt = String(value || '').trim().toUpperCase();
+  txt = txt.replace(/º|°/g, '');
+  txt = txt.replace(/ANDAR|PISO/g, '').trim();
+  txt = txt.replace(/\s+/g, '');
+  return txt;
+}
+
+function normalizeGarageFraction_(value) {
+  var txt = String(value || '').trim().toUpperCase();
+  txt = txt.normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+  txt = txt.replace(/FRACCAO|FRACAO|FRAÇÃO|FRAÇÃO/g, '').trim();
+  txt = txt.replace(/\s+/g, '');
+  return txt;
+}
+
+function validateGarageResident_(piso, fracao) {
+  var floor = normalizeGarageFloor_(piso);
+  var fraction = normalizeGarageFraction_(fracao);
+  var allowed = GARAGE_RESIDENTIAL_STRUCTURE[floor];
+
+  if (!allowed) {
+    throw new Error('Piso inválido para registo. Só são aceites os pisos residenciais 2 a 10.');
+  }
+
+  if (allowed.indexOf(fraction) === -1) {
+    throw new Error('Fração inválida para o piso ' + floor + '. Frações possíveis: ' + allowed.join(', ') + '.');
+  }
+
+  return {
+    piso: floor,
+    fracao: fraction
+  };
+}
+
+function getConfiguredAdminEmail_() {
+  var fromConfig = '';
+  try {
+    fromConfig = getConfig('ADMIN_EMAIL') || '';
+  } catch (err) {}
+
+  if (isRealEmail_(fromConfig)) return fromConfig;
+  if (isRealEmail_(CONFIG.ADMIN_EMAIL)) return CONFIG.ADMIN_EMAIL;
+  return '';
 }
 
 // ── Registo de condómino ─────────────────────────────────────
 function registarCondomino(dados) {
   try {
+    if (!dados) throw new Error('Dados em falta.');
+    if (!dados.nome) throw new Error('Nome obrigatório.');
+    if (!dados.email) throw new Error('Email obrigatório.');
+
+    var validated = validateGarageResident_(dados.piso, dados.fracao);
+    dados.piso = validated.piso;
+    dados.fracao = validated.fracao;
+
     var sheet = getSheet('CONDOMINOS');
     var allData = sheet.getDataRange().getValues();
+    var emailNorm = String(dados.email || '').toLowerCase().trim();
 
     // Verificar email duplicado
     for (var i = 1; i < allData.length; i++) {
-      if (String(allData[i][5]).toLowerCase() === String(dados.email).toLowerCase()) {
-        var estado = allData[i][7];
-        if (estado === 'PENDENTE') return { ok: false, msg: 'Já existe um pedido pendente com este email.' };
-        if (estado === 'APROVADO') return { ok: false, msg: 'Este email já tem acesso aprovado.' };
-        if (estado === 'BLOQUEADO') return { ok: false, msg: 'Este email encontra-se bloqueado. Contacte a administração.' };
+      if (String(allData[i][5]).toLowerCase().trim() === emailNorm) {
+        var estado = String(allData[i][7] || '').toUpperCase();
+        if (estado === 'PENDENTE') {
+          return {
+            ok: false,
+            success: false,
+            tipo: 'pendente',
+            recoveryAllowed: false,
+            msg: 'Já existe um pedido pendente com este email. Aguarde validação da administração.'
+          };
+        }
+        if (estado === 'APROVADO') {
+          return {
+            ok: false,
+            success: false,
+            tipo: 'email_existente',
+            recoveryAllowed: true,
+            email: dados.email,
+            msg: 'Este email já tem acesso aprovado. Pode recuperar o PIN/código de acesso.'
+          };
+        }
+        if (estado === 'BLOQUEADO') {
+          return {
+            ok: false,
+            success: false,
+            tipo: 'bloqueado',
+            recoveryAllowed: false,
+            msg: 'Este email encontra-se bloqueado. Contacte a administração.'
+          };
+        }
+        if (estado === 'REJEITADO') {
+          return {
+            ok: false,
+            success: false,
+            tipo: 'rejeitado',
+            recoveryAllowed: false,
+            msg: 'Este email já teve um pedido analisado e não aprovado. Contacte a administração.'
+          };
+        }
       }
     }
 
@@ -1430,17 +1565,15 @@ function registarCondomino(dados) {
       ''     // BloqueadoAte
     ]);
 
-    addLog('INFO', 'REGISTO', dados.email, 'Novo pedido de registo: ' + dados.nome);
+    addLog('INFO', 'REGISTO', dados.email, 'Novo pedido de registo: ' + dados.nome + ' | ' + dados.piso + dados.fracao);
 
-    // Email para o condómino
     emailRegisto(dados.email, dados.nome);
-    // Email para o admin
     emailAdminNovoPedido(dados);
 
-    return { ok: true };
+    return { ok: true, success: true };
   } catch (err) {
-    addLog('ERRO', 'REGISTO', dados.email, err.message);
-    return { ok: false, msg: 'Erro ao registar: ' + err.message };
+    addLog('ERRO', 'REGISTO', dados && dados.email, err.message);
+    return { ok: false, success: false, msg: 'Erro ao registar: ' + err.message, message: 'Erro ao registar: ' + err.message };
   }
 }
 
@@ -1516,27 +1649,33 @@ function registarTentativaFalhada(pin) {
 // ── Reenviar PIN ─────────────────────────────────────────────
 function reenviarPIN(email) {
   try {
+    if (!email) return { ok: false, success: false, msg: 'Indique o email registado.' };
+
     var sheet = getSheet('CONDOMINOS');
     var data = sheet.getDataRange().getValues();
+    var target = String(email || '').toLowerCase().trim();
 
     for (var i = 1; i < data.length; i++) {
-      if (String(data[i][5]).toLowerCase() === String(email).toLowerCase()) {
-        var estado = data[i][7];
+      if (String(data[i][5]).toLowerCase().trim() === target) {
+        var estado = String(data[i][7] || '').toUpperCase();
         var pin    = data[i][8];
         var nome   = data[i][2];
 
-        if (estado !== 'APROVADO') {
-          return { ok: false, msg: 'Não existe conta aprovada com este email.' };
+        if (estado !== 'APROVADO' || !pin) {
+          if (estado === 'PENDENTE') return { ok: false, success: false, msg: 'Existe um pedido pendente para este email. Aguarde aprovação da administração.' };
+          if (estado === 'BLOQUEADO') return { ok: false, success: false, msg: 'Este acesso está bloqueado. Contacte a administração.' };
+          if (estado === 'REJEITADO') return { ok: false, success: false, msg: 'Este pedido não está aprovado. Contacte a administração.' };
+          return { ok: false, success: false, msg: 'Não existe conta aprovada com este email.' };
         }
 
         emailPINRecuperacao(email, nome, pin);
-        addLog('INFO', 'LOGIN', email, 'PIN reenviado por pedido do condómino');
-        return { ok: true };
+        addLog('INFO', 'LOGIN', email, 'PIN/código reenviado por pedido do condómino');
+        return { ok: true, success: true, msg: 'PIN enviado para o email registado.' };
       }
     }
-    return { ok: false, msg: 'Email não encontrado.' };
+    return { ok: false, success: false, msg: 'Email não encontrado.' };
   } catch (err) {
-    return { ok: false, msg: 'Erro ao reenviar PIN.' };
+    return { ok: false, success: false, msg: 'Erro ao reenviar PIN: ' + err.message };
   }
 }
 
@@ -1823,6 +1962,7 @@ function emailRegisto(email, nome) {
     var nomeCondominio = getConfig('NOME_CONDOMINIO');
     MailApp.sendEmail({
       to: email,
+      replyTo: getConfiguredAdminEmail_(),
       subject: 'Pedido de acesso recebido — ' + nomeCondominio,
       htmlBody: templateEmail(
         'Pedido recebido ✓',
@@ -1842,6 +1982,7 @@ function emailAdminNovoPedido(dados) {
     var nomeCondominio = getConfig('NOME_CONDOMINIO');
     MailApp.sendEmail({
       to: adminEmail,
+      replyTo: getConfiguredAdminEmail_(),
       subject: 'Novo pedido de acesso à app da garagem — ' + nomeCondominio,
       htmlBody: templateEmail(
         'Novo pedido de acesso',
@@ -1863,6 +2004,7 @@ function emailAprovacao(email, nome, pin) {
     var nomeCondominio = getConfig('NOME_CONDOMINIO');
     MailApp.sendEmail({
       to: email,
+      replyTo: getConfiguredAdminEmail_(),
       subject: 'Acesso aprovado — ' + nomeCondominio,
       htmlBody: templateEmail(
         'Acesso aprovado ✓',
@@ -1884,6 +2026,7 @@ function emailRejeicao(email, nome) {
     var adminEmail = getConfig('ADMIN_EMAIL');
     MailApp.sendEmail({
       to: email,
+      replyTo: getConfiguredAdminEmail_(),
       subject: 'Pedido de acesso — ' + nomeCondominio,
       htmlBody: templateEmail(
         'Pedido analisado',
@@ -1902,6 +2045,7 @@ function emailPINRecuperacao(email, nome, pin) {
     var nomeCondominio = getConfig('NOME_CONDOMINIO');
     MailApp.sendEmail({
       to: email,
+      replyTo: getConfiguredAdminEmail_(),
       subject: 'Recuperação de PIN — ' + nomeCondominio,
       htmlBody: templateEmail(
         'O seu PIN pessoal',
