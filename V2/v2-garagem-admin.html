@@ -1,0 +1,73 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Admin Garagem</title><style>
+:root{--navy:#1A2F5A;--blue:#2563EB;--bg:#F5F7FA;--card:#fff;--text:#111827;--muted:#6B7280;--border:#E5E7EB;--green:#16A34A;--red:#DC2626;--amber:#D97706;--radius:18px}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#EEF4FF 0%,var(--bg) 55%);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}
+.app{width:min(100%,760px);margin:0 auto;padding:22px 16px 38px}.hero{padding:24px 0 18px}.badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:#EFF6FF;color:#1D4ED8;font-weight:700;font-size:13px}.title{margin:14px 0 6px;font-size:32px;line-height:1.05;color:var(--navy)}.sub{margin:0;color:var(--muted);line-height:1.5}.grid{display:grid;gap:14px}.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 10px 30px rgba(15,23,42,.08);padding:18px}.card h2{margin:0 0 6px;color:var(--navy);font-size:20px}.card p{margin:0 0 14px;color:var(--muted);line-height:1.45}.btn{display:flex;justify-content:center;align-items:center;text-decoration:none;border:0;border-radius:14px;padding:14px 16px;font-weight:800;cursor:pointer;width:100%;font-size:15px}.btn-primary{background:var(--blue);color:#fff}.btn-navy{background:var(--navy);color:#fff}.btn-outline{background:#fff;color:var(--navy);border:1px solid var(--border)}.btn-danger{background:#FEE2E2;color:var(--red)}.stack{display:grid;gap:10px}.input,select,textarea{width:100%;border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;font:inherit;background:#fff;color:var(--text)}textarea{min-height:96px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.screen{display:none}.screen.active{display:block}.alert{padding:12px 14px;border-radius:14px;margin:10px 0;font-size:14px}.ok{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}.err{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}.warn{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}.code{font-size:46px;letter-spacing:8px;font-weight:900;text-align:center;color:#fff;background:var(--navy);border-radius:22px;padding:26px;margin:10px 0}.pill{display:inline-block;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800}.pill-ok{background:#DCFCE7;color:#166534}.pill-warn{background:#FEF3C7;color:#92400E}.list{display:grid;gap:10px}.item{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff}.item b{color:var(--navy)}.muted{color:var(--muted);font-size:13px}@media(min-width:680px){.grid.two{grid-template-columns:1fr 1fr}.title{font-size:42px}}
+</style></head>
+<body><main class="app">
+<section class="hero"><span class="badge">⚙️ Administração</span><h1 class="title">Admin Garagem</h1><p class="sub">Gerir acessos, código do cadeado e histórico.</p></section>
+
+<section id="login" class="screen active card stack">
+  <input class="input" id="email" type="email" placeholder="Email admin">
+  <input class="input" id="pin" type="password" inputmode="numeric" placeholder="PIN admin">
+  <div id="loginMsg"></div>
+  <button class="btn btn-navy" onclick="login()">Entrar</button>
+  <a class="btn btn-outline" href="index.html">← Voltar ao menu</a>
+</section>
+
+<section id="dash" class="screen stack">
+  <div class="grid two">
+    <div class="card"><h2 id="kPend">—</h2><p>Pedidos pendentes</p></div>
+    <div class="card"><h2 id="kAtiv">—</h2><p>Condóminos ativos</p></div>
+    <div class="card"><h2 id="kCons">—</h2><p>Consultas hoje</p></div>
+    <div class="card"><h2 id="kCod">—</h2><p>Código atual</p></div>
+  </div>
+  <div class="grid two">
+    <button class="btn btn-primary" onclick="pendentes()">Pedidos</button>
+    <button class="btn btn-primary" onclick="aprovados()">Condóminos</button>
+    <button class="btn btn-outline" onclick="historico()">Histórico</button>
+    <button class="btn btn-outline" onclick="defs()">Definições</button>
+  </div>
+  <button class="btn btn-outline" onclick="logout()">Sair</button>
+</section>
+
+<section id="lista" class="screen card stack"><h2 id="listaTitulo">Lista</h2><div id="listaBody" class="list"></div><button class="btn btn-outline" onclick="go('dash');dashboard()">Voltar</button></section>
+
+<section id="defs" class="screen card stack">
+  <h2>Definições</h2>
+  <input class="input" id="codigo" placeholder="Código do cadeado">
+  <input class="input" id="nome" placeholder="Nome condomínio">
+  <input class="input" id="adminEmail" type="email" placeholder="Email admin">
+  <input class="input" id="adminPin" type="password" placeholder="Novo PIN admin (opcional)">
+  <input class="input" id="tempo" type="number" placeholder="Tempo visível (segundos)">
+  <input class="input" id="tentativas" type="number" placeholder="Máx. tentativas">
+  <input class="input" id="bloqueio" type="number" placeholder="Bloqueio minutos">
+  <textarea id="aviso" placeholder="Texto de aviso"></textarea>
+  <div id="defMsg"></div>
+  <button class="btn btn-primary" onclick="guardar()">Guardar configurações</button>
+  <button class="btn btn-outline" onclick="go('dash');dashboard()">Voltar</button>
+</section>
+</main>
+<script>
+let CFG={backendUrl:""}, A={email:"",ok:false};
+async function boot(){CFG=await (await fetch('config.json?ts='+Date.now())).json()}
+function go(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');scrollTo(0,0)}
+function msg(id,txt,type='err'){document.getElementById(id).innerHTML=txt?`<div class="alert ${type}">${txt}</div>`:''}
+function fd(obj){const f=new FormData();Object.entries(obj).forEach(([k,v])=>f.append(k, typeof v==='object'?JSON.stringify(v):String(v??'')));return f}
+async function apiGet(action){const u=new URL(CFG.backendUrl);u.searchParams.set('action',action);const r=await fetch(u.toString(),{cache:'no-store'});return await r.json()}
+async function apiPost(obj){const r=await fetch(CFG.backendUrl,{method:'POST',body:fd(obj)});return await r.json()}
+async function login(){const r=await apiPost({action:'garage.loginAdmin',email:email.value,pin:pin.value});if(r.ok){A.email=email.value;A.ok=true;go('dash');dashboard()}else msg('loginMsg',r.msg||'Credenciais inválidas.')}
+function logout(){A={email:"",ok:false};go('login')}
+async function dashboard(){const r=await apiGet('garage.dashboard');if(!r.ok)return;kPend.textContent=r.pendentes;kAtiv.textContent=r.ativos;kCons.textContent=r.consultasHoje;kCod.textContent=r.codigoAtual}
+function item(html){return `<div class="item">${html}</div>`}
+async function pendentes(){listaTitulo.textContent='Pedidos pendentes';go('lista');const l=await apiGet('garage.pending');listaBody.innerHTML=l.length?l.map(c=>item(`<b>${c.nome}</b><div class="muted">Piso ${c.piso} · Fração ${c.fracao} · ${c.email}</div><div class="row" style="margin-top:10px"><button class="btn btn-primary" onclick="aprovar(${c.row})">Aprovar</button><button class="btn btn-danger" onclick="rejeitar(${c.row})">Rejeitar</button></div>`)).join(''):'<div class="alert ok">Sem pedidos pendentes.</div>'}
+async function aprovados(){listaTitulo.textContent='Condóminos aprovados';go('lista');const l=await apiGet('garage.approved');listaBody.innerHTML=l.length?l.map(c=>item(`<b>${c.nome}</b><div class="muted">Piso ${c.piso} · Fração ${c.fracao} · ${c.email}</div><div class="muted">Último acesso: ${c.ultimoAcesso}</div><div class="row" style="margin-top:10px"><button class="btn btn-danger" onclick="bloquear(${c.row})">Bloquear</button><button class="btn btn-outline" onclick="regen(${c.row})">Regenerar PIN</button></div>`)).join(''):'<div class="alert warn">Sem condóminos aprovados.</div>'}
+async function historico(){listaTitulo.textContent='Histórico';go('lista');const l=await apiGet('garage.history');listaBody.innerHTML=l.length?l.map(h=>item(`<b>${h.nome}</b><div class="muted">${h.dataHora} · ${h.motivo} ${h.motivoOutro||''}</div><div class="muted">Piso ${h.piso} · Fração ${h.fracao}</div>`)).join(''):'<div class="alert warn">Sem histórico.</div>'}
+async function aprovar(row){await apiPost({action:'garage.approve',row,adminEmail:A.email});pendentes();dashboard()}
+async function rejeitar(row){await apiPost({action:'garage.reject',row,adminEmail:A.email});pendentes();dashboard()}
+async function bloquear(row){await apiPost({action:'garage.block',row,adminEmail:A.email});aprovados();dashboard()}
+async function regen(row){await apiPost({action:'garage.regeneratePin',row});aprovados()}
+async function defs(){go('defs');const c=await apiGet('garage.adminConfig');codigo.value=c.codigoAtual||'';nome.value=c.nomeCondominio||'';adminEmail.value=c.adminEmail||'';tempo.value=c.tempoVisivel||'';tentativas.value=c.maxTentativas||'';bloqueio.value=c.bloqueioMinutos||'';aviso.value=c.textoAviso||''}
+async function guardar(){const configs={NOME_CONDOMINIO:nome.value,ADMIN_EMAIL:adminEmail.value,TEMPO_VISIVEL_SEGUNDOS:tempo.value,MAX_TENTATIVAS_PIN:tentativas.value,BLOQUEIO_MINUTOS:bloqueio.value,TEXTO_AVISO:aviso.value};if(adminPin.value)configs.ADMIN_PIN=adminPin.value;let r=await apiPost({action:'garage.changeCode',codigo:codigo.value,adminEmail:A.email});r=await apiPost({action:'garage.saveConfig',configs});msg('defMsg',r.ok?'Configurações guardadas.':(r.msg||'Erro.'),r.ok?'ok':'err');dashboard()}
+boot();
+</script></body></html>

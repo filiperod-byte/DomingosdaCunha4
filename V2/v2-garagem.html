@@ -1,0 +1,90 @@
+<!doctype html>
+<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Acesso Garagem</title><style>
+:root{--navy:#1A2F5A;--blue:#2563EB;--bg:#F5F7FA;--card:#fff;--text:#111827;--muted:#6B7280;--border:#E5E7EB;--green:#16A34A;--red:#DC2626;--amber:#D97706;--radius:18px}
+*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#EEF4FF 0%,var(--bg) 55%);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}
+.app{width:min(100%,760px);margin:0 auto;padding:22px 16px 38px}.hero{padding:24px 0 18px}.badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:#EFF6FF;color:#1D4ED8;font-weight:700;font-size:13px}.title{margin:14px 0 6px;font-size:32px;line-height:1.05;color:var(--navy)}.sub{margin:0;color:var(--muted);line-height:1.5}.grid{display:grid;gap:14px}.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 10px 30px rgba(15,23,42,.08);padding:18px}.card h2{margin:0 0 6px;color:var(--navy);font-size:20px}.card p{margin:0 0 14px;color:var(--muted);line-height:1.45}.btn{display:flex;justify-content:center;align-items:center;text-decoration:none;border:0;border-radius:14px;padding:14px 16px;font-weight:800;cursor:pointer;width:100%;font-size:15px}.btn-primary{background:var(--blue);color:#fff}.btn-navy{background:var(--navy);color:#fff}.btn-outline{background:#fff;color:var(--navy);border:1px solid var(--border)}.btn-danger{background:#FEE2E2;color:var(--red)}.stack{display:grid;gap:10px}.input,select,textarea{width:100%;border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;font:inherit;background:#fff;color:var(--text)}textarea{min-height:96px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.screen{display:none}.screen.active{display:block}.alert{padding:12px 14px;border-radius:14px;margin:10px 0;font-size:14px}.ok{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}.err{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}.warn{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}.code{font-size:46px;letter-spacing:8px;font-weight:900;text-align:center;color:#fff;background:var(--navy);border-radius:22px;padding:26px;margin:10px 0}.pill{display:inline-block;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800}.pill-ok{background:#DCFCE7;color:#166534}.pill-warn{background:#FEF3C7;color:#92400E}.list{display:grid;gap:10px}.item{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff}.item b{color:var(--navy)}.muted{color:var(--muted);font-size:13px}@media(min-width:680px){.grid.two{grid-template-columns:1fr 1fr}.title{font-size:42px}}
+</style></head>
+<body><main class="app">
+<section class="hero"><span class="badge">🔐 Garagem</span><h1 class="title" id="nome">Acesso Garagem</h1><p class="sub">Código da caixa do automático da luz / cadeado.</p></section>
+
+<section id="inicio" class="screen active card stack">
+  <button class="btn btn-navy" onclick="show('login')">Entrar com PIN</button>
+  <button class="btn btn-primary" onclick="show('registo')">Registar acesso</button>
+  <button class="btn btn-outline" onclick="show('contacto')">Contacto da administração</button>
+  <a class="btn btn-outline" href="index.html">← Voltar ao menu</a>
+</section>
+
+<section id="registo" class="screen card stack">
+  <h2>Registar acesso</h2>
+  <input class="input" id="rNome" placeholder="Nome completo">
+  <div class="row"><input class="input" id="rPiso" placeholder="Piso"><input class="input" id="rFracao" placeholder="Fração"></div>
+  <input class="input" id="rEmail" type="email" placeholder="Email">
+  <input class="input" id="rTel" placeholder="Telemóvel (opcional)">
+  <div id="regMsg"></div>
+  <button class="btn btn-primary" onclick="registar()">Enviar pedido</button>
+  <button class="btn btn-outline" onclick="show('inicio')">Voltar</button>
+</section>
+
+<section id="login" class="screen card stack">
+  <h2>Introduz o PIN</h2>
+  <input class="input" id="pin" inputmode="numeric" maxlength="6" placeholder="PIN de 6 dígitos">
+  <div id="loginMsg"></div>
+  <button class="btn btn-navy" onclick="login()">Entrar</button>
+  <button class="btn btn-outline" onclick="show('recuperar')">Esqueci o PIN</button>
+  <button class="btn btn-outline" onclick="show('inicio')">Voltar</button>
+</section>
+
+<section id="recuperar" class="screen card stack">
+  <h2>Recuperar PIN</h2>
+  <input class="input" id="recEmail" type="email" placeholder="Email">
+  <div id="recMsg"></div>
+  <button class="btn btn-primary" onclick="recuperar()">Reenviar PIN</button>
+  <button class="btn btn-outline" onclick="show('login')">Voltar</button>
+</section>
+
+<section id="motivo" class="screen card stack">
+  <h2>Motivo da consulta</h2>
+  <select id="motivoSel"><option value="">Selecionar motivo</option><option>Emergência</option><option>Luz ligada indevidamente</option><option>Manutenção</option><option>Outro</option></select>
+  <textarea id="motivoOutro" placeholder="Detalhe, se selecionares Outro"></textarea>
+  <div id="motivoMsg"></div>
+  <button class="btn btn-navy" onclick="pedirCodigo()">Ver código do cadeado</button>
+  <button class="btn btn-outline" onclick="terminar()">Terminar sessão</button>
+</section>
+
+<section id="codigo" class="screen card stack">
+  <h2>Código atual</h2>
+  <div class="code" id="codigoNum">——————</div>
+  <div class="alert warn" id="aviso">Após utilização, confirma que fica corretamente fechado.</div>
+  <div class="muted" id="timer">—</div>
+  <button class="btn btn-outline" onclick="ocultar()">Ocultar código</button>
+  <button class="btn btn-danger" onclick="terminar()">Terminar sessão</button>
+</section>
+
+<section id="estado" class="screen card stack">
+  <h2 id="estadoTitulo">Estado</h2><div id="estadoTexto" class="alert warn"></div>
+  <button class="btn btn-outline" onclick="show('inicio')">Voltar ao início</button>
+</section>
+
+<section id="contacto" class="screen card stack">
+  <h2>Contacto</h2><p class="sub">Administração do condomínio</p><div class="alert ok" id="adminEmail">—</div>
+  <button class="btn btn-outline" onclick="show('inicio')">Voltar</button>
+</section>
+</main>
+<script>
+let CFG={backendUrl:""}, S={pin:""}, T=null;
+async function boot(){try{CFG=await (await fetch('config.json?ts='+Date.now())).json();const c=await apiGet('garage.publicConfig');document.getElementById('nome').textContent=c.nomeCondominio||'Acesso Garagem';document.getElementById('adminEmail').textContent=c.adminEmail||'—';}catch(e){console.error(e)}}
+function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');scrollTo(0,0)}
+function msg(id,txt,type='err'){document.getElementById(id).innerHTML=txt?`<div class="alert ${type}">${txt}</div>`:''}
+function fd(obj){const f=new FormData();Object.entries(obj).forEach(([k,v])=>f.append(k, typeof v==='object'?JSON.stringify(v):String(v??'')));return f}
+async function apiGet(action){const u=new URL(CFG.backendUrl);u.searchParams.set('action',action);const r=await fetch(u.toString(),{cache:'no-store'});return await r.json()}
+async function apiPost(obj){const r=await fetch(CFG.backendUrl,{method:'POST',body:fd(obj)});return await r.json()}
+async function registar(){msg('regMsg','');const d={action:'garage.register',nome:rNome.value,piso:rPiso.value,fracao:rFracao.value,email:rEmail.value,telemovel:rTel.value};if(!d.nome||!d.piso||!d.fracao||!d.email)return msg('regMsg','Preenche os campos obrigatórios.');const r=await apiPost(d);if(r.ok){estado('Pedido enviado','O pedido ficou pendente de aprovação. Vais receber o PIN por email após validação.','ok')}else msg('regMsg',r.msg||r.message||'Erro ao registar.')}
+async function login(){msg('loginMsg','');S.pin=pin.value.trim();if(S.pin.length!==6)return msg('loginMsg','Introduz os 6 dígitos.','warn');const r=await apiPost({action:'garage.loginPin',pin:S.pin,userAgent:navigator.userAgent});if(r.ok)show('motivo');else{if(r.tipo==='pendente')return estado('Pedido pendente',r.msg,'warn');if(r.tipo==='rejeitado')return estado('Acesso não aprovado',r.msg,'err');if(r.tipo==='bloqueado'||r.tipo==='bloqueio_temp')return estado('Acesso bloqueado',r.msg,'warn');msg('loginMsg',r.msg||'PIN inválido.');await apiPost({action:'garage.failedAttempt',pin:S.pin});pin.value='';}}
+async function recuperar(){msg('recMsg','A enviar...','warn');const r=await apiPost({action:'garage.resendPin',email:recEmail.value});msg('recMsg',r.ok?'PIN enviado. Verifica o email.':(r.msg||'Erro ao reenviar PIN.'),r.ok?'ok':'err')}
+async function pedirCodigo(){msg('motivoMsg','');const motivo=motivoSel.value;if(!motivo)return msg('motivoMsg','Seleciona um motivo.','warn');if(motivo==='Outro'&&!motivoOutro.value.trim())return msg('motivoMsg','Descreve o motivo.','warn');const r=await apiPost({action:'garage.getCode',pin:S.pin,motivo,motivoOutro:motivoOutro.value,userAgent:navigator.userAgent});if(!r.ok)return msg('motivoMsg',r.msg||'Erro ao obter código.');codigoNum.textContent=r.codigo;aviso.textContent=r.aviso||aviso.textContent;show('codigo');timer(r.tempo||60)}
+function timer(seg){clearInterval(T);let n=seg;T=setInterval(()=>{timer.textContent='Oculta em '+n+'s';if(n--<=0)ocultar()},1000)}
+function ocultar(){clearInterval(T);codigoNum.textContent='——————';document.getElementById('timer').textContent='Código oculto'}
+function terminar(){ocultar();S={pin:''};pin.value='';motivoSel.value='';motivoOutro.value='';show('inicio')}
+function estado(t,msgtxt,type){estadoTitulo.textContent=t;estadoTexto.textContent=msgtxt||'';estadoTexto.className='alert '+(type||'warn');show('estado')}
+boot();
+</script></body></html>
