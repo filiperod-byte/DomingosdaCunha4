@@ -1,90 +1,275 @@
-<!doctype html>
-<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Acesso Garagem</title><style>
-:root{--navy:#1A2F5A;--blue:#2563EB;--bg:#F5F7FA;--card:#fff;--text:#111827;--muted:#6B7280;--border:#E5E7EB;--green:#16A34A;--red:#DC2626;--amber:#D97706;--radius:18px}
-*{box-sizing:border-box}body{margin:0;background:linear-gradient(180deg,#EEF4FF 0%,var(--bg) 55%);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}
-.app{width:min(100%,760px);margin:0 auto;padding:22px 16px 38px}.hero{padding:24px 0 18px}.badge{display:inline-flex;gap:8px;align-items:center;padding:8px 12px;border-radius:999px;background:#EFF6FF;color:#1D4ED8;font-weight:700;font-size:13px}.title{margin:14px 0 6px;font-size:32px;line-height:1.05;color:var(--navy)}.sub{margin:0;color:var(--muted);line-height:1.5}.grid{display:grid;gap:14px}.card{background:var(--card);border:1px solid var(--border);border-radius:var(--radius);box-shadow:0 10px 30px rgba(15,23,42,.08);padding:18px}.card h2{margin:0 0 6px;color:var(--navy);font-size:20px}.card p{margin:0 0 14px;color:var(--muted);line-height:1.45}.btn{display:flex;justify-content:center;align-items:center;text-decoration:none;border:0;border-radius:14px;padding:14px 16px;font-weight:800;cursor:pointer;width:100%;font-size:15px}.btn-primary{background:var(--blue);color:#fff}.btn-navy{background:var(--navy);color:#fff}.btn-outline{background:#fff;color:var(--navy);border:1px solid var(--border)}.btn-danger{background:#FEE2E2;color:var(--red)}.stack{display:grid;gap:10px}.input,select,textarea{width:100%;border:1.5px solid var(--border);border-radius:14px;padding:13px 14px;font:inherit;background:#fff;color:var(--text)}textarea{min-height:96px;resize:vertical}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}.screen{display:none}.screen.active{display:block}.alert{padding:12px 14px;border-radius:14px;margin:10px 0;font-size:14px}.ok{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}.err{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}.warn{background:#FFFBEB;color:#92400E;border:1px solid #FDE68A}.code{font-size:46px;letter-spacing:8px;font-weight:900;text-align:center;color:#fff;background:var(--navy);border-radius:22px;padding:26px;margin:10px 0}.pill{display:inline-block;border-radius:999px;padding:4px 10px;font-size:12px;font-weight:800}.pill-ok{background:#DCFCE7;color:#166534}.pill-warn{background:#FEF3C7;color:#92400E}.list{display:grid;gap:10px}.item{border:1px solid var(--border);border-radius:14px;padding:14px;background:#fff}.item b{color:var(--navy)}.muted{color:var(--muted);font-size:13px}@media(min-width:680px){.grid.two{grid-template-columns:1fr 1fr}.title{font-size:42px}}
-</style></head>
-<body><main class="app">
-<section class="hero"><span class="badge">🔐 Garagem</span><h1 class="title" id="nome">Acesso Garagem</h1><p class="sub">Código da caixa do automático da luz / cadeado.</p></section>
+<!DOCTYPE html>
+<html lang="pt-PT">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#1E3A5F" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Acesso Garagem</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --navy:#1A2F5A; --navy2:#122345; --blue:#2563EB; --blue-lt:#EFF6FF; --blue-md:#DBEAFE;
+      --success:#16A34A; --warning:#D97706; --danger:#DC2626; --bg:#F5F7FA; --card:#FFFFFF;
+      --text:#111827; --muted:#6B7280; --border:#E5E7EB; --warn-bg:#FFFBEB; --warn-br:#FDE68A;
+      --radius:16px; --shadow:0 1px 8px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.05);
+    }
+    html, body { min-height:100%; background:var(--bg); font-family:'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif; color:var(--text); -webkit-font-smoothing:antialiased; }
+    .app { min-height:100vh; display:flex; flex-direction:column; align-items:center; padding:0 0 40px; }
+    .screen { display:none; width:100%; max-width:420px; flex-direction:column; }
+    .screen.active { display:flex; animation:fadeUp .22s ease; }
+    @keyframes fadeUp { from{opacity:0; transform:translateY(12px)} to{opacity:1; transform:translateY(0)} }
+    .page-header { display:flex; align-items:center; gap:12px; padding:20px 20px 8px; }
+    .back-btn { width:38px; height:38px; border-radius:12px; background:var(--card); border:1.5px solid var(--border); display:flex; align-items:center; justify-content:center; cursor:pointer; flex-shrink:0; box-shadow:0 1px 4px rgba(0,0,0,.06); }
+    .back-btn svg { width:18px; height:18px; fill:var(--text); }
+    .page-title { font-size:20px; font-weight:800; color:var(--navy); }
+    .page-sub { font-size:13px; color:var(--muted); margin-top:1px; line-height:1.4; }
+    .input-icon-wrap { position:relative; margin-bottom:10px; }
+    .input-icon-wrap svg { position:absolute; left:14px; top:50%; transform:translateY(-50%); width:18px; height:18px; fill:#9CA3AF; }
+    .input-icon { width:100%; padding:15px 16px 15px 42px; border:1.5px solid var(--border); border-radius:14px; font-size:15px; font-family:inherit; color:var(--text); background:var(--card); outline:none; transition:border-color .18s; }
+    .input-icon:focus { border-color:var(--blue); }
+    .input-icon::placeholder { color:#B0B8C4; }
+    textarea.input-icon { padding:14px 16px; min-height:86px; resize:none; }
+    .btn { display:flex; align-items:center; justify-content:center; gap:8px; width:100%; padding:16px; border:none; border-radius:14px; font-size:15px; font-weight:700; font-family:inherit; cursor:pointer; transition:opacity .15s, transform .1s; text-decoration:none; }
+    .btn:active { transform:scale(.975); opacity:.88; }
+    .btn svg { width:18px; height:18px; fill:currentColor; flex-shrink:0; }
+    .btn-primary { background:var(--blue); color:#fff; }
+    .btn-navy { background:var(--navy); color:#fff; }
+    .btn-outline { background:var(--card); color:var(--text); border:1.5px solid var(--border); font-weight:600; }
+    .btn-ghost { background:transparent; color:var(--muted); font-weight:500; font-size:14px; }
+    .btn-soft-danger { background:#FEE2E2; color:var(--danger); }
+    .btn:disabled { opacity:.5; cursor:not-allowed; }
+    .alert { padding:13px 15px; border-radius:12px; font-size:14px; font-weight:500; line-height:1.5; }
+    .alert-info { background:var(--blue-lt); color:#1D4ED8; border:1px solid var(--blue-md); }
+    .alert-success { background:#F0FDF4; color:#166534; border:1px solid #BBF7D0; }
+    .alert-warning { background:var(--warn-bg); color:#92400E; border:1px solid var(--warn-br); }
+    .alert-danger { background:#FEF2F2; color:var(--danger); border:1px solid #FECACA; }
+    .spinner { width:20px; height:20px; border:2.5px solid rgba(255,255,255,.35); border-top-color:#fff; border-radius:50%; animation:spin .65s linear infinite; display:inline-block; }
+    @keyframes spin { to{transform:rotate(360deg)} }
+    #screen-inicio { min-height:100vh; background:linear-gradient(180deg,#EEF4FF 0%,var(--bg) 55%); }
+    .inicio-hero { padding:48px 24px 20px; text-align:center; }
+    .lock-circle { width:96px; height:96px; border-radius:28px; background:var(--navy); margin:0 auto 20px; display:flex; align-items:center; justify-content:center; box-shadow:0 8px 32px rgba(26,47,90,.28); }
+    .lock-circle svg { width:48px; height:48px; fill:#fff; }
+    .inicio-title { font-size:26px; font-weight:800; color:var(--navy); line-height:1.15; }
+    .inicio-sub { font-size:14px; color:var(--muted); margin-top:6px; line-height:1.5; }
+    .inicio-btns { padding:0 20px; display:flex; flex-direction:column; gap:10px; }
+    .inicio-illustration { padding:28px 0 0; text-align:center; opacity:.38; }
+    .pin-hero { padding:24px 20px 12px; text-align:center; }
+    .pin-icon-wrap { width:72px; height:72px; border-radius:22px; background:var(--blue-lt); border:2px solid var(--blue-md); display:flex; align-items:center; justify-content:center; margin:0 auto 14px; }
+    .pin-icon-wrap svg { width:36px; height:36px; fill:var(--blue); }
+    .pin-heading { font-size:20px; font-weight:800; color:var(--navy); }
+    .pin-sub { font-size:13px; color:var(--muted); margin-top:4px; }
+    .pin-boxes-row { display:flex; gap:8px; justify-content:center; padding:8px 20px; }
+    .pin-box { flex:1; max-width:52px; height:58px; border:2px solid var(--border); border-radius:14px; background:var(--bg); display:flex; align-items:center; justify-content:center; font-size:22px; font-weight:800; color:var(--navy); transition:all .15s; }
+    .pin-box.filled { border-color:var(--blue); background:var(--blue-lt); }
+    .pin-box.active { border-color:var(--blue); box-shadow:0 0 0 3px rgba(37,99,235,.15); }
+    .keypad { display:grid; grid-template-columns:repeat(3,1fr); gap:8px; padding:8px 20px 4px; }
+    .key { height:64px; border:none; border-radius:14px; background:var(--card); color:var(--navy); font-size:22px; font-weight:700; font-family:inherit; cursor:pointer; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; box-shadow:0 2px 8px rgba(0,0,0,.06); transition:background .1s, transform .08s; -webkit-tap-highlight-color:transparent; }
+    .key:active { background:var(--blue-md); transform:scale(.94); }
+    .key-sub { font-size:9px; font-weight:600; letter-spacing:1.5px; color:var(--muted); line-height:1; }
+    .key-del { background:var(--bg); }
+    .key-del svg { width:22px; height:22px; fill:var(--navy); }
+    .key-empty { background:transparent; box-shadow:none; cursor:default; pointer-events:none; }
+    .pin-actions { padding:8px 20px 0; display:flex; flex-direction:column; gap:8px; }
+    .motivo-list { display:flex; flex-direction:column; gap:8px; padding:8px 20px; }
+    .motivo-item { display:flex; align-items:center; gap:14px; background:var(--card); border:2px solid var(--border); border-radius:14px; padding:14px 16px; cursor:pointer; transition:all .15s; }
+    .motivo-item.selected { border-color:var(--blue); background:var(--blue-lt); }
+    .motivo-icon-wrap { width:40px; height:40px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:20px; flex-shrink:0; }
+    .motivo-label { flex:1; font-size:15px; font-weight:600; color:var(--navy); }
+    .motivo-radio { width:20px; height:20px; border-radius:50%; border:2px solid var(--border); flex-shrink:0; transition:all .15s; display:flex; align-items:center; justify-content:center; }
+    .motivo-item.selected .motivo-radio { border-color:var(--blue); background:var(--blue); }
+    .motivo-item.selected .motivo-radio::after { content:''; width:8px; height:8px; border-radius:50%; background:#fff; }
+    .codigo-header { padding:20px 20px 0; text-align:center; }
+    .codigo-shield { width:64px; height:64px; border-radius:20px; background:var(--blue-lt); border:2px solid var(--blue-md); display:flex; align-items:center; justify-content:center; margin:0 auto 12px; }
+    .codigo-shield svg { width:32px; height:32px; fill:var(--blue); }
+    .codigo-titulo { font-size:20px; font-weight:800; color:var(--navy); }
+    .codigo-card { margin:12px 20px 0; background:var(--navy); border-radius:20px; padding:28px; text-align:center; box-shadow:0 8px 32px rgba(26,47,90,.22); position:relative; overflow:hidden; }
+    .codigo-card::before { content:''; position:absolute; top:-40px; right:-40px; width:140px; height:140px; background:rgba(255,255,255,.05); border-radius:50%; }
+    .codigo-num-display { font-size:54px; font-weight:800; color:#fff; letter-spacing:10px; line-height:1; font-variant-numeric:tabular-nums; }
+    .codigo-timer-row { display:flex; align-items:center; justify-content:center; gap:6px; margin-top:10px; }
+    .codigo-timer-row svg { width:14px; height:14px; fill:rgba(255,255,255,.6); }
+    .codigo-timer-text { font-size:13px; color:rgba(255,255,255,.65); font-weight:500; }
+    .codigo-aviso-box { margin:10px 20px 0; background:var(--warn-bg); border:1.5px solid var(--warn-br); border-radius:14px; padding:13px 15px; display:flex; gap:10px; align-items:flex-start; }
+    .codigo-aviso-box .aviso-icon { font-size:18px; flex-shrink:0; margin-top:1px; }
+    .codigo-aviso-box p { font-size:13px; color:#92400E; font-weight:500; line-height:1.5; }
+    .codigo-btns { padding:12px 20px 0; display:flex; flex-direction:column; gap:8px; }
+    .estado-screen { min-height:80vh; display:flex; flex-direction:column; align-items:center; justify-content:center; padding:32px 20px; }
+    .estado-icon-wrap { width:100px; height:100px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin-bottom:20px; font-size:48px; }
+    .estado-titulo { font-size:20px; font-weight:800; color:var(--navy); text-align:center; margin-bottom:10px; }
+    .estado-texto { font-size:14px; color:var(--muted); text-align:center; line-height:1.6; margin-bottom:20px; max-width:300px; }
+    .text-link { background:none; border:none; color:var(--blue); font-weight:600; font-size:14px; cursor:pointer; font-family:inherit; }
+    .px-20 { padding-left:20px; padding-right:20px; }
+    .mt-8 { margin-top:8px; } .mt-12 { margin-top:12px; } .mt-16 { margin-top:16px; }
+  </style>
+</head>
+<body>
+<div class="app">
+  <div class="screen active" id="screen-inicio">
+    <div class="inicio-hero">
+      <div class="lock-circle"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div>
+      <h1 class="inicio-title" id="nome-condominio">Acesso Garagem</h1>
+      <p class="inicio-sub">Código da caixa do automático da luz</p>
+    </div>
+    <div class="inicio-btns">
+      <button class="btn btn-navy" onclick="irPara('screen-login')"><svg viewBox="0 0 24 24"><path d="M4 4h7v2H4v12h7v2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2zm12.17 7H11v2h5.17l-2.09 2.09L15.5 16.5 20 12l-4.5-4.5-1.41 1.41L16.17 11z"/></svg>Entrar com PIN</button>
+      <button class="btn btn-primary" onclick="irPara('screen-registo')"><svg viewBox="0 0 24 24"><path d="M14 2H6c-1.1 0-2 .9-2 2v16c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V8l-6-6zm4 18H6V4h7v5h5v11zM11 17H9v-2h2v2zm4 0h-2v-2h2v2zm0-4H9v-2h6v2z"/></svg>Registar acesso</button>
+      <button class="btn btn-outline" onclick="irPara('screen-contacto')"><svg viewBox="0 0 24 24" style="fill:var(--muted)"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg>Contacto da administração</button>
+      <a class="btn btn-outline" href="index.html">← Voltar ao menu</a>
+    </div>
+    <div class="inicio-illustration"><svg viewBox="0 0 240 90" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="8" y="32" width="32" height="58" rx="2" fill="#1A2F5A"/><rect x="44" y="14" width="44" height="76" rx="2" fill="#1E3A5F"/><rect x="93" y="42" width="28" height="48" rx="2" fill="#253D70"/><rect x="126" y="22" width="38" height="68" rx="2" fill="#1A2F5A"/><rect x="169" y="48" width="22" height="42" rx="2" fill="#253D70"/><rect x="196" y="56" width="20" height="34" rx="2" fill="#1E3A5F"/><rect x="0" y="88" width="240" height="2" fill="#CBD5E1" opacity=".3"/></svg></div>
+      <div style="padding:20px 20px 0;text-align:center;"><button class="text-link" style="font-weight:400;color:var(--muted);font-size:12px;" onclick="window.location.href='garagem-admin.html'">Área de administração</button></div>
+  </div>
 
-<section id="inicio" class="screen active card stack">
-  <button class="btn btn-navy" onclick="show('login')">Entrar com PIN</button>
-  <button class="btn btn-primary" onclick="show('registo')">Registar acesso</button>
-  <button class="btn btn-outline" onclick="show('contacto')">Contacto da administração</button>
-  <a class="btn btn-outline" href="index.html">← Voltar ao menu</a>
-</section>
+  <div class="screen" id="screen-registo">
+    <div class="page-header"><button class="back-btn" onclick="irPara('screen-inicio')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><div><div class="page-title">Registar acesso</div><div class="page-sub">Preencha os seus dados para solicitar acesso.</div></div></div>
+    <div style="padding:8px 20px;">
+      <div class="input-icon-wrap"><svg viewBox="0 0 24 24"><path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/></svg><input class="input-icon" id="reg-nome" type="text" placeholder="Nome completo" autocomplete="name" /></div>
+      <div class="input-icon-wrap"><svg viewBox="0 0 24 24"><path d="M17 11V3H7v4H3v14h8v-4h2v4h8V11h-4z"/></svg><input class="input-icon" id="reg-piso" type="text" placeholder="Piso (ex: 2.º)" /></div>
+      <div class="input-icon-wrap"><svg viewBox="0 0 24 24"><path d="M10 20v-6h4v6h5v-8h3L12 3 2 12h3v8z"/></svg><input class="input-icon" id="reg-fracao" type="text" placeholder="Fração (ex: Esq.)" /></div>
+      <div class="input-icon-wrap"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><input class="input-icon" id="reg-email" type="email" placeholder="Email" autocomplete="email" /></div>
+      <div class="input-icon-wrap"><svg viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg><input class="input-icon" id="reg-tel" type="tel" placeholder="Telemóvel (opcional)" autocomplete="tel" /></div>
+      <div id="reg-msg" style="margin-bottom:8px;"></div>
+      <button class="btn btn-primary" id="btn-registar" onclick="submeterRegisto()">Enviar pedido de acesso</button>
+    </div>
+  </div>
 
-<section id="registo" class="screen card stack">
-  <h2>Registar acesso</h2>
-  <input class="input" id="rNome" placeholder="Nome completo">
-  <div class="row"><input class="input" id="rPiso" placeholder="Piso"><input class="input" id="rFracao" placeholder="Fração"></div>
-  <input class="input" id="rEmail" type="email" placeholder="Email">
-  <input class="input" id="rTel" placeholder="Telemóvel (opcional)">
-  <div id="regMsg"></div>
-  <button class="btn btn-primary" onclick="registar()">Enviar pedido</button>
-  <button class="btn btn-outline" onclick="show('inicio')">Voltar</button>
-</section>
+  <div class="screen" id="screen-login">
+    <div class="page-header"><button class="back-btn" onclick="irPara('screen-inicio')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button></div>
+    <div class="pin-hero"><div class="pin-icon-wrap"><svg viewBox="0 0 24 24"><path d="M18 8h-1V6c0-2.76-2.24-5-5-5S7 3.24 7 6v2H6c-1.1 0-2 .9-2 2v10c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2V10c0-1.1-.9-2-2-2zm-6 9c-1.1 0-2-.9-2-2s.9-2 2-2 2 .9 2 2-.9 2-2 2zm3.1-9H8.9V6c0-1.71 1.39-3.1 3.1-3.1 1.71 0 3.1 1.39 3.1 3.1v2z"/></svg></div><div class="pin-heading">Introduza o seu PIN</div><div class="pin-sub">Digite o seu PIN de 6 dígitos.</div></div>
+    <div class="pin-boxes-row" id="pin-boxes"><div class="pin-box" id="pb0"></div><div class="pin-box" id="pb1"></div><div class="pin-box" id="pb2"></div><div class="pin-box" id="pb3"></div><div class="pin-box" id="pb4"></div><div class="pin-box" id="pb5"></div></div>
+    <div class="px-20 mt-8" id="login-msg"></div>
+    <div class="keypad"><button class="key" onclick="keyPress('1')">1<span class="key-sub"></span></button><button class="key" onclick="keyPress('2')">2<span class="key-sub">ABC</span></button><button class="key" onclick="keyPress('3')">3<span class="key-sub">DEF</span></button><button class="key" onclick="keyPress('4')">4<span class="key-sub">GHI</span></button><button class="key" onclick="keyPress('5')">5<span class="key-sub">JKL</span></button><button class="key" onclick="keyPress('6')">6<span class="key-sub">MNO</span></button><button class="key" onclick="keyPress('7')">7<span class="key-sub">PQRS</span></button><button class="key" onclick="keyPress('8')">8<span class="key-sub">TUV</span></button><button class="key" onclick="keyPress('9')">9<span class="key-sub">WXYZ</span></button><button class="key key-empty"></button><button class="key" onclick="keyPress('0')">0</button><button class="key key-del" onclick="keyDelete()"><svg viewBox="0 0 24 24"><path d="M22 3H7c-.69 0-1.23.35-1.59.88L0 12l5.41 8.11c.36.53.9.89 1.59.89h15c1.1 0 2-.9 2-2V5c0-1.1-.9-2-2-2zm-3 12.59L17.59 17 14 13.41 10.41 17 9 15.59 12.59 12 9 8.41 10.41 7 14 10.59 17.59 7 19 8.41 15.41 12 19 15.59z"/></svg></button></div>
+    <div class="pin-actions"><button class="btn btn-primary" id="btn-entrar" onclick="submeterLogin()">Entrar</button><button class="btn btn-ghost" onclick="irPara('screen-esqueci-pin')">Esqueci o meu PIN</button></div>
+  </div>
 
-<section id="login" class="screen card stack">
-  <h2>Introduz o PIN</h2>
-  <input class="input" id="pin" inputmode="numeric" maxlength="6" placeholder="PIN de 6 dígitos">
-  <div id="loginMsg"></div>
-  <button class="btn btn-navy" onclick="login()">Entrar</button>
-  <button class="btn btn-outline" onclick="show('recuperar')">Esqueci o PIN</button>
-  <button class="btn btn-outline" onclick="show('inicio')">Voltar</button>
-</section>
+  <div class="screen" id="screen-esqueci-pin"><div class="page-header"><button class="back-btn" onclick="irPara('screen-login')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><div><div class="page-title">Recuperar PIN</div><div class="page-sub">Enviaremos o seu PIN por email.</div></div></div><div style="padding:8px 20px;display:flex;flex-direction:column;gap:10px;"><div class="input-icon-wrap"><svg viewBox="0 0 24 24"><path d="M20 4H4c-1.1 0-2 .9-2 2v12c0 1.1.9 2 2 2h16c1.1 0 2-.9 2-2V6c0-1.1-.9-2-2-2zm0 4l-8 5-8-5V6l8 5 8-5v2z"/></svg><input class="input-icon" id="rec-email" type="email" placeholder="Email" autocomplete="email"></div><div id="rec-msg"></div><button class="btn btn-primary" onclick="submeterRecuperacao()">Reenviar PIN</button></div></div>
 
-<section id="recuperar" class="screen card stack">
-  <h2>Recuperar PIN</h2>
-  <input class="input" id="recEmail" type="email" placeholder="Email">
-  <div id="recMsg"></div>
-  <button class="btn btn-primary" onclick="recuperar()">Reenviar PIN</button>
-  <button class="btn btn-outline" onclick="show('login')">Voltar</button>
-</section>
+  <div class="screen" id="screen-motivo"><div class="page-header"><button class="back-btn" onclick="terminarSessao()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><div><div class="page-title">Porque precisa de consultar o código?</div><div class="page-sub">Selecione o motivo da consulta.</div></div></div><div class="motivo-list"><div class="motivo-item" data-motivo="Emergência" onclick="selecionarMotivo(this)"><div class="motivo-icon-wrap" style="background:#FEE2E2;">🚨</div><span class="motivo-label">Emergência</span><div class="motivo-radio"></div></div><div class="motivo-item" data-motivo="Luz ligada indevidamente" onclick="selecionarMotivo(this)"><div class="motivo-icon-wrap" style="background:#FFFBEB;">💡</div><span class="motivo-label">Luz ligada indevidamente</span><div class="motivo-radio"></div></div><div class="motivo-item" data-motivo="Manutenção" onclick="selecionarMotivo(this)"><div class="motivo-icon-wrap" style="background:#F0FDF4;">🔧</div><span class="motivo-label">Manutenção</span><div class="motivo-radio"></div></div><div class="motivo-item" data-motivo="Outro" onclick="selecionarMotivo(this)"><div class="motivo-icon-wrap" style="background:#F3F4F6;">💬</div><span class="motivo-label">Outro</span><div class="motivo-radio"></div></div><div id="outro-wrapper" style="display:none;"><textarea class="input-icon" id="motivo-outro" rows="3" placeholder="Descreva o motivo..."></textarea></div><div id="motivo-msg"></div><button class="btn btn-navy" id="btn-ver-codigo" onclick="pedirCodigo()">Ver código do cadeado</button></div></div>
 
-<section id="motivo" class="screen card stack">
-  <h2>Motivo da consulta</h2>
-  <select id="motivoSel"><option value="">Selecionar motivo</option><option>Emergência</option><option>Luz ligada indevidamente</option><option>Manutenção</option><option>Outro</option></select>
-  <textarea id="motivoOutro" placeholder="Detalhe, se selecionares Outro"></textarea>
-  <div id="motivoMsg"></div>
-  <button class="btn btn-navy" onclick="pedirCodigo()">Ver código do cadeado</button>
-  <button class="btn btn-outline" onclick="terminar()">Terminar sessão</button>
-</section>
+  <div class="screen" id="screen-codigo"><div class="page-header"><button class="back-btn" onclick="terminarSessao()"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button></div><div class="codigo-header"><div class="codigo-shield"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4zm-1 14l-3-3 1.41-1.41L11 12.17l4.59-4.58L17 9l-6 6z"/></svg></div><div class="codigo-titulo">Código atual</div></div><div class="codigo-card"><div class="codigo-num-display" id="codigo-num">——————</div><div class="codigo-timer-row"><svg viewBox="0 0 24 24"><path d="M11.99 2C6.47 2 2 6.48 2 12s4.47 10 9.99 10C17.52 22 22 17.52 22 12S17.52 2 11.99 2z"/></svg><span class="codigo-timer-text" id="codigo-timer">—</span></div></div><div class="codigo-aviso-box"><span class="aviso-icon">⚠️</span><p id="codigo-aviso-text">Após utilização, confirme que a caixa fica corretamente fechada.</p></div><div class="codigo-btns"><button class="btn btn-outline" id="btn-ocultar" onclick="ocultarCodigo()">Ocultar código</button><button class="btn btn-soft-danger" onclick="terminarSessao()">Terminar sessão</button></div></div>
 
-<section id="codigo" class="screen card stack">
-  <h2>Código atual</h2>
-  <div class="code" id="codigoNum">——————</div>
-  <div class="alert warn" id="aviso">Após utilização, confirma que fica corretamente fechado.</div>
-  <div class="muted" id="timer">—</div>
-  <button class="btn btn-outline" onclick="ocultar()">Ocultar código</button>
-  <button class="btn btn-danger" onclick="terminar()">Terminar sessão</button>
-</section>
+  <div class="screen" id="screen-registo-ok"><div class="estado-screen"><div class="estado-icon-wrap" style="background:#F0FDF4;">✅</div><div class="estado-titulo">Pedido enviado com sucesso!</div><div class="estado-texto">A administração irá validar o acesso. Após aprovação receberá o seu PIN pessoal por email.</div><button class="btn btn-primary" style="max-width:280px;" onclick="irPara('screen-inicio')">Voltar ao início</button></div></div>
+  <div class="screen" id="screen-pendente"><div class="estado-screen"><div class="estado-icon-wrap" style="background:var(--blue-lt);">⏳</div><div class="estado-titulo">O seu pedido está pendente de aprovação.</div><div class="estado-texto">Iremos analisar o seu pedido e notificá-lo assim que for aprovado.</div><button class="btn btn-primary" style="max-width:280px;" onclick="irPara('screen-inicio')">Voltar ao início</button></div></div>
+  <div class="screen" id="screen-rejeitado"><div class="estado-screen"><div class="estado-icon-wrap" style="background:#FEE2E2;">🚫</div><div class="estado-titulo">Acesso não aprovado</div><div class="estado-texto">O seu pedido não foi aprovado. Para mais informações contacte a administração do condomínio.</div><button class="btn btn-primary" style="max-width:280px;" onclick="irPara('screen-contacto')">Contactar administração</button></div></div>
+  <div class="screen" id="screen-bloqueado"><div class="estado-screen"><div class="estado-icon-wrap" style="background:#FEF3C7;">🔒</div><div class="estado-titulo">Acesso bloqueado</div><div class="estado-texto">O seu acesso encontra-se bloqueado pela administração. Contacte-nos para mais informações.</div><button class="btn btn-primary" style="max-width:280px;" onclick="irPara('screen-contacto')">Contactar administração</button></div></div>
+  <div class="screen" id="screen-contacto"><div class="page-header"><button class="back-btn" onclick="irPara('screen-inicio')"><svg viewBox="0 0 24 24"><path d="M20 11H7.83l5.59-5.59L12 4l-8 8 8 8 1.41-1.41L7.83 13H20v-2z"/></svg></button><div><div class="page-title">Contacto</div></div></div><div style="padding:8px 20px;display:flex;flex-direction:column;gap:10px;"><div style="background:var(--card);border-radius:var(--radius);padding:24px;text-align:center;box-shadow:var(--shadow);"><div style="font-size:48px;margin-bottom:12px;">📬</div><div style="font-size:16px;font-weight:700;color:var(--navy);margin-bottom:6px;">Administração do Condomínio</div><div style="font-size:14px;color:var(--blue);" id="admin-email-display">—</div></div><div class="alert alert-info">Para pedidos urgentes, contacte diretamente a administração através do email acima.</div><button class="btn btn-outline" onclick="irPara('screen-inicio')">Voltar ao início</button></div></div>
+</div>
 
-<section id="estado" class="screen card stack">
-  <h2 id="estadoTitulo">Estado</h2><div id="estadoTexto" class="alert warn"></div>
-  <button class="btn btn-outline" onclick="show('inicio')">Voltar ao início</button>
-</section>
-
-<section id="contacto" class="screen card stack">
-  <h2>Contacto</h2><p class="sub">Administração do condomínio</p><div class="alert ok" id="adminEmail">—</div>
-  <button class="btn btn-outline" onclick="show('inicio')">Voltar</button>
-</section>
-</main>
 <script>
-let CFG={backendUrl:""}, S={pin:""}, T=null;
-async function boot(){try{CFG=await (await fetch('config.json?ts='+Date.now())).json();const c=await apiGet('garage.publicConfig');document.getElementById('nome').textContent=c.nomeCondominio||'Acesso Garagem';document.getElementById('adminEmail').textContent=c.adminEmail||'—';}catch(e){console.error(e)}}
-function show(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));document.getElementById(id).classList.add('active');scrollTo(0,0)}
-function msg(id,txt,type='err'){document.getElementById(id).innerHTML=txt?`<div class="alert ${type}">${txt}</div>`:''}
-function fd(obj){const f=new FormData();Object.entries(obj).forEach(([k,v])=>f.append(k, typeof v==='object'?JSON.stringify(v):String(v??'')));return f}
-async function apiGet(action){const u=new URL(CFG.backendUrl);u.searchParams.set('action',action);const r=await fetch(u.toString(),{cache:'no-store'});return await r.json()}
-async function apiPost(obj){const r=await fetch(CFG.backendUrl,{method:'POST',body:fd(obj)});return await r.json()}
-async function registar(){msg('regMsg','');const d={action:'garage.register',nome:rNome.value,piso:rPiso.value,fracao:rFracao.value,email:rEmail.value,telemovel:rTel.value};if(!d.nome||!d.piso||!d.fracao||!d.email)return msg('regMsg','Preenche os campos obrigatórios.');const r=await apiPost(d);if(r.ok){estado('Pedido enviado','O pedido ficou pendente de aprovação. Vais receber o PIN por email após validação.','ok')}else msg('regMsg',r.msg||r.message||'Erro ao registar.')}
-async function login(){msg('loginMsg','');S.pin=pin.value.trim();if(S.pin.length!==6)return msg('loginMsg','Introduz os 6 dígitos.','warn');const r=await apiPost({action:'garage.loginPin',pin:S.pin,userAgent:navigator.userAgent});if(r.ok)show('motivo');else{if(r.tipo==='pendente')return estado('Pedido pendente',r.msg,'warn');if(r.tipo==='rejeitado')return estado('Acesso não aprovado',r.msg,'err');if(r.tipo==='bloqueado'||r.tipo==='bloqueio_temp')return estado('Acesso bloqueado',r.msg,'warn');msg('loginMsg',r.msg||'PIN inválido.');await apiPost({action:'garage.failedAttempt',pin:S.pin});pin.value='';}}
-async function recuperar(){msg('recMsg','A enviar...','warn');const r=await apiPost({action:'garage.resendPin',email:recEmail.value});msg('recMsg',r.ok?'PIN enviado. Verifica o email.':(r.msg||'Erro ao reenviar PIN.'),r.ok?'ok':'err')}
-async function pedirCodigo(){msg('motivoMsg','');const motivo=motivoSel.value;if(!motivo)return msg('motivoMsg','Seleciona um motivo.','warn');if(motivo==='Outro'&&!motivoOutro.value.trim())return msg('motivoMsg','Descreve o motivo.','warn');const r=await apiPost({action:'garage.getCode',pin:S.pin,motivo,motivoOutro:motivoOutro.value,userAgent:navigator.userAgent});if(!r.ok)return msg('motivoMsg',r.msg||'Erro ao obter código.');codigoNum.textContent=r.codigo;aviso.textContent=r.aviso||aviso.textContent;show('codigo');timer(r.tempo||60)}
-function timer(seg){clearInterval(T);let n=seg;T=setInterval(()=>{timer.textContent='Oculta em '+n+'s';if(n--<=0)ocultar()},1000)}
-function ocultar(){clearInterval(T);codigoNum.textContent='——————';document.getElementById('timer').textContent='Código oculto'}
-function terminar(){ocultar();S={pin:''};pin.value='';motivoSel.value='';motivoOutro.value='';show('inicio')}
-function estado(t,msgtxt,type){estadoTitulo.textContent=t;estadoTexto.textContent=msgtxt||'';estadoTexto.className='alert '+(type||'warn');show('estado')}
-boot();
-</script></body></html>
+let APP_CONFIG = null;
+let BACKEND_URL = '';
+let App = { pin:'', nome:'', piso:'', fracao:'', motivo:'' };
+let _timerInterval = null;
+
+async function loadLocalConfig(){
+  const res = await fetch('config.json', { cache:'no-store' });
+  if(!res.ok) throw new Error('Não foi possível carregar o config.json');
+  APP_CONFIG = await res.json();
+  BACKEND_URL = APP_CONFIG.backendUrl || '';
+}
+async function apiGet(action, params = {}){
+  if(!BACKEND_URL) throw new Error('Backend não configurado.');
+  const url = new URL(BACKEND_URL);
+  url.searchParams.set('action', action);
+  Object.keys(params).forEach(k => { if(params[k] !== undefined && params[k] !== null && params[k] !== '') url.searchParams.set(k, params[k]); });
+  const res = await fetch(url.toString(), { cache:'no-store' });
+  const text = await res.text();
+  try { return JSON.parse(text); } catch(e){ throw new Error('Resposta não JSON do backend.'); }
+}
+async function apiPost(action, data = {}){
+  if(!BACKEND_URL) throw new Error('Backend não configurado.');
+  const res = await fetch(BACKEND_URL, {
+    method:'POST',
+    headers:{ 'Content-Type':'text/plain;charset=utf-8' },
+    body: JSON.stringify(Object.assign({ action }, data))
+  });
+  const text = await res.text();
+  try { return JSON.parse(text); } catch(e){ throw new Error('Resposta não JSON do backend.'); }
+}
+function htmlMsg(type, text){ return '<div class="alert alert-' + type + '">' + escapeHtml(text || '') + '</div>'; }
+function escapeHtml(str){ return String(str || '').replace(/[&<>"]/g, s => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[s])); }
+function irPara(id){
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('active'));
+  const t = document.getElementById(id);
+  if(t){ t.classList.add('active'); window.scrollTo(0,0); }
+  if(id === 'screen-login'){ App.pin=''; renderPIN(); document.getElementById('login-msg').innerHTML=''; }
+}
+window.addEventListener('DOMContentLoaded', async function(){
+  try{
+    await loadLocalConfig();
+    const cfg = await apiGet('garage.publicConfig');
+    if(cfg.nomeCondominio) document.getElementById('nome-condominio').textContent = cfg.nomeCondominio;
+    if(cfg.adminEmail) document.getElementById('admin-email-display').textContent = cfg.adminEmail;
+  }catch(err){
+    document.getElementById('admin-email-display').textContent = '—';
+  }
+  irPara('screen-inicio');
+});
+function keyPress(d){ if(App.pin.length >= 6) return; App.pin += d; renderPIN(); if(App.pin.length === 6) setTimeout(submeterLogin,150); }
+function keyDelete(){ if(!App.pin.length) return; App.pin = App.pin.slice(0,-1); renderPIN(); }
+function renderPIN(){ for(let i=0;i<6;i++){ const b=document.getElementById('pb'+i); b.textContent = App.pin[i] ? '●' : ''; b.className = 'pin-box'; if(App.pin[i]) b.classList.add('filled'); if(i === App.pin.length) b.classList.add('active'); } }
+async function submeterRegisto(){
+  const nome = document.getElementById('reg-nome').value.trim();
+  const piso = document.getElementById('reg-piso').value.trim();
+  const fracao = document.getElementById('reg-fracao').value.trim();
+  const email = document.getElementById('reg-email').value.trim();
+  const tel = document.getElementById('reg-tel').value.trim();
+  const msgEl = document.getElementById('reg-msg');
+  const btn = document.getElementById('btn-registar');
+  if(!nome || !piso || !fracao || !email){ msgEl.innerHTML = htmlMsg('danger','Preencha todos os campos obrigatórios.'); return; }
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ msgEl.innerHTML = htmlMsg('danger','Email inválido.'); return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; msgEl.innerHTML = '';
+  try{
+    const r = await apiPost('garage.register', { nome, piso, fracao, email, telemovel: tel });
+    if(r.ok || r.success) irPara('screen-registo-ok'); else msgEl.innerHTML = htmlMsg('danger', r.msg || r.message || 'Erro ao registar.');
+  }catch(err){ msgEl.innerHTML = htmlMsg('danger', err.message || 'Erro de ligação.'); }
+  finally{ btn.disabled = false; btn.textContent = 'Enviar pedido de acesso'; }
+}
+async function submeterLogin(){
+  const pin = App.pin;
+  const msgEl = document.getElementById('login-msg');
+  const btn = document.getElementById('btn-entrar');
+  if(pin.length !== 6){ msgEl.innerHTML = htmlMsg('warning','Introduza os 6 dígitos.'); return; }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; msgEl.innerHTML = '';
+  try{
+    const r = await apiPost('garage.loginPin', { pin, userAgent: navigator.userAgent });
+    if(r.ok || r.success){ App.nome = r.nome || ''; App.piso = r.piso || ''; App.fracao = r.fracao || ''; irPara('screen-motivo'); }
+    else{
+      if(r.tipo === 'pendente'){ irPara('screen-pendente'); return; }
+      if(r.tipo === 'rejeitado'){ irPara('screen-rejeitado'); return; }
+      if(r.tipo === 'bloqueado'){ irPara('screen-bloqueado'); return; }
+      msgEl.innerHTML = htmlMsg('danger', r.msg || r.message || 'PIN inválido.');
+      App.pin=''; renderPIN();
+      if(r.tipo === 'invalido') apiPost('garage.failedAttempt', { pin }).catch(()=>{});
+    }
+  }catch(err){ msgEl.innerHTML = htmlMsg('danger', err.message || 'Erro de ligação.'); App.pin=''; renderPIN(); }
+  finally{ btn.disabled = false; btn.textContent = 'Entrar'; }
+}
+async function submeterRecuperacao(){
+  const email = document.getElementById('rec-email').value.trim();
+  const msgEl = document.getElementById('rec-msg');
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){ msgEl.innerHTML = htmlMsg('danger','Email inválido.'); return; }
+  msgEl.innerHTML = htmlMsg('info','A enviar...');
+  try{ const r = await apiPost('garage.resendPin', { email }); msgEl.innerHTML = (r.ok || r.success) ? htmlMsg('success','PIN enviado! Verifique o seu email.') : htmlMsg('danger', r.msg || r.message || 'Não foi possível enviar.'); }
+  catch(err){ msgEl.innerHTML = htmlMsg('danger', err.message || 'Erro ao enviar.'); }
+}
+function selecionarMotivo(el){ document.querySelectorAll('.motivo-item').forEach(m => m.classList.remove('selected')); el.classList.add('selected'); App.motivo = el.getAttribute('data-motivo'); document.getElementById('outro-wrapper').style.display = App.motivo === 'Outro' ? 'block' : 'none'; document.getElementById('motivo-msg').innerHTML = ''; }
+async function pedirCodigo(){
+  const msgEl = document.getElementById('motivo-msg'); const btn = document.getElementById('btn-ver-codigo');
+  if(!App.motivo){ msgEl.innerHTML = htmlMsg('warning','Selecione um motivo.'); return; }
+  let motivoOutro = '';
+  if(App.motivo === 'Outro'){ motivoOutro = document.getElementById('motivo-outro').value.trim(); if(!motivoOutro){ msgEl.innerHTML = htmlMsg('warning','Descreva o motivo.'); return; } }
+  btn.disabled = true; btn.innerHTML = '<span class="spinner"></span>'; msgEl.innerHTML = '';
+  try{ const r = await apiPost('garage.getCode', { pin: App.pin, motivo: App.motivo, motivoOutro, userAgent: navigator.userAgent }); if(r.ok || r.success) mostrarCodigo(r.codigo, r.tempo, r.aviso); else msgEl.innerHTML = htmlMsg('danger', r.msg || r.message || 'Erro ao obter código.'); }
+  catch(err){ msgEl.innerHTML = htmlMsg('danger', err.message || 'Erro ao obter código.'); }
+  finally{ btn.disabled = false; btn.textContent = 'Ver código do cadeado'; }
+}
+function mostrarCodigo(codigo, tempo, aviso){ document.getElementById('codigo-num').textContent = codigo || '——————'; if(aviso) document.getElementById('codigo-aviso-text').textContent = aviso; document.getElementById('btn-ocultar').style.display=''; irPara('screen-codigo'); iniciarTimer(Number(tempo) || 60); }
+function iniciarTimer(seg){ clearInterval(_timerInterval); let r = seg; function tick(){ document.getElementById('codigo-timer').textContent = 'Oculta em ' + r + 's'; if(r <= 0){ clearInterval(_timerInterval); ocultarCodigo(); } r--; } tick(); _timerInterval = setInterval(tick,1000); }
+function ocultarCodigo(){ clearInterval(_timerInterval); document.getElementById('codigo-num').textContent='——————'; document.getElementById('codigo-timer').textContent='Código oculto'; document.getElementById('btn-ocultar').style.display='none'; }
+function terminarSessao(){ clearInterval(_timerInterval); App = { pin:'', nome:'', piso:'', fracao:'', motivo:'' }; document.querySelectorAll('.motivo-item').forEach(m => m.classList.remove('selected')); const ow=document.getElementById('outro-wrapper'); if(ow) ow.style.display='none'; irPara('screen-inicio'); }
+</script>
+</body>
+</html>
