@@ -2,6 +2,7 @@ let APP_CONFIG = null;
 let REPORTED_SET = new Set();
 let SELECTED_POINT = null;
 let SELECTED_FILE = null;
+let AUTO_REPORTER_NAME = '';
 
 const els = {};
 
@@ -10,6 +11,7 @@ document.addEventListener("DOMContentLoaded", initApp);
 async function initApp() {
   cacheElements();
   bindEvents();
+  loadAutoReporter();
 
   try {
     APP_CONFIG = await loadConfig();
@@ -17,6 +19,7 @@ async function initApp() {
     document.getElementById("buildingName").textContent =
       APP_CONFIG.building?.name || "Condomínio";
 
+    applyAutoReporterUI();
     await loadStatuses();
     renderBuilding();
     handleDeepLink();
@@ -83,6 +86,34 @@ function bindEvents() {
   els.reportForm.addEventListener("submit", submitReport);
 }
 
+function loadAutoReporter() {
+  const params = new URLSearchParams(window.location.search);
+  const fromUrl = params.get("name") || params.get("nome") || params.get("reporter") || params.get("reporterName") || "";
+
+  let fromStorage = "";
+  try {
+    const raw = localStorage.getItem("dc4_user") || sessionStorage.getItem("dc4_user") || "";
+    if (raw) {
+      const parsed = JSON.parse(raw);
+      fromStorage = parsed?.nome || parsed?.name || "";
+    }
+  } catch (err) {
+    fromStorage = "";
+  }
+
+  AUTO_REPORTER_NAME = String(fromUrl || fromStorage || "").trim();
+}
+
+function applyAutoReporterUI() {
+  if (!AUTO_REPORTER_NAME || !els.reporterName) return;
+
+  els.reporterName.value = AUTO_REPORTER_NAME;
+  els.reporterName.required = false;
+
+  const field = els.reporterName.closest(".field");
+  if (field) field.classList.add("hidden");
+}
+
 async function loadConfig() {
   const res = await fetch("config.json", { cache: "no-store" });
   if (!res.ok) {
@@ -128,27 +159,13 @@ function extractReportedItems(payload) {
 
 function normalizeStatusKey(item) {
   if (!item) return "";
-
   if (typeof item === "string") return item.trim().toUpperCase();
 
-  const floorRaw =
-    item.floor ??
-    item.piso ??
-    item.level ??
-    item.floorNumber ??
-    item.idFloor;
-
-  const pointRaw =
-    item.point ??
-    item.ponto ??
-    item.extinguisher ??
-    item.extintor ??
-    item.code ??
-    item.idPoint;
+  const floorRaw = item.floor ?? item.piso ?? item.level ?? item.floorNumber ?? item.idFloor;
+  const pointRaw = item.point ?? item.ponto ?? item.extinguisher ?? item.extintor ?? item.code ?? item.idPoint;
 
   if (floorRaw === undefined || floorRaw === null || !pointRaw) {
-    const fallbackId =
-      item.id ?? item.key ?? item.extinguisherId ?? item.extintorId ?? "";
+    const fallbackId = item.id ?? item.key ?? item.extinguisherId ?? item.extintorId ?? "";
     return String(fallbackId).trim().toUpperCase();
   }
 
@@ -253,19 +270,23 @@ function openModal(ext) {
 
   const targetLabel = `${ext.floorLabel} - ${ext.label}`;
   els.modalTitle.textContent = "Reportar extintor";
-  els.modalSubtitle.textContent = `Ponto selecionado: ${targetLabel}`;
+  els.modalSubtitle.textContent = AUTO_REPORTER_NAME
+    ? `Ponto selecionado: ${targetLabel} · Reportado por: ${AUTO_REPORTER_NAME}`
+    : `Ponto selecionado: ${targetLabel}`;
   els.alreadyReportedBox.classList.toggle("show", !!ext.isAlert);
 
   els.hiddenFloor.value = String(ext.floor);
   els.hiddenPoint.value = ext.point;
   els.hiddenLocation.value = ext.location || "";
+  els.reporterName.value = AUTO_REPORTER_NAME || els.reporterName.value || "";
 
   els.overlay.classList.add("show");
   els.overlay.setAttribute("aria-hidden", "false");
   document.body.style.overflow = "hidden";
 
   window.setTimeout(() => {
-    els.reporterName.focus();
+    if (AUTO_REPORTER_NAME) els.reportReason.focus();
+    else els.reporterName.focus();
   }, 40);
 }
 
@@ -274,6 +295,7 @@ function closeModal() {
   els.overlay.setAttribute("aria-hidden", "true");
   document.body.style.overflow = "";
   els.reportForm.reset();
+  if (AUTO_REPORTER_NAME) els.reporterName.value = AUTO_REPORTER_NAME;
   SELECTED_FILE = null;
   SELECTED_POINT = null;
   clearPhotoInputs();
@@ -314,12 +336,12 @@ async function submitReport(event) {
     return;
   }
 
-  const name = els.reporterName.value.trim();
+  const name = (AUTO_REPORTER_NAME || els.reporterName.value || "").trim();
   const reason = els.reportReason.value;
   const notes = els.reportNote.value.trim();
 
   if (!name) {
-    showToast("Preenche o nome.");
+    showToast("Não foi possível identificar o utilizador. Entre pela app do condomínio.");
     els.reporterName.focus();
     return;
   }
@@ -364,7 +386,7 @@ async function submitReport(event) {
       throw new Error(response.message || "Falha no registo do reporte.");
     }
 
-    showToast("Reporte enviado com sucesso.");
+    showToast("Reporte enviado. Aguarda validação da administração.");
     closeModal();
     await loadStatuses();
     renderBuilding();
