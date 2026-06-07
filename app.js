@@ -16,9 +16,7 @@ async function initApp() {
   try {
     APP_CONFIG = await loadConfig();
     fillReasonOptions();
-    document.getElementById("buildingName").textContent =
-      APP_CONFIG.building?.name || "Condomínio";
-
+    document.getElementById("buildingName").textContent = APP_CONFIG.building?.name || "Condomínio";
     applyAutoReporterUI();
     await loadStatuses();
     renderBuilding();
@@ -35,54 +33,41 @@ function cacheElements() {
   els.building = document.getElementById("building");
   els.buildingLoading = document.getElementById("buildingLoading");
   els.lastRefresh = document.getElementById("lastRefresh");
-
   els.overlay = document.getElementById("reportOverlay");
   els.closeModalBtn = document.getElementById("closeModalBtn");
   els.cancelBtn = document.getElementById("cancelBtn");
   els.reportForm = document.getElementById("reportForm");
-
   els.modalTitle = document.getElementById("modalTitle");
   els.modalSubtitle = document.getElementById("modalSubtitle");
   els.alreadyReportedBox = document.getElementById("alreadyReportedBox");
-
   els.hiddenFloor = document.getElementById("hiddenFloor");
   els.hiddenPoint = document.getElementById("hiddenPoint");
   els.hiddenLocation = document.getElementById("hiddenLocation");
-
   els.reporterName = document.getElementById("reporterName");
   els.reportReason = document.getElementById("reportReason");
   els.reportNote = document.getElementById("reportNote");
   els.submitBtn = document.getElementById("submitBtn");
-
   els.openCameraBtn = document.getElementById("openCameraBtn");
   els.pickFileBtn = document.getElementById("pickFileBtn");
   els.cameraInput = document.getElementById("cameraInput");
   els.fileInput = document.getElementById("fileInput");
   els.photoMeta = document.getElementById("photoMeta");
-
   els.toast = document.getElementById("toast");
 }
 
 function bindEvents() {
   els.closeModalBtn.addEventListener("click", closeModal);
   els.cancelBtn.addEventListener("click", closeModal);
-
   els.overlay.addEventListener("click", (event) => {
     if (event.target === els.overlay) closeModal();
   });
-
   document.addEventListener("keydown", (event) => {
-    if (event.key === "Escape" && els.overlay.classList.contains("show")) {
-      closeModal();
-    }
+    if (event.key === "Escape" && els.overlay.classList.contains("show")) closeModal();
   });
-
   els.openCameraBtn.addEventListener("click", () => els.cameraInput.click());
   els.pickFileBtn.addEventListener("click", () => els.fileInput.click());
-
   els.cameraInput.addEventListener("change", handlePhotoPicked);
   els.fileInput.addEventListener("change", handlePhotoPicked);
-
   els.reportForm.addEventListener("submit", submitReport);
 }
 
@@ -106,26 +91,21 @@ function loadAutoReporter() {
 
 function applyAutoReporterUI() {
   if (!AUTO_REPORTER_NAME || !els.reporterName) return;
-
   els.reporterName.value = AUTO_REPORTER_NAME;
   els.reporterName.required = false;
-
   const field = els.reporterName.closest(".field");
   if (field) field.classList.add("hidden");
 }
 
 async function loadConfig() {
   const res = await fetch("config.json", { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error("Não foi possível carregar o config.json");
-  }
+  if (!res.ok) throw new Error("Não foi possível carregar o config.json");
   return res.json();
 }
 
 function fillReasonOptions() {
   const reasons = APP_CONFIG?.reportReasons || [];
   els.reportReason.innerHTML = `<option value="">Selecionar motivo</option>`;
-
   reasons.forEach((reason) => {
     const option = document.createElement("option");
     option.value = reason;
@@ -172,43 +152,82 @@ function normalizeStatusKey(item) {
   return makeKey(Number(floorRaw), String(pointRaw));
 }
 
+function formatFloorLabel(floorValue, labelValue) {
+  const floorNumber = Number(floorValue);
+  const label = String(labelValue ?? floorValue ?? "").trim();
+  if (Number.isFinite(floorNumber) && floorNumber > 0) return `${floorNumber}º`;
+  return label || String(floorValue ?? "");
+}
+
+function getFacadeKind(floor) {
+  const floorNumber = Number(floor.floor);
+  if (floor.type === "garage" || floorNumber < 0) return "garage";
+  if (floor.type === "service" || floorNumber === 0) return "service";
+  return "residential";
+}
+
 function renderBuilding() {
   const floors = APP_CONFIG?.building?.floors || [];
   els.building.innerHTML = "";
 
+  const facade = document.createElement("div");
+  facade.className = "facade-shell";
+
+  const roof = document.createElement("div");
+  roof.className = "facade-roof";
+  roof.innerHTML = `<span></span><span></span><span></span>`;
+  facade.appendChild(roof);
+
   floors.forEach((floor) => {
+    const kind = getFacadeKind(floor);
+    const displayLabel = formatFloorLabel(floor.floor, floor.label);
+
     const row = document.createElement("div");
-    row.className = "floor-row";
+    row.className = `facade-row ${kind}`;
 
     const label = document.createElement("div");
     label.className = "floor-label";
-    label.textContent = floor.label;
+    label.textContent = displayLabel;
 
     const body = document.createElement("div");
     body.className = "floor-body";
 
     const inner = document.createElement("div");
-    inner.className = "floor-inner";
+    inner.className = "facade-inner";
 
-    const left = document.createElement("div");
+    const stair = document.createElement("div");
+    stair.className = "stair-tower";
+    for (let i = 0; i < 3; i += 1) {
+      const pane = document.createElement("span");
+      stair.appendChild(pane);
+    }
 
-    if (floor.type === "garage") {
+    const facadeContent = document.createElement("div");
+    facadeContent.className = `facade-content ${kind}`;
+
+    if (kind === "garage") {
       const garage = document.createElement("div");
-      garage.className = "garage-zone";
+      garage.className = "garage-zone facade-garage";
       garage.textContent = "Garagem / espaço aberto";
-      left.appendChild(garage);
-    } else {
-      const fractions = document.createElement("div");
-      fractions.className = `fractions cols-${floor.fractions || 3}`;
-
-      const totalFractions = floor.fractions || 3;
-      for (let i = 0; i < totalFractions; i += 1) {
-        const windowEl = document.createElement("div");
-        windowEl.className = "window";
-        fractions.appendChild(windowEl);
+      facadeContent.appendChild(garage);
+    } else if (kind === "service") {
+      const podium = document.createElement("div");
+      podium.className = "podium-zone";
+      for (let i = 0; i < 4; i += 1) {
+        const column = document.createElement("span");
+        podium.appendChild(column);
       }
-
-      left.appendChild(fractions);
+      facadeContent.appendChild(podium);
+    } else {
+      const windows = document.createElement("div");
+      const totalWindows = Math.max(2, Math.min(Number(floor.fractions || 3), 4));
+      windows.className = `facade-windows cols-${totalWindows}`;
+      for (let i = 0; i < totalWindows; i += 1) {
+        const windowEl = document.createElement("div");
+        windowEl.className = `window facade-window ${i === 0 && totalWindows > 2 ? "wide" : ""}`;
+        windows.appendChild(windowEl);
+      }
+      facadeContent.appendChild(windows);
     }
 
     const exts = document.createElement("div");
@@ -225,11 +244,8 @@ function renderBuilding() {
       btn.dataset.point = ext.point;
       btn.dataset.location = ext.location || "";
       btn.dataset.label = ext.label || ext.point;
-      btn.dataset.title = floor.label;
-      btn.setAttribute(
-        "aria-label",
-        `${floor.label} - ${ext.label || ext.point}${isAlert ? " - reportado" : " - sem alerta"}`
-      );
+      btn.dataset.title = displayLabel;
+      btn.setAttribute("aria-label", `${displayLabel} - ${ext.label || ext.point}${isAlert ? " - reportado" : " - sem alerta"}`);
 
       const span = document.createElement("span");
       span.textContent = ext.shortLabel || ext.label || ext.point;
@@ -238,7 +254,7 @@ function renderBuilding() {
       btn.addEventListener("click", () => {
         openModal({
           floor: floor.floor,
-          floorLabel: floor.label,
+          floorLabel: displayLabel,
           point: ext.point,
           label: ext.label || ext.point,
           shortLabel: ext.shortLabel || ext.point,
@@ -250,16 +266,16 @@ function renderBuilding() {
       exts.appendChild(btn);
     });
 
-    inner.appendChild(left);
+    inner.appendChild(stair);
+    inner.appendChild(facadeContent);
     inner.appendChild(exts);
     body.appendChild(inner);
-
     row.appendChild(label);
     row.appendChild(body);
-
-    els.building.appendChild(row);
+    facade.appendChild(row);
   });
 
+  els.building.appendChild(facade);
   els.building.classList.remove("hidden");
 }
 
@@ -312,14 +328,14 @@ function handlePhotoPicked(event) {
     return;
   }
 
-  if (file.size > 8 * 1024 * 1024) {
-    showToast("A fotografia é demasiado grande. Usa uma imagem até 8 MB.");
+  if (file.size > 18 * 1024 * 1024) {
+    showToast("A fotografia é demasiado grande. Usa uma imagem até 18 MB.");
     event.target.value = "";
     return;
   }
 
   SELECTED_FILE = file;
-  els.photoMeta.textContent = `${file.name} · ${formatBytes(file.size)}`;
+  els.photoMeta.textContent = `${file.name} · ${formatBytes(file.size)} · será reduzida antes do envio`;
 }
 
 function clearPhotoInputs() {
@@ -352,18 +368,22 @@ async function submitReport(event) {
     return;
   }
 
-  const photoPayload = SELECTED_FILE ? await fileToPayload(SELECTED_FILE) : null;
   const reportPhotoRequired = !!APP_CONFIG?.features?.reportPhotoRequired;
-
-  if (reportPhotoRequired && !photoPayload) {
+  if (reportPhotoRequired && !SELECTED_FILE) {
     showToast("A fotografia é obrigatória neste reporte.");
     return;
   }
 
   els.submitBtn.disabled = true;
-  els.submitBtn.textContent = "A enviar…";
+  els.submitBtn.textContent = SELECTED_FILE ? "A reduzir foto…" : "A enviar…";
 
   try {
+    const photoPayload = SELECTED_FILE ? await fileToPayload(SELECTED_FILE) : null;
+    if (photoPayload?.originalSize && photoPayload?.size) {
+      els.photoMeta.textContent = `${photoPayload.name} · reduzida de ${formatBytes(photoPayload.originalSize)} para ${formatBytes(photoPayload.size)}`;
+    }
+
+    els.submitBtn.textContent = "A enviar…";
     const payload = {
       action: getAction("report"),
       floor: Number(els.hiddenFloor.value),
@@ -381,10 +401,7 @@ async function submitReport(event) {
     };
 
     const response = await apiPost(payload);
-
-    if (response?.success === false) {
-      throw new Error(response.message || "Falha no registo do reporte.");
-    }
+    if (response?.success === false) throw new Error(response.message || "Falha no registo do reporte.");
 
     showToast("Reporte enviado. Aguarda validação da administração.");
     closeModal();
@@ -438,7 +455,7 @@ function getAllPoints() {
   return floors.flatMap((floor) =>
     (floor.extinguishers || []).map((ext) => ({
       floor: floor.floor,
-      floorLabel: floor.label,
+      floorLabel: formatFloorLabel(floor.floor, floor.label),
       point: ext.point,
       label: ext.label || ext.point,
       shortLabel: ext.shortLabel || ext.point,
@@ -454,22 +471,16 @@ async function apiGet(actionName, params = {}, allowRootFallback = false) {
   }
 
   const url = new URL(baseUrl);
-  if (actionName) {
-    url.searchParams.set("action", getAction(actionName));
-  }
+  if (actionName) url.searchParams.set("action", getAction(actionName));
 
   Object.entries(params).forEach(([key, value]) => {
-    if (value !== undefined && value !== null && value !== "") {
-      url.searchParams.set(key, value);
-    }
+    if (value !== undefined && value !== null && value !== "") url.searchParams.set(key, value);
   });
 
   try {
     return await fetchJson(url.toString());
   } catch (error) {
-    if (allowRootFallback) {
-      return fetchJson(baseUrl);
-    }
+    if (allowRootFallback) return fetchJson(baseUrl);
     throw error;
   }
 }
@@ -481,7 +492,6 @@ async function apiPost(payload) {
   }
 
   const formData = new FormData();
-
   Object.entries(payload).forEach(([key, value]) => {
     if (value === undefined || value === null) return;
     formData.append(key, String(value));
@@ -489,22 +499,16 @@ async function apiPost(payload) {
 
   let response;
   try {
-    response = await fetch(baseUrl, {
-      method: "POST",
-      body: formData
-    });
+    response = await fetch(baseUrl, { method: "POST", body: formData });
   } catch (error) {
     throw new Error("Falha de ligação ao backend (POST bloqueado / CORS).");
   }
 
   const text = await response.text();
-
   try {
     return JSON.parse(text);
   } catch {
-    if (!response.ok) {
-      throw new Error(`Resposta inválida do backend (${response.status})`);
-    }
+    if (!response.ok) throw new Error(`Resposta inválida do backend (${response.status})`);
     return { success: true, raw: text };
   }
 }
@@ -512,11 +516,7 @@ async function apiPost(payload) {
 async function fetchJson(url) {
   const response = await fetch(url, { cache: "no-store" });
   const text = await response.text();
-
-  if (!response.ok) {
-    throw new Error(`Erro HTTP ${response.status}`);
-  }
-
+  if (!response.ok) throw new Error(`Erro HTTP ${response.status}`);
   try {
     return JSON.parse(text);
   } catch {
@@ -561,16 +561,11 @@ function showToast(message) {
   els.toast.textContent = message;
   els.toast.classList.add("show");
   window.clearTimeout(showToast._timer);
-  showToast._timer = window.setTimeout(() => {
-    els.toast.classList.remove("show");
-  }, 3200);
+  showToast._timer = window.setTimeout(() => els.toast.classList.remove("show"), 3200);
 }
 
 function formatTime(date) {
-  return new Intl.DateTimeFormat("pt-PT", {
-    hour: "2-digit",
-    minute: "2-digit"
-  }).format(date);
+  return new Intl.DateTimeFormat("pt-PT", { hour: "2-digit", minute: "2-digit" }).format(date);
 }
 
 function formatBytes(bytes) {
@@ -578,11 +573,9 @@ function formatBytes(bytes) {
   const units = ["B", "KB", "MB", "GB"];
   let value = bytes;
   let unitIndex = 0;
-
   while (value >= 1024 && unitIndex < units.length - 1) {
     value /= 1024;
     unitIndex += 1;
   }
-
   return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
