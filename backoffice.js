@@ -3,6 +3,7 @@ let BO_OPEN_OCCURRENCES = [];
 let BO_PENDING_OCCURRENCES = [];
 let BO_REPORTED_SET = new Set();
 let BO_CLOSE_FILE = null;
+let BO_QR_SELECTED = new Set();
 
 const bo = {};
 document.addEventListener('DOMContentLoaded', initBackoffice);
@@ -10,6 +11,7 @@ document.addEventListener('DOMContentLoaded', initBackoffice);
 async function initBackoffice(){
   cacheBackofficeElements();
   bindBackofficeEvents();
+  injectQrStyles();
   try{
     BO_CONFIG = await loadBackofficeConfig();
     renderStaticConfigInfo();
@@ -71,24 +73,43 @@ function cacheBackofficeElements(){
 }
 
 function bindBackofficeEvents(){
-  bo.setupPinBtn.addEventListener('click', handleSetupPin);
-  bo.loginBtn.addEventListener('click', handleLogin);
-  bo.recoverPinBtn.addEventListener('click', handleRecoverPin);
+  bo.setupPinBtn?.addEventListener('click', handleSetupPin);
+  bo.loginBtn?.addEventListener('click', handleLogin);
+  bo.recoverPinBtn?.addEventListener('click', handleRecoverPin);
   bo.tabButtons.forEach(btn => btn.addEventListener('click', () => activateTab(btn.dataset.tab)));
-  bo.refreshDashboardBtn.addEventListener('click', refreshAllAdminData);
+  bo.refreshDashboardBtn?.addEventListener('click', refreshAllAdminData);
   bo.refreshPendingBtn?.addEventListener('click', loadPendingOccurrences);
-  bo.refreshOccurrencesBtn.addEventListener('click', loadOccurrences);
-  bo.pickClosePhotoBtn.addEventListener('click', () => bo.closePhotoInput.click());
-  bo.closePhotoInput.addEventListener('change', handleClosePhotoPicked);
-  bo.closeOccurrenceSelect.addEventListener('change', renderCloseOccurrenceSummary);
-  bo.closeOccurrenceBtn.addEventListener('click', handleCloseOccurrence);
-  bo.singleQrSelect.addEventListener('change', renderSingleQrPreview);
-  bo.printSingleQrBtn.addEventListener('click', printSingleQr);
-  bo.printAllQrBtn.addEventListener('click', printAllQrs);
-  bo.configRecoverPinBtn.addEventListener('click', handleRecoverPin);
-  bo.logoutBtn.addEventListener('click', logoutBackoffice);
-  bo.loginPin.addEventListener('keydown', e => { if(e.key === 'Enter') handleLogin(); });
-  bo.setupPinConfirm.addEventListener('keydown', e => { if(e.key === 'Enter') handleSetupPin(); });
+  bo.refreshOccurrencesBtn?.addEventListener('click', loadOccurrences);
+  bo.pickClosePhotoBtn?.addEventListener('click', () => bo.closePhotoInput.click());
+  bo.closePhotoInput?.addEventListener('change', handleClosePhotoPicked);
+  bo.closeOccurrenceSelect?.addEventListener('change', renderCloseOccurrenceSummary);
+  bo.closeOccurrenceBtn?.addEventListener('click', handleCloseOccurrence);
+  bo.singleQrSelect?.addEventListener('change', renderSingleQrPreview);
+  bo.printSingleQrBtn?.addEventListener('click', printSelectedQrs);
+  bo.printAllQrBtn?.addEventListener('click', printAllQrs);
+  bo.configRecoverPinBtn?.addEventListener('click', handleRecoverPin);
+  bo.logoutBtn?.addEventListener('click', logoutBackoffice);
+  bo.loginPin?.addEventListener('keydown', e => { if(e.key === 'Enter') handleLogin(); });
+  bo.setupPinConfirm?.addEventListener('keydown', e => { if(e.key === 'Enter') handleSetupPin(); });
+}
+
+function injectQrStyles(){
+  const style = document.createElement('style');
+  style.id = 'qr-select-print-style';
+  style.textContent = `
+    .qr-toolbar-enhanced{display:flex;flex-wrap:wrap;gap:10px;margin:0 0 14px;align-items:center}
+    .qr-counter{color:var(--muted);font-weight:800;font-size:.9rem;margin-left:auto}
+    .qr-grid.selectable{grid-template-columns:repeat(2,1fr)}
+    .qr-card{position:relative;min-height:150px;padding:10px;cursor:pointer;transition:.16s;user-select:none}
+    .qr-card:hover{transform:translateY(-1px)}
+    .qr-card.selected{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.14),var(--shadow)}
+    .qr-card.selected:after{content:'✓';position:absolute;top:8px;right:8px;width:24px;height:24px;border-radius:999px;background:var(--blue);color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900;font-size:.86rem}
+    .qr-card img{max-width:94px;width:94px;height:94px}
+    .qr-label{font-size:.76rem;line-height:1.2;margin-top:6px}
+    .qr-url-mini{display:none}
+    @media(min-width:768px){.qr-grid.selectable{grid-template-columns:repeat(5,1fr)}.qr-card img{max-width:104px;width:104px;height:104px}}
+  `;
+  document.head.appendChild(style);
 }
 
 async function loadBackofficeConfig(){
@@ -96,16 +117,18 @@ async function loadBackofficeConfig(){
   if(!res.ok) throw new Error('Não foi possível carregar o config.json');
   return res.json();
 }
+
 function renderStaticConfigInfo(){
   const ok = !!BO_CONFIG?.backendUrl && !BO_CONFIG.backendUrl.includes('COLOCAR_AQUI');
   bo.backendBadge.innerHTML = ok ? '<span class="dot ok"></span> Backend configurado' : '<span class="dot danger"></span> Backend por configurar';
   bo.configBackendUrl.textContent = BO_CONFIG?.backendUrl || '—';
   bo.configAdminEmail.textContent = BO_CONFIG?.adminEmail || '—';
   bo.configPublicUrl.textContent = getPublicIndexUrl();
-  bo.configQrSize.textContent = `${BO_CONFIG?.qr?.printSizeCm || 8} cm`;
+  bo.configQrSize.textContent = '2,8 cm';
   bo.dashboardBackendInfo.textContent = ok ? 'Configurado' : 'Por configurar';
   bo.dashboardAdminEmail.textContent = BO_CONFIG?.adminEmail || '—';
 }
+
 async function bootPinFlow(){
   try{
     const pinInfo = await apiGet('pinStatus');
@@ -270,15 +293,155 @@ function renderCloseOccurrenceSummary(){ const id = bo.closeOccurrenceSelect.val
 function handleClosePhotoPicked(event){ const file = event.target.files?.[0]; if(!file) return; if(!file.type.startsWith('image/')){ showBackofficeToast('Seleciona uma imagem válida.'); event.target.value = ''; return; } if(file.size > 8*1024*1024){ showBackofficeToast('A fotografia é demasiado grande.'); event.target.value = ''; return; } BO_CLOSE_FILE = file; bo.closePhotoMeta.textContent = `${file.name} · ${formatBytes(file.size)}`; }
 async function handleCloseOccurrence(){ const id = bo.closeOccurrenceSelect.value; const occ = BO_OPEN_OCCURRENCES.find(x => x.id === id); if(!occ){ showBackofficeToast('Seleciona uma ocorrência aberta.'); return; } if((BO_CONFIG?.features?.closePhotoRequired !== false) && !BO_CLOSE_FILE){ showBackofficeToast('A fotografia de fecho é obrigatória.'); return; } try{ bo.closeOccurrenceBtn.disabled = true; bo.closeOccurrenceBtn.textContent = 'A fechar…'; const photo = BO_CLOSE_FILE ? await fileToPayload(BO_CLOSE_FILE) : null; const r = await apiPost({ action:getAction('closeOccurrence'), occurrenceId:occ.id, floor:occ.floor, point:occ.point, closeNotes:bo.closeNote.value.trim(), closePhotoBase64:photo?.base64 || '', closePhotoDataUrl:photo?.dataUrl || '', closePhotoName:photo?.name || '', closePhotoType:photo?.type || '', clientTs:new Date().toISOString(), source:'github-pages-backoffice' }); if(r?.success === false) throw new Error(r.message || 'Falha ao fechar ocorrência.'); showBackofficeToast('Ocorrência fechada.'); bo.closeOccurrenceSelect.value = ''; bo.closeNote.value = ''; bo.closePhotoInput.value = ''; bo.closePhotoMeta.textContent = 'Nenhuma fotografia selecionada.'; BO_CLOSE_FILE = null; await Promise.all([loadOccurrences(), refreshDashboard()]); }catch(err){ showBackofficeToast(err.message || 'Não foi possível fechar.'); } finally{ bo.closeOccurrenceBtn.disabled = false; bo.closeOccurrenceBtn.textContent = 'Fechar ocorrência'; } }
 
-function renderQrSection(){ const points = getAllPoints(); bo.singleQrSelect.innerHTML = '<option value="">Selecionar ponto</option>'; bo.qrGrid.innerHTML = ''; points.forEach(point => { const o = document.createElement('option'); o.value = makeKey(point.floor, point.point); o.textContent = `${point.floorLabel} · ${point.label}`; bo.singleQrSelect.appendChild(o); bo.qrGrid.appendChild(createQrCard(point)); }); renderSingleQrPreview(); }
-function renderSingleQrPreview(){ const key = bo.singleQrSelect.value; if(!key){ bo.singleQrPreview.classList.add('hidden'); bo.singleQrPreview.innerHTML=''; return; } const point = getAllPoints().find(x => makeKey(x.floor, x.point) === key); if(!point) return; const reportUrl = buildReportUrl(point); const imgUrl = buildQrImageUrl(reportUrl); bo.singleQrPreview.classList.remove('hidden'); bo.singleQrPreview.innerHTML = `<div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;"><div class="qr-card" style="width:220px; min-height:auto;"><img src="${escapeAttr(imgUrl)}" alt="QR Code ${escapeAttr(point.label)}"><div class="qr-label">${escapeHtml(point.floorLabel)}<br>${escapeHtml(point.label)}</div></div><div style="flex:1; min-width:240px;"><div class="kv"><div><strong>Ponto:</strong> ${escapeHtml(point.floorLabel)} · ${escapeHtml(point.label)}</div><div><strong>Localização:</strong> ${escapeHtml(point.location || '—')}</div><div><strong>URL:</strong></div></div><div class="code-box" style="margin-top:10px;">${escapeHtml(reportUrl)}</div></div></div>`; }
-function createQrCard(point){ const card = document.createElement('div'); card.className = 'qr-card'; const url = buildReportUrl(point); const qr = buildQrImageUrl(url); card.innerHTML = `<img src="${escapeAttr(qr)}" alt="QR ${escapeAttr(point.label)}"><div class="qr-label">${escapeHtml(point.floorLabel)}<br>${escapeHtml(point.label)}</div>`; return card; }
-function printSingleQr(){ const key = bo.singleQrSelect.value; if(!key) return showBackofficeToast('Seleciona um ponto.'); const point = getAllPoints().find(x => makeKey(x.floor, x.point) === key); if(point) openPrintWindow([point], true); }
+function renderQrSection(){
+  const points = getAllPoints();
+  BO_QR_SELECTED = new Set(Array.from(BO_QR_SELECTED).filter(key => points.some(p => makeKey(p.floor,p.point) === key)));
+
+  if(bo.singleQrSelect){
+    bo.singleQrSelect.innerHTML = '<option value="">Selecionar ponto</option>';
+    points.forEach(point => {
+      const o = document.createElement('option');
+      o.value = makeKey(point.floor, point.point);
+      o.textContent = getQrPrintLabel(point);
+      bo.singleQrSelect.appendChild(o);
+    });
+    const field = bo.singleQrSelect.closest('.field');
+    if(field) field.style.display = 'none';
+  }
+
+  if(bo.printSingleQrBtn){
+    bo.printSingleQrBtn.textContent = 'Imprimir selecionados';
+    bo.printSingleQrBtn.classList.remove('btn-secondary');
+    bo.printSingleQrBtn.classList.add('btn-primary');
+  }
+  if(bo.printAllQrBtn){
+    bo.printAllQrBtn.textContent = 'Imprimir todos';
+    bo.printAllQrBtn.classList.remove('btn-primary');
+    bo.printAllQrBtn.classList.add('btn-secondary');
+  }
+
+  ensureQrToolbar();
+  bo.qrGrid.classList.add('selectable');
+  bo.qrGrid.innerHTML = '';
+
+  if(!points.length){
+    bo.qrGrid.innerHTML = '<div class="empty">Sem QR codes configurados.</div>';
+    updateQrCounter();
+    return;
+  }
+
+  points.forEach(point => bo.qrGrid.appendChild(createQrCard(point)));
+  renderSingleQrPreview();
+  updateQrCounter();
+}
+function ensureQrToolbar(){
+  const tab = document.getElementById('tab-qrcodes');
+  const existing = document.getElementById('qrToolbarEnhanced');
+  if(existing) return;
+  const toolbar = document.createElement('div');
+  toolbar.id = 'qrToolbarEnhanced';
+  toolbar.className = 'qr-toolbar-enhanced';
+  toolbar.innerHTML = `<button id="selectAllQrBtn" class="btn btn-secondary" type="button">Selecionar todos</button><button id="clearQrSelectionBtn" class="btn btn-secondary" type="button">Limpar seleção</button><span id="qrCounter" class="qr-counter">0 selecionados</span>`;
+  const helper = tab.querySelector('.helper');
+  tab.insertBefore(toolbar, helper);
+  document.getElementById('selectAllQrBtn').addEventListener('click', selectAllQrs);
+  document.getElementById('clearQrSelectionBtn').addEventListener('click', clearQrSelection);
+}
+function updateQrCounter(){
+  const counter = document.getElementById('qrCounter');
+  if(counter) counter.textContent = `${BO_QR_SELECTED.size} selecionado${BO_QR_SELECTED.size === 1 ? '' : 's'}`;
+}
+function selectAllQrs(){
+  BO_QR_SELECTED = new Set(getAllPoints().map(p => makeKey(p.floor,p.point)));
+  renderQrCardsSelection();
+  updateQrCounter();
+}
+function clearQrSelection(){
+  BO_QR_SELECTED.clear();
+  renderQrCardsSelection();
+  updateQrCounter();
+}
+function renderQrCardsSelection(){
+  bo.qrGrid.querySelectorAll('.qr-card').forEach(card => card.classList.toggle('selected', BO_QR_SELECTED.has(card.dataset.key)));
+}
+function toggleQrSelection(point){
+  const key = makeKey(point.floor, point.point);
+  if(BO_QR_SELECTED.has(key)) BO_QR_SELECTED.delete(key); else BO_QR_SELECTED.add(key);
+  renderQrCardsSelection();
+  updateQrCounter();
+}
+function renderSingleQrPreview(){
+  const key = bo.singleQrSelect?.value || '';
+  if(!key){ bo.singleQrPreview.classList.add('hidden'); bo.singleQrPreview.innerHTML=''; return; }
+  const point = getAllPoints().find(x => makeKey(x.floor, x.point) === key);
+  if(!point) return;
+  const reportUrl = buildReportUrl(point);
+  const imgUrl = buildQrImageUrl(reportUrl);
+  bo.singleQrPreview.classList.remove('hidden');
+  bo.singleQrPreview.innerHTML = `<div style="display:flex; gap:14px; flex-wrap:wrap; align-items:center;"><div class="qr-card" style="width:180px; min-height:auto;"><img src="${escapeAttr(imgUrl)}" alt="QR Code ${escapeAttr(getQrPrintLabel(point))}"><div class="qr-label">${escapeHtml(getQrPrintLabel(point))}</div></div><div style="flex:1; min-width:240px;"><div class="kv"><div><strong>Ponto:</strong> ${escapeHtml(getQrPrintLabel(point))}</div><div><strong>Localização:</strong> ${escapeHtml(point.location || '—')}</div><div><strong>URL:</strong></div></div><div class="code-box" style="margin-top:10px;">${escapeHtml(reportUrl)}</div></div></div>`;
+}
+function createQrCard(point){
+  const card = document.createElement('button');
+  card.type = 'button';
+  card.className = 'qr-card';
+  const key = makeKey(point.floor, point.point);
+  card.dataset.key = key;
+  card.classList.toggle('selected', BO_QR_SELECTED.has(key));
+  const url = buildReportUrl(point);
+  const qr = buildQrImageUrl(url);
+  const label = getQrPrintLabel(point);
+  card.innerHTML = `<img src="${escapeAttr(qr)}" alt="QR ${escapeAttr(label)}"><div class="qr-label">${escapeHtml(label)}</div><div class="qr-url-mini">${escapeHtml(url)}</div>`;
+  card.addEventListener('click', () => toggleQrSelection(point));
+  return card;
+}
+function printSelectedQrs(){
+  const selected = getAllPoints().filter(p => BO_QR_SELECTED.has(makeKey(p.floor,p.point)));
+  if(!selected.length) return showBackofficeToast('Seleciona pelo menos um QR code.');
+  openPrintWindow(selected, false);
+}
+function printSingleQr(){ printSelectedQrs(); }
 function printAllQrs(){ const points = getAllPoints(); if(!points.length) return showBackofficeToast('Não há QR codes.'); openPrintWindow(points, false); }
-function openPrintWindow(points, singleMode){ const size = Number(BO_CONFIG?.qr?.printSizeCm || 8); const title = singleMode ? 'QR Code Individual' : 'Folha A4 - QR Codes'; const items = points.map(p => { const url = buildReportUrl(p); const qr = buildQrImageUrl(url); return `<div class="item"><img src="${escapeAttr(qr)}" alt="QR"><div class="label">${escapeHtml(p.floorLabel)}<br>${escapeHtml(p.label)}</div></div>`; }).join(''); const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>@page{size:A4 portrait;margin:10mm}body{font-family:Arial,sans-serif;margin:0}.grid{display:grid;grid-template-columns:repeat(2,1fr);gap:10mm}.item{border:1px solid #ddd;border-radius:8px;padding:8mm;text-align:center;break-inside:avoid}.item img{width:${size}cm;height:${size}cm}.label{font-weight:700;margin-top:4mm;font-size:12px}</style></head><body><div class="grid">${items}</div><script>window.onload=()=>window.print()<\/script></body></html>`; const w = window.open('', '_blank'); w.document.write(html); w.document.close(); }
-function buildReportUrl(point){ const base = BO_CONFIG?.publicUrl || window.location.href.replace(/backoffice\.html.*$/, 'index.html'); const url = new URL(base, window.location.href); url.searchParams.set('floor', point.floor); url.searchParams.set('point', point.point); return url.toString(); }
-function buildQrImageUrl(text){ const size = Number(BO_CONFIG?.qr?.imageSizePx || 600); return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`; }
-function getPublicIndexUrl(){ return BO_CONFIG?.publicUrl || window.location.href.replace(/backoffice\.html.*$/, 'index.html'); }
+function openPrintWindow(points, singleMode){
+  const title = singleMode ? 'QR Code Individual' : 'QR Codes - Extintores';
+  const items = points.map(p => {
+    const url = buildReportUrl(p);
+    const qr = buildQrImageUrl(url);
+    return `<div class="item"><img src="${escapeAttr(qr)}" alt="QR"><div class="label">${escapeHtml(getQrPrintLabel(p))}</div></div>`;
+  }).join('');
+  const html = `<!doctype html><html><head><meta charset="utf-8"><title>${title}</title><style>@page{size:A4 portrait;margin:8mm}*{box-sizing:border-box}body{font-family:Arial,sans-serif;margin:0;color:#111827}.grid{display:grid;grid-template-columns:repeat(4,1fr);gap:5mm}.item{border:1px solid #E5E7EB;border-radius:6px;padding:4mm 3mm;text-align:center;break-inside:avoid;min-height:42mm;display:flex;flex-direction:column;align-items:center;justify-content:center}.item img{width:2.8cm;height:2.8cm;display:block}.label{font-weight:700;margin-top:2mm;font-size:10px;line-height:1.2}@media print{.item{page-break-inside:avoid}}</style></head><body><div class="grid">${items}</div><script>window.onload=()=>window.print()<\/script></body></html>`;
+  const w = window.open('', '_blank');
+  if(!w) return showBackofficeToast('O browser bloqueou a janela de impressão.');
+  w.document.write(html);
+  w.document.close();
+}
+function buildReportUrl(point){
+  const base = getV2EntryUrl();
+  const url = new URL(base, window.location.href);
+  url.searchParams.set('floor', point.floor);
+  url.searchParams.set('point', point.point);
+  url.searchParams.set('qr', 'extintor');
+  return url.toString();
+}
+function getV2EntryUrl(){
+  if(BO_CONFIG?.qr?.entryUrl) return BO_CONFIG.qr.entryUrl;
+  const configured = BO_CONFIG?.publicBaseUrl || BO_CONFIG?.publicUrl || '';
+  if(configured){
+    try{
+      const u = new URL(configured, window.location.href);
+      u.pathname = u.pathname.replace(/\/index\.html$/,'/V2/index.html').replace(/\/$/,'/V2/index.html');
+      return u.toString();
+    }catch(e){}
+  }
+  return window.location.href.replace(/backoffice\.html.*$/, 'V2/index.html');
+}
+function buildQrImageUrl(text){ const size = Number(BO_CONFIG?.qr?.imageSizePx || BO_CONFIG?.qr?.sizePx || 600); return `https://api.qrserver.com/v1/create-qr-code/?size=${size}x${size}&data=${encodeURIComponent(text)}`; }
+function getPublicIndexUrl(){ return BO_CONFIG?.publicBaseUrl || BO_CONFIG?.publicUrl || window.location.href.replace(/backoffice\.html.*$/, 'index.html'); }
+function getQrPrintLabel(point){
+  const floor = Number(point.floor);
+  if(floor >= 0) return `Piso ${floor}`;
+  const ext = String(point.label || point.point || '').trim();
+  return `Piso ${floor} · ${ext || 'Extintor'}`;
+}
 function getAllPoints(){ const floors = BO_CONFIG?.building?.floors || []; return floors.flatMap(f => (f.extinguishers || []).map(e => ({ floor:f.floor, floorLabel:f.label, point:e.point, label:e.label || e.point, shortLabel:e.shortLabel || e.point, location:e.location || '' }))); }
 function getFloorLabel(floor){ const match = (BO_CONFIG?.building?.floors || []).find(f => Number(f.floor) === Number(floor)); return match?.label || String(floor); }
 function extractReportedItems(payload){ if(!payload) return []; if(Array.isArray(payload)) return payload; return payload.reported || payload.items || payload.data || []; }
