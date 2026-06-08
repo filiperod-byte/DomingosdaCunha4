@@ -1,5 +1,5 @@
 // Reduz fotografias no telemóvel antes do envio para o Apps Script.
-// Este ficheiro também aplica ajustes visuais à fachada dos extintores.
+// Este ficheiro também aplica ajustes visuais e funcionais à fachada dos extintores.
 window.fileToPayload = async function fileToPayload(file) {
   const originalSize = file.size;
   const compressed = await compressExtinguisherImage(file, {
@@ -94,8 +94,12 @@ function estimateDataUrlBytesForCompression(dataUrl) {
   return Math.round(base64.length * 0.75);
 }
 
-// Fachada inspirada no prédio real.
+// Fachada inspirada no prédio real + estados verde/amarelo/vermelho.
 (function applyFacadeOverrides() {
+  const occurrenceMap = new Map();
+  const openSet = new Set();
+  const pendingSet = new Set();
+
   const css = `
     .facade-shell:before{display:none!important}
     .facade-row.residential .facade-inner{grid-template-columns:32px 1fr auto}
@@ -115,6 +119,14 @@ function estimateDataUrlBytesForCompression(dataUrl) {
     .facade-row.garage .facade-inner{min-height:70px;grid-template-columns:1fr auto!important}
     .facade-row.garage .garage-zone{background:linear-gradient(180deg,#F4D7C4,#D99A78)!important;border:1px dashed rgba(86,45,31,.42)!important;color:#5B2F22!important;font-weight:800}
     .facade-row.garage .ext-btn{box-shadow:0 7px 16px rgba(73,34,20,.26)}
+    .dot.pending{background:#F59E0B}
+    .ext-btn.pending{background:linear-gradient(180deg,#FBBF24,#D97706)!important;color:#fff!important}
+    .alert-box.pending{display:block;background:#FFFBEB;border-color:#FDE68A;color:#92400E}
+    .alert-box.open{display:block;background:#FEF2F2;border-color:#FECACA;color:#991B1B}
+    .existing-report-title{font-weight:900;margin-bottom:6px}
+    .existing-report-grid{display:grid;gap:4px;font-size:.9rem;line-height:1.35}
+    .existing-report-grid strong{font-weight:900}
+    .existing-report-grid a{color:inherit;font-weight:900;text-decoration:underline}
     @media(max-width:420px){
       .facade-row.residential .facade-inner{grid-template-columns:24px 1fr auto}
       .facade-row.service .floor-label{min-height:112px}
@@ -129,6 +141,80 @@ function estimateDataUrlBytesForCompression(dataUrl) {
   style.id = 'facade-overrides-style';
   style.textContent = css;
   document.head.appendChild(style);
+
+  function escapeHtmlLocal(value) {
+    return String(value || '').replace(/[&<>\"]/g, (char) => ({
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;'
+    }[char]));
+  }
+
+  function displayDate(value) {
+    if (!value) return '';
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return String(value);
+    return new Intl.DateTimeFormat('pt-PT', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    }).format(date);
+  }
+
+  function asOccurrenceArray(payload) {
+    if (!payload) return [];
+    if (Array.isArray(payload)) return payload;
+    if (Array.isArray(payload.occurrences)) return payload.occurrences;
+    if (Array.isArray(payload.items)) return payload.items;
+    if (Array.isArray(payload.data)) return payload.data;
+    return [];
+  }
+
+  function clearOccurrenceState() {
+    occurrenceMap.clear();
+    openSet.clear();
+    pendingSet.clear();
+  }
+
+  function registerOccurrence(item, type) {
+    if (!item) return;
+    const floor = Number(item.floor ?? item.piso ?? item.FLOOR);
+    const point = String(item.point ?? item.ponto ?? item.POINT ?? '').trim();
+    if (!point || Number.isNaN(floor)) return;
+
+    const key = makeKey(floor, point);
+    const detail = {
+      type,
+      id: item.id || item.occurrenceId || item.OCCURRENCE_ID || '',
+      floor,
+      point,
+      floorLabel: item.floorLabel || item.FLOOR_LABEL || facadeFloorLabel(floor),
+      location: item.location || item.LOCATION || '',
+      reportedBy: item.reportedBy || item.REPORTED_BY || '',
+      reason: item.reason || item.REASON || '',
+      notes: item.notes || item.NOTES || '',
+      createdAt: item.createdAt || item.reportedAt || item.REPORTED_AT || '',
+      photoUrl: item.photoUrl || item.PHOTO_FILE_URL || '',
+      status: item.status || item.STATUS || ''
+    };
+
+    occurrenceMap.set(key, detail);
+    if (type === 'open') openSet.add(key);
+    if (type === 'pending') pendingSet.add(key);
+  }
+
+  function updateLegendText() {
+    const legend = document.querySelector('.legend');
+    if (!legend) return;
+    legend.innerHTML = `
+      <span class="pill"><span class="dot ok"></span> Sem ocorrência</span>
+      <span class="pill"><span class="dot pending"></span> A aguardar validação</span>
+      <span class="pill"><span class="dot alert"></span> Ocorrência aberta</span>
+    `;
+  }
 
   function facadeFloorLabel(floorValue, labelValue) {
     const floorNumber = Number(floorValue);
@@ -188,7 +274,39 @@ function estimateDataUrlBytesForCompression(dataUrl) {
     return garage;
   }
 
-  window.renderBuilding = function renderBuilding() {
+  loadStatuses = async function loadStatusesOverride() {
+    clearOccurrenceState();
+    updateLegendText();
+
+    try {
+      const [openResult, pendingResult] = await Promise.allSettled([
+        apiGet('openOccurrences'),
+        apiGet('pendingOccurrences')
+      ]);
+
+      if (openResult.status === 'fulfilled') {
+        asOccurrenceArray(openResult.value).forEach((item) => registerOccurrence(item, 'open'));
+      }
+      if (pendingResult.status === 'fulfilled') {
+        asOccurrenceArray(pendingResult.value).forEach((item) => registerOccurrence(item, 'pending'));
+      }
+
+      REPORTED_SET = new Set(openSet);
+      els.lastRefresh.textContent = `Atualizado às ${formatTime(new Date())}`;
+
+      if (openResult.status === 'rejected' && pendingResult.status === 'rejected') {
+        throw openResult.reason || pendingResult.reason;
+      }
+    } catch (error) {
+      console.error('Erro ao carregar estados:', error);
+      clearOccurrenceState();
+      REPORTED_SET = new Set();
+      els.lastRefresh.textContent = 'Sem ligação ao backend';
+      showToast('Não foi possível atualizar o estado. A app continua disponível para reporte.');
+    }
+  };
+
+  renderBuilding = function renderBuildingOverride() {
     const floors = APP_CONFIG?.building?.floors || [];
     els.building.innerHTML = '';
 
@@ -234,17 +352,19 @@ function estimateDataUrlBytesForCompression(dataUrl) {
 
       (floor.extinguishers || []).forEach((ext) => {
         const key = makeKey(floor.floor, ext.point);
-        const isAlert = REPORTED_SET.has(key);
+        const detail = occurrenceMap.get(key) || null;
+        const stateClass = detail?.type === 'pending' ? 'pending' : detail?.type === 'open' ? 'alert' : 'ok';
+        const stateText = detail?.type === 'pending' ? ' - a aguardar validação' : detail?.type === 'open' ? ' - ocorrência aberta' : ' - sem ocorrência';
 
         const btn = document.createElement('button');
         btn.type = 'button';
-        btn.className = `ext-btn ${isAlert ? 'alert' : 'ok'}`;
+        btn.className = `ext-btn ${stateClass}`;
         btn.dataset.floor = String(floor.floor);
         btn.dataset.point = ext.point;
         btn.dataset.location = ext.location || '';
         btn.dataset.label = ext.label || ext.point;
         btn.dataset.title = displayLabel;
-        btn.setAttribute('aria-label', `${displayLabel} - ${ext.label || ext.point}${isAlert ? ' - reportado' : ' - sem alerta'}`);
+        btn.setAttribute('aria-label', `${displayLabel} - ${ext.label || ext.point}${stateText}`);
 
         const span = document.createElement('span');
         span.textContent = ext.shortLabel || ext.label || ext.point;
@@ -258,7 +378,9 @@ function estimateDataUrlBytesForCompression(dataUrl) {
             label: ext.label || ext.point,
             shortLabel: ext.shortLabel || ext.point,
             location: ext.location || '',
-            isAlert
+            isAlert: detail?.type === 'open',
+            isPending: detail?.type === 'pending',
+            existingOccurrence: detail
           });
         });
 
@@ -276,4 +398,57 @@ function estimateDataUrlBytesForCompression(dataUrl) {
     els.building.appendChild(facade);
     els.building.classList.remove('hidden');
   };
+
+  openModal = function openModalOverride(ext) {
+    SELECTED_POINT = ext;
+    SELECTED_FILE = null;
+    clearPhotoInputs();
+
+    const targetLabel = `${ext.floorLabel} - ${ext.label}`;
+    els.modalTitle.textContent = 'Reportar extintor';
+    els.modalSubtitle.textContent = AUTO_REPORTER_NAME
+      ? `Ponto selecionado: ${targetLabel} · Reportado por: ${AUTO_REPORTER_NAME}`
+      : `Ponto selecionado: ${targetLabel}`;
+
+    const existing = ext.existingOccurrence;
+    els.alreadyReportedBox.className = 'alert-box';
+
+    if (existing) {
+      const typeLabel = existing.type === 'pending'
+        ? 'Já existe um reporte neste extintor a aguardar validação.'
+        : 'Já existe uma ocorrência aberta neste extintor.';
+
+      els.alreadyReportedBox.classList.add(existing.type === 'pending' ? 'pending' : 'open');
+      els.alreadyReportedBox.classList.add('show');
+      els.alreadyReportedBox.innerHTML = `
+        <div class="existing-report-title">${escapeHtmlLocal(typeLabel)}</div>
+        <div class="existing-report-grid">
+          ${existing.createdAt ? `<div><strong>Data:</strong> ${escapeHtmlLocal(displayDate(existing.createdAt))}</div>` : ''}
+          ${existing.reportedBy ? `<div><strong>Reportado por:</strong> ${escapeHtmlLocal(existing.reportedBy)}</div>` : ''}
+          ${existing.reason ? `<div><strong>Motivo:</strong> ${escapeHtmlLocal(existing.reason)}</div>` : ''}
+          ${existing.notes ? `<div><strong>Observação:</strong> ${escapeHtmlLocal(existing.notes)}</div>` : ''}
+          ${existing.photoUrl ? `<div><strong>Foto:</strong> <a href="${escapeHtmlLocal(existing.photoUrl)}" target="_blank" rel="noopener noreferrer">Abrir fotografia</a></div>` : ''}
+        </div>
+      `;
+    } else {
+      els.alreadyReportedBox.classList.remove('show');
+      els.alreadyReportedBox.innerHTML = 'Este extintor já tem uma ocorrência aberta. Pode submeter informação adicional, se necessário.';
+    }
+
+    els.hiddenFloor.value = String(ext.floor);
+    els.hiddenPoint.value = ext.point;
+    els.hiddenLocation.value = ext.location || '';
+    els.reporterName.value = AUTO_REPORTER_NAME || els.reporterName.value || '';
+
+    els.overlay.classList.add('show');
+    els.overlay.setAttribute('aria-hidden', 'false');
+    document.body.style.overflow = 'hidden';
+
+    window.setTimeout(() => {
+      if (AUTO_REPORTER_NAME) els.reportReason.focus();
+      else els.reporterName.focus();
+    }, 40);
+  };
+
+  document.addEventListener('DOMContentLoaded', updateLegendText);
 })();
