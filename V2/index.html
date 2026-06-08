@@ -30,12 +30,13 @@
 
   <section class="screen code-screen" id="screen-codigo"><div class="module-head"><div class="module-head-row"><button class="module-back" onclick="irPara('screen-home')">←</button><div><div class="module-head-title">PIN quadro elétrico</div><div class="module-head-sub">Código temporariamente visível. Use apenas quando necessário.</div></div></div></div><div class="module-content code-content"><div class="code-status-card"><div class="shield">🛡️</div><div><div class="code-title">Código atual</div><div class="module-intro-text">Toque no olho para voltar a mostrar o código.</div></div></div><div class="code-card"><button class="eye" id="btn-eye" onclick="toggleCodigo()" aria-label="Mostrar código"></button><div class="code" id="codigo-num">****</div><span class="timer" id="codigo-timer">Código oculto</span></div><div class="warn-box"><span>⚠️</span><p id="codigo-aviso-text">Após utilização, confirme que a caixa fica corretamente fechada.</p></div><button class="btn btn-outline" onclick="irPara('screen-home')">Voltar ao menu</button></div></section>
 
-  <section class="screen" id="screen-extintores"><div class="header"><button class="back" onclick="irPara('screen-home')">←</button><div><div class="h-title">Controlo de extintores</div><div class="h-sub">Estado atual e reporte de inconformidades.</div></div></div><div class="body" id="ext-body"><div class="status-card"><div class="status-title">A carregar estado...</div><div class="status-text">Só um instante.</div></div></div></section>
+  <section class="screen" id="screen-extintores"></section>
 
   <section class="screen" id="screen-ok"><div class="state"><div class="state-icon" style="background:#F0FDF4">✅</div><div class="state-title">Pedido enviado</div><div class="state-text">A administração vai validar o pedido. Depois receberá o PIN pessoal por email.</div><button class="btn btn-primary" style="max-width:280px" onclick="irPara('screen-start')">Voltar ao início</button></div></section>
   <section class="screen" id="screen-pendente"><div class="state"><div class="state-icon" style="background:var(--blue-lt)">⏳</div><div class="state-title">Pedido pendente</div><div class="state-text">O seu acesso ainda está a aguardar aprovação.</div><button class="btn btn-primary" style="max-width:280px" onclick="irPara('screen-start')">Voltar ao início</button></div></section>
   <section class="screen" id="screen-bloqueado"><div class="state"><div class="state-icon" style="background:#FEF3C7">🔒</div><div class="state-title">Acesso bloqueado</div><div class="state-text">Contacte a administração do condomínio.</div><button class="btn btn-primary" style="max-width:280px" onclick="irPara('screen-start')">Voltar ao início</button></div></section>
 </div>
 <script src="app.js" defer></script>
+<script src="extintores-direct.js" defer></script>
 </body>
 </html>
