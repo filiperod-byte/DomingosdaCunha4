@@ -5,23 +5,96 @@
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#1A2F5A">
   <title>Administração — Domingos da Cunha 4</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
   <style>
-    *{box-sizing:border-box;margin:0;padding:0}:root{--navy:#1A2F5A;--blue:#2563EB;--blue-lt:#EFF6FF;--bg:#F5F7FA;--card:#fff;--text:#111827;--muted:#6B7280;--border:#E5E7EB;--danger:#DC2626;--shadow:0 1px 8px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.05)}html,body{min-height:100%;background:linear-gradient(180deg,#EEF4FF 0%,var(--bg) 56%);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}.app{min-height:100vh;max-width:430px;margin:0 auto;padding:28px 18px 40px}.hero{text-align:center;padding:18px 8px 22px}.icon{width:88px;height:88px;border-radius:26px;background:var(--navy);margin:0 auto 16px;display:flex;align-items:center;justify-content:center;font-size:42px;box-shadow:0 8px 32px rgba(26,47,90,.28)}h1{font-size:26px;line-height:1.15;color:var(--navy)}p{color:var(--muted);font-size:14px;line-height:1.45;margin-top:7px}.card{background:var(--card);border:1px solid var(--border);border-radius:18px;padding:16px;margin-bottom:10px;box-shadow:var(--shadow);display:flex;gap:14px;align-items:center;text-decoration:none;color:inherit}.card:active{transform:scale(.99)}.cicon{width:48px;height:48px;border-radius:15px;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}.title{font-size:15px;font-weight:800;color:var(--navy)}.desc{font-size:12px;color:var(--muted);margin-top:3px}.chev{margin-left:auto;color:#CBD5E1;font-size:24px}.back,.btn{display:flex;align-items:center;justify-content:center;width:100%;padding:15px;border-radius:14px;background:#fff;border:1.5px solid var(--border);color:var(--text);font-weight:800;text-decoration:none;margin-top:10px;font:inherit}.btn-primary{background:var(--blue);color:#fff;border:0}.login{background:#fff;border-radius:18px;padding:18px;box-shadow:var(--shadow);margin-top:10px}.field{margin-top:12px}.field label{display:block;font-size:13px;font-weight:800;color:var(--navy);margin-bottom:6px}.input{width:100%;padding:14px;border:1.5px solid var(--border);border-radius:14px;background:#fff;font:inherit}.msg{padding:12px;border-radius:13px;margin-top:10px;font-size:14px;font-weight:700;background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}.hidden{display:none!important}
+    *{box-sizing:border-box;margin:0;padding:0}
+    :root{--navy:#1A2F5A;--blue:#2563EB;--blue-lt:#EFF6FF;--blue-md:#DBEAFE;--bg:#F5F7FA;--card:#fff;--text:#111827;--muted:#6B7280;--border:#E5E7EB;--danger:#DC2626;--ok:#16A34A;--warn:#F59E0B;--shadow:0 1px 8px rgba(0,0,0,.07),0 4px 16px rgba(0,0,0,.05)}
+    html,body{min-height:100%;background:linear-gradient(180deg,#EEF4FF 0%,var(--bg) 56%);font-family:'Plus Jakarta Sans',system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}
+    .app{min-height:100vh;max-width:430px;margin:0 auto;padding-bottom:34px}
+    .admin-head{background:var(--navy);color:#fff;padding:22px 20px 44px;border-radius:0 0 26px 26px;box-shadow:0 8px 24px rgba(26,47,90,.16)}
+    .head-row{display:flex;align-items:flex-start;gap:12px}.back-mini{width:40px;height:40px;border-radius:14px;border:none;background:rgba(255,255,255,.14);color:#fff;font-size:22px;font-weight:900;display:flex;align-items:center;justify-content:center;text-decoration:none;flex-shrink:0}.head-title{font-size:24px;font-weight:900;line-height:1.12}.head-sub{font-size:13px;color:rgba(255,255,255,.74);line-height:1.45;margin-top:5px}
+    .admin-intro{margin:-22px 16px 16px;background:#fff;border-radius:18px;padding:16px;box-shadow:var(--shadow);display:flex;align-items:center;gap:12px}.intro-icon{width:54px;height:54px;border-radius:17px;background:var(--blue-lt);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}.intro-title{font-size:15px;font-weight:900;color:var(--navy)}.intro-text{font-size:12px;color:var(--muted);line-height:1.42;margin-top:3px}
+    .content{padding:0 16px 28px}.section-title{font-size:15px;font-weight:900;color:var(--navy);margin:6px 0 12px}.login-card,.session-card,.admin-card{background:#fff;border:1px solid var(--border);border-radius:18px;box-shadow:var(--shadow)}.login-card{padding:16px}.field{margin-bottom:12px}.field label{display:block;font-size:13px;font-weight:900;color:var(--navy);margin-bottom:6px}.input{width:100%;padding:15px;border:1.5px solid var(--border);border-radius:14px;background:#fff;color:var(--text);font:inherit;outline:none}.input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}.input::placeholder{color:#A8B0BD}
+    .btn{display:flex;align-items:center;justify-content:center;gap:8px;width:100%;padding:15px;border-radius:14px;border:0;font:inherit;font-weight:900;text-decoration:none;cursor:pointer;transition:.12s}.btn:active{transform:scale(.98);opacity:.9}.btn:disabled{opacity:.55;cursor:not-allowed}.btn-primary{background:var(--blue);color:#fff}.btn-outline{background:#fff;color:var(--text);border:1.5px solid var(--border)}.btn-danger{background:#FEE2E2;color:#991B1B}.msg{padding:12px 13px;border-radius:13px;margin:10px 0 0;font-size:13px;font-weight:800;line-height:1.4}.msg.danger{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}.msg.ok{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}.hidden{display:none!important}
+    .session-card{padding:15px 16px;margin-bottom:14px;display:flex;gap:12px;align-items:center}.session-icon{width:46px;height:46px;border-radius:15px;background:#F0FDF4;color:#166534;display:flex;align-items:center;justify-content:center;font-size:24px;flex-shrink:0}.session-title{font-size:14px;font-weight:900;color:var(--navy)}.session-text{font-size:12px;color:var(--muted);line-height:1.35;margin-top:3px}.module-list{display:grid;gap:10px}.admin-card{padding:16px;display:flex;gap:14px;align-items:center;text-decoration:none;color:inherit;position:relative;overflow:hidden}.admin-card:active{transform:scale(.99)}.admin-card:after{content:'›';margin-left:auto;color:#CBD5E1;font-size:26px;font-weight:800}.card-icon{width:50px;height:50px;border-radius:16px;display:flex;align-items:center;justify-content:center;font-size:25px;flex-shrink:0}.card-title{font-size:15px;font-weight:900;color:var(--navy)}.card-desc{font-size:12px;color:var(--muted);line-height:1.36;margin-top:3px}.badge{display:inline-flex;margin-top:7px;padding:4px 8px;border-radius:999px;background:#F3F4F6;color:#6B7280;font-size:10px;font-weight:900}.badge.live{background:#F0FDF4;color:#166534}.badge.admin{background:#EFF6FF;color:#1D4ED8}.admin-actions{display:grid;gap:10px;margin-top:16px}.fineprint{font-size:11px;color:var(--muted);line-height:1.4;margin-top:10px;text-align:center}.spinner{width:18px;height:18px;border:2.5px solid rgba(255,255,255,.35);border-top-color:#fff;border-radius:50%;animation:spin .65s linear infinite;display:inline-block}@keyframes spin{to{transform:rotate(360deg)}}
   </style>
 </head>
 <body>
   <main class="app">
-    <section class="hero"><div class="icon">🛠️</div><h1>Área de administração</h1><p id="lead">Faça login uma vez e escolha o módulo que pretende gerir.</p></section>
-    <section id="loginBox" class="login"><div class="field"><label>Email</label><input class="input" id="email" type="email" placeholder="admin@email.com"></div><div class="field"><label>PIN de administrador</label><input class="input" id="pin" type="password" inputmode="numeric" maxlength="6" placeholder="••••••"></div><div id="msg"></div><button class="btn btn-primary" onclick="login()">Entrar na administração</button></section>
-    <section id="menuBox" class="hidden"><a class="card" href="acessos-admin.html"><div class="cicon" style="background:#EFF6FF">🔐</div><div><div class="title">Acessos e códigos</div><div class="desc">Aprovar utilizadores, gerir PINs e código do quadro elétrico.</div></div><div class="chev">›</div></a><a class="card" href="../backoffice.html"><div class="cicon" style="background:#FEE2E2">🧯</div><div><div class="title">Validação dos extintores</div><div class="desc">Validar reportes pendentes, consultar fotos e fechar ocorrências.</div></div><div class="chev">›</div></a><button class="back" onclick="logout()">Terminar sessão de administração</button></section>
-    <a class="back" href="index.html">← Voltar à app</a>
+    <header class="admin-head">
+      <div class="head-row">
+        <a class="back-mini" href="index.html" aria-label="Voltar à app">←</a>
+        <div>
+          <div class="head-title">Área de administração</div>
+          <div class="head-sub" id="lead">Faça login uma vez e escolha o módulo que pretende gerir.</div>
+        </div>
+      </div>
+    </header>
+
+    <section class="admin-intro">
+      <div class="intro-icon">🛠️</div>
+      <div>
+        <div class="intro-title">Gestão do condomínio</div>
+        <div class="intro-text" id="introText">Acesso reservado à administração. Depois do login, os módulos ficam disponíveis sem novo PIN.</div>
+      </div>
+    </section>
+
+    <section class="content">
+      <section id="loginBox" class="login-card">
+        <div class="section-title">Entrar na administração</div>
+        <div class="field"><label>Email</label><input class="input" id="email" type="email" placeholder="admin@email.com" autocomplete="email"></div>
+        <div class="field"><label>PIN de administrador</label><input class="input" id="pin" type="password" inputmode="numeric" maxlength="6" placeholder="••••••" autocomplete="current-password"></div>
+        <div id="msg"></div>
+        <button class="btn btn-primary" id="loginBtn" onclick="login()">Entrar na administração</button>
+        <div class="fineprint">Esta sessão desbloqueia a gestão de acessos e os módulos administrativos.</div>
+      </section>
+
+      <section id="menuBox" class="hidden">
+        <div class="session-card">
+          <div class="session-icon">✅</div>
+          <div>
+            <div class="session-title">Sessão de administração ativa</div>
+            <div class="session-text">Ligado como <span id="adminEmailLabel">administrador</span>.</div>
+          </div>
+        </div>
+
+        <div class="section-title">Módulos de administração</div>
+        <div class="module-list">
+          <a class="admin-card" href="acessos-admin.html">
+            <div class="card-icon" style="background:#EFF6FF">🔐</div>
+            <div>
+              <div class="card-title">Acessos e códigos</div>
+              <div class="card-desc">Aprovar utilizadores, gerir PINs e consultar histórico do quadro elétrico.</div>
+              <span class="badge admin">Utilizadores e códigos</span>
+            </div>
+          </a>
+          <a class="admin-card" href="../backoffice.html">
+            <div class="card-icon" style="background:#FEE2E2">🧯</div>
+            <div>
+              <div class="card-title">Extintores</div>
+              <div class="card-desc">Validar reportes, consultar fotografias, fechar ocorrências e imprimir QR codes.</div>
+              <span class="badge live">Reportes e QR codes</span>
+            </div>
+          </a>
+        </div>
+
+        <div class="admin-actions">
+          <button class="btn btn-danger" onclick="logout()">Terminar sessão de administração</button>
+          <a class="btn btn-outline" href="index.html">← Voltar à app</a>
+        </div>
+      </section>
+    </section>
   </main>
 <script>
 let BACKEND_URL='';
-async function init(){const r=await fetch('config.json',{cache:'no-store'});const c=await r.json();BACKEND_URL=c.backendUrl||'';document.getElementById('email').value=sessionStorage.getItem('dc4_admin_email')||c.adminEmail||'';if(sessionStorage.getItem('dc4_admin_unlocked')==='1')showMenu()}
-function showMenu(){document.getElementById('loginBox').classList.add('hidden');document.getElementById('menuBox').classList.remove('hidden');document.getElementById('lead').textContent='Sessão de administração ativa.';sessionStorage.setItem('extintores_bo_unlocked','1')}
-async function login(){const email=document.getElementById('email').value.trim();const pin=document.getElementById('pin').value.trim();const msg=document.getElementById('msg');msg.innerHTML='';try{const res=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'garage.loginAdmin',email,pin})});const r=await res.json();if(r.ok||r.success){sessionStorage.setItem('dc4_admin_unlocked','1');sessionStorage.setItem('dc4_admin_email',email);sessionStorage.setItem('extintores_bo_unlocked','1');showMenu()}else msg.innerHTML='<div class="msg">Credenciais inválidas.</div>'}catch(e){msg.innerHTML='<div class="msg">Erro de ligação ao backend.</div>'}}
+async function init(){try{const r=await fetch('config.json',{cache:'no-store'});const c=await r.json();BACKEND_URL=c.backendUrl||'';document.getElementById('email').value=sessionStorage.getItem('dc4_admin_email')||c.adminEmail||'';if(sessionStorage.getItem('dc4_admin_unlocked')==='1')showMenu()}catch(e){showMsg('Erro ao carregar configuração.','danger')}}
+function showMsg(text,type='danger'){const msg=document.getElementById('msg');msg.innerHTML='<div class="msg '+type+'">'+escapeHtml(text)+'</div>'}
+function escapeHtml(s){return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
+function showMenu(){const email=sessionStorage.getItem('dc4_admin_email')||document.getElementById('email').value.trim()||'administrador';document.getElementById('loginBox').classList.add('hidden');document.getElementById('menuBox').classList.remove('hidden');document.getElementById('lead').textContent='Sessão ativa. Escolha o módulo que pretende gerir.';document.getElementById('introText').textContent='Acesso validado. Pode entrar nos módulos administrativos sem repetir o PIN.';document.getElementById('adminEmailLabel').textContent=email;sessionStorage.setItem('extintores_bo_unlocked','1')}
+async function login(){const email=document.getElementById('email').value.trim();const pin=document.getElementById('pin').value.trim();const btn=document.getElementById('loginBtn');document.getElementById('msg').innerHTML='';if(!email||!pin){showMsg('Preencha o email e o PIN.');return}try{btn.disabled=true;btn.innerHTML='<span class="spinner"></span>';const res=await fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({action:'garage.loginAdmin',email,pin})});const r=await res.json();if(r.ok||r.success){sessionStorage.setItem('dc4_admin_unlocked','1');sessionStorage.setItem('dc4_admin_email',email);sessionStorage.setItem('extintores_bo_unlocked','1');showMenu()}else showMsg(r.msg||'Credenciais inválidas.')}catch(e){showMsg('Erro de ligação ao backend.')}finally{btn.disabled=false;btn.textContent='Entrar na administração'}}
 function logout(){sessionStorage.removeItem('dc4_admin_unlocked');sessionStorage.removeItem('dc4_admin_email');sessionStorage.removeItem('extintores_bo_unlocked');location.reload()}
+document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter')login()});
 init();
 </script>
 </body>
