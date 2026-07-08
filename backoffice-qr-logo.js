@@ -1,9 +1,16 @@
-// V2.2.1 - QR codes com logótipo no centro.
-// Corrige a ordem de carregamento: injeta CSS logo que este ficheiro carrega e volta a renderizar os QR codes.
+// V2.2.2 - QR codes com logótipo no centro.
+// Corrige a ordem de carregamento, usa PNG no centro e ajusta a descrição para "Ext. Piso X".
 
 function getQrLogoUrl(){
   if (BO_CONFIG?.qr?.logoUrl) return BO_CONFIG.qr.logoUrl;
   return 'assets/logo-qrcode.png?v=2';
+}
+
+function getQrPrintLabel(point){
+  const floor = Number(point.floor);
+  const ext = String(point.label || point.point || '').trim();
+  if (floor >= 0) return `Ext. Piso ${floor}`;
+  return `Ext. Piso ${floor} · ${ext || 'Extintor'}`;
 }
 
 function buildQrImageUrl(text){
