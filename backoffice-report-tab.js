@@ -1,5 +1,15 @@
 // V2.1 - adiciona separador Relatórios ao Backoffice dos Extintores.
+// V2.2 - carrega também o módulo que coloca o logótipo no centro dos QR codes.
 (function () {
+  function loadQrLogoModule() {
+    if (document.getElementById('qrLogoModule')) return;
+    const script = document.createElement('script');
+    script.id = 'qrLogoModule';
+    script.src = 'backoffice-qr-logo.js';
+    script.defer = true;
+    document.body.appendChild(script);
+  }
+
   function addReportTab() {
     const tabs = document.querySelector('.tabs');
     const adminSection = document.getElementById('adminSection');
@@ -46,6 +56,7 @@
   }
 
   document.addEventListener('DOMContentLoaded', function () {
+    loadQrLogoModule();
     addReportTab();
     setTimeout(addReportTab, 300);
     setTimeout(addReportTab, 1000);
