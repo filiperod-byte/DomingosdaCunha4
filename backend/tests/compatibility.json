@@ -1,0 +1,2942 @@
+{
+  "read-contracts": {
+    "responses": [
+      {
+        "success": true,
+        "reported": [],
+        "totalOpen": 0,
+        "updatedAt": "2026-09-11T10:00:00.000Z"
+      },
+      {
+        "success": true,
+        "pinConfigured": false,
+        "updatedAt": ""
+      },
+      {
+        "success": true,
+        "appName": "Domingos da Cunha 4",
+        "spreadsheetId": "TEST-SHEET",
+        "rootFolderId": "TEST-DRIVE",
+        "adminEmail": "admin@example.invalid",
+        "pinConfigured": false,
+        "garageConfigReady": true,
+        "now": "2026-09-11T10:00:00.000Z"
+      },
+      {
+        "success": true,
+        "occurrences": []
+      },
+      {
+        "success": true,
+        "occurrences": []
+      },
+      {
+        "nomeCondominio": "Domingos da Cunha 4",
+        "tempoVisivel": 15,
+        "adminEmail": "admin@example.invalid",
+        "structure": [
+          {
+            "piso": "10",
+            "label": "10.º andar",
+            "fraccoes": [
+              "A",
+              "B"
+            ]
+          },
+          {
+            "piso": "9",
+            "label": "9.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "8",
+            "label": "8.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "7",
+            "label": "7.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "6",
+            "label": "6.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "5",
+            "label": "5.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "4",
+            "label": "4.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "3",
+            "label": "3.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "2",
+            "label": "2.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "-1",
+            "label": "Garagem p-1",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-2",
+            "label": "Garagem p-2",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-3",
+            "label": "Garagem p-3",
+            "fraccoes": [
+              "LUGAR_GARAGEM"
+            ]
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "success": true,
+        "floors": [
+          {
+            "piso": "10",
+            "label": "10.º andar",
+            "fraccoes": [
+              "A",
+              "B"
+            ]
+          },
+          {
+            "piso": "9",
+            "label": "9.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "8",
+            "label": "8.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "7",
+            "label": "7.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "6",
+            "label": "6.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "5",
+            "label": "5.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "4",
+            "label": "4.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "3",
+            "label": "3.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "2",
+            "label": "2.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "-1",
+            "label": "Garagem p-1",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-2",
+            "label": "Garagem p-2",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-3",
+            "label": "Garagem p-3",
+            "fraccoes": [
+              "LUGAR_GARAGEM"
+            ]
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "pendentes": 0,
+        "ativos": 0,
+        "consultasHoje": 0,
+        "codigoAtual": "0000"
+      },
+      [],
+      [],
+      [],
+      {
+        "nomeCondominio": "Domingos da Cunha 4",
+        "adminEmail": "admin@example.invalid",
+        "codigoAtual": "0000",
+        "tempoVisivel": "15",
+        "maxTentativas": "5",
+        "bloqueioMinutos": "15",
+        "textoAviso": "Após utilização, confirme que a caixa fica corretamente fechada."
+      },
+      {
+        "success": true,
+        "reported": [],
+        "totalOpen": 0,
+        "updatedAt": "2026-09-11T10:00:00.000Z"
+      },
+      {
+        "success": false,
+        "message": "Ação GET inválida: unknown"
+      },
+      {
+        "success": false,
+        "message": "Ação GET inválida: toString"
+      },
+      {
+        "success": false,
+        "message": "Ação POST inválida: unknown"
+      },
+      {
+        "success": false,
+        "message": "Ação POST inválida: toString"
+      },
+      {
+        "success": false,
+        "message": "Ação POST inválida: sendExtinguisherReport"
+      }
+    ],
+    "state": {
+      "sheets": {
+        "CONDOMINOS": [
+          [
+            "ID",
+            "DataRegisto",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Telemovel",
+            "Estado",
+            "PIN",
+            "PINAtivo",
+            "DataAprovacao",
+            "AprovadoPor",
+            "UltimoAcesso",
+            "Observacoes",
+            "TentativasFalhadas",
+            "BloqueadoAte"
+          ]
+        ],
+        "CONFIG": [
+          [
+            "Chave",
+            "Valor",
+            "Descricao"
+          ],
+          [
+            "NOME_CONDOMINIO",
+            "Domingos da Cunha 4",
+            "Nome do condomínio"
+          ],
+          [
+            "CODIGO_CADEADO",
+            "0000",
+            "Código atual do cadeado"
+          ],
+          [
+            "ADMIN_EMAIL",
+            "admin@example.invalid",
+            "Email do administrador"
+          ],
+          [
+            "ADMIN_PIN",
+            "123456",
+            "PIN do administrador"
+          ],
+          [
+            "TEMPO_VISIVEL_SEGUNDOS",
+            "15",
+            "Segundos que o código fica visível"
+          ],
+          [
+            "PIN_DIGITOS",
+            "6",
+            "Número de dígitos do PIN"
+          ],
+          [
+            "MAX_TENTATIVAS_PIN",
+            "5",
+            "Tentativas antes de bloquear"
+          ],
+          [
+            "BLOQUEIO_MINUTOS",
+            "15",
+            "Minutos de bloqueio"
+          ],
+          [
+            "TEXTO_AVISO",
+            "Após utilização, confirme que a caixa fica corretamente fechada.",
+            "Aviso mostrado com o código"
+          ]
+        ],
+        "CONSULTAS": [
+          [
+            "ID",
+            "DataHora",
+            "PINUsado",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Motivo",
+            "MotivoOutro",
+            "CodigoMostrado",
+            "Resultado",
+            "UserAgent"
+          ]
+        ],
+        "ESTADO_EXTINTORES": [
+          [
+            "LAST_UPDATED",
+            "STATUS",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "CLOSED_AT",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "LAST_EVENT"
+          ]
+        ],
+        "HISTORICO_FECHOS": [
+          [
+            "TIMESTAMP",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "OPEN_NOTES",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "SOURCE",
+            "CLIENT_TS"
+          ]
+        ],
+        "LOG": [
+          [
+            "DataHora",
+            "Tipo",
+            "Acao",
+            "Email",
+            "Mensagem"
+          ]
+        ],
+        "REGISTOS": [
+          [
+            "TIMESTAMP",
+            "EVENTO",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "STATUS_BEFORE",
+            "STATUS_AFTER",
+            "SOURCE",
+            "CLIENT_TS",
+            "EXTRA_JSON"
+          ]
+        ]
+      },
+      "emails": [],
+      "uploads": [],
+      "props": {}
+    }
+  },
+  "resident-lifecycle": {
+    "responses": [
+      {
+        "ok": true,
+        "success": true
+      },
+      [
+        {
+          "row": 2,
+          "id": "COND_1789120800000_420",
+          "nome": "Morador de teste",
+          "piso": "9",
+          "fracao": "B",
+          "email": "morador@example.invalid",
+          "telemovel": "",
+          "dataRegisto": "2026-09-11T10:00:00.000Z"
+        }
+      ],
+      {
+        "ok": false,
+        "success": false,
+        "tipo": "pendente",
+        "msg": "Já existe um pedido pendente com este email."
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true,
+        "nome": "Morador de teste",
+        "piso": "9",
+        "fracao": "B"
+      },
+      [
+        {
+          "row": 2,
+          "id": "COND_1789120800000_420",
+          "nome": "Morador de teste",
+          "piso": "9",
+          "fracao": "B",
+          "email": "morador@example.invalid",
+          "pin": "478000",
+          "ultimoAcesso": "2026-09-11T10:00:00.000Z"
+        }
+      ],
+      {
+        "ok": true,
+        "success": true,
+        "codigo": "0000",
+        "aviso": "Após utilização, confirme que a caixa fica corretamente fechada.",
+        "tempo": 15
+      },
+      {
+        "ok": true,
+        "pendentes": 0,
+        "ativos": 1,
+        "consultasHoje": 1,
+        "codigoAtual": "0000"
+      },
+      [
+        {
+          "dataHora": "2026-09-11T10:00:00.000Z",
+          "pin": "478000",
+          "nome": "Morador de teste",
+          "piso": "9",
+          "fracao": "B",
+          "email": "morador@example.invalid",
+          "motivo": "Disjuntor",
+          "motivoOutro": "Teste",
+          "codigo": "0000",
+          "resultado": "SUCESSO"
+        }
+      ],
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": false,
+        "tipo": "bloqueado",
+        "msg": "Acesso bloqueado."
+      },
+      {
+        "ok": false,
+        "msg": "Acesso inválido."
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true,
+        "msg": "PIN enviado para o email registado."
+      },
+      {
+        "success": false,
+        "message": "Não foi possível gerar PIN único."
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": false,
+        "tipo": "rejeitado",
+        "msg": "Pedido rejeitado."
+      }
+    ],
+    "state": {
+      "sheets": {
+        "CONDOMINOS": [
+          [
+            "ID",
+            "DataRegisto",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Telemovel",
+            "Estado",
+            "PIN",
+            "PINAtivo",
+            "DataAprovacao",
+            "AprovadoPor",
+            "UltimoAcesso",
+            "Observacoes",
+            "TentativasFalhadas",
+            "BloqueadoAte"
+          ],
+          [
+            "COND_1789120800000_420",
+            "2026-09-11T10:00:00.000Z",
+            "Morador de teste",
+            "9",
+            "B",
+            "morador@example.invalid",
+            "",
+            "REJEITADO",
+            "478000",
+            true,
+            "2026-09-11T10:00:00.000Z",
+            "admin@example.invalid",
+            "2026-09-11T10:00:00.000Z",
+            "",
+            0,
+            ""
+          ]
+        ],
+        "CONFIG": [
+          [
+            "Chave",
+            "Valor",
+            "Descricao"
+          ],
+          [
+            "NOME_CONDOMINIO",
+            "Domingos da Cunha 4",
+            "Nome do condomínio"
+          ],
+          [
+            "CODIGO_CADEADO",
+            "0000",
+            "Código atual do cadeado"
+          ],
+          [
+            "ADMIN_EMAIL",
+            "admin@example.invalid",
+            "Email do administrador"
+          ],
+          [
+            "ADMIN_PIN",
+            "123456",
+            "PIN do administrador"
+          ],
+          [
+            "TEMPO_VISIVEL_SEGUNDOS",
+            "15",
+            "Segundos que o código fica visível"
+          ],
+          [
+            "PIN_DIGITOS",
+            "6",
+            "Número de dígitos do PIN"
+          ],
+          [
+            "MAX_TENTATIVAS_PIN",
+            "5",
+            "Tentativas antes de bloquear"
+          ],
+          [
+            "BLOQUEIO_MINUTOS",
+            "15",
+            "Minutos de bloqueio"
+          ],
+          [
+            "TEXTO_AVISO",
+            "Após utilização, confirme que a caixa fica corretamente fechada.",
+            "Aviso mostrado com o código"
+          ]
+        ],
+        "CONSULTAS": [
+          [
+            "ID",
+            "DataHora",
+            "PINUsado",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Motivo",
+            "MotivoOutro",
+            "CodigoMostrado",
+            "Resultado",
+            "UserAgent"
+          ],
+          [
+            "CONS_1789120800000_420",
+            "2026-09-11T10:00:00.000Z",
+            "478000",
+            "Morador de teste",
+            "9",
+            "B",
+            "morador@example.invalid",
+            "Disjuntor",
+            "Teste",
+            "0000",
+            "SUCESSO",
+            "Test"
+          ]
+        ],
+        "ESTADO_EXTINTORES": [
+          [
+            "LAST_UPDATED",
+            "STATUS",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "CLOSED_AT",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "LAST_EVENT"
+          ]
+        ],
+        "HISTORICO_FECHOS": [
+          [
+            "TIMESTAMP",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "OPEN_NOTES",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "SOURCE",
+            "CLIENT_TS"
+          ]
+        ],
+        "LOG": [
+          [
+            "DataHora",
+            "Tipo",
+            "Acao",
+            "Email",
+            "Mensagem"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "INFO",
+            "REGISTO",
+            "morador@example.invalid",
+            "Novo pedido: Morador de teste"
+          ]
+        ],
+        "REGISTOS": [
+          [
+            "TIMESTAMP",
+            "EVENTO",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "STATUS_BEFORE",
+            "STATUS_AFTER",
+            "SOURCE",
+            "CLIENT_TS",
+            "EXTRA_JSON"
+          ]
+        ]
+      },
+      "emails": [
+        {
+          "to": "morador@example.invalid",
+          "subject": "Pedido de acesso recebido — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nRecebemos o seu pedido de acesso. Após aprovação receberá o PIN por email.",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "admin@example.invalid",
+          "subject": "Novo pedido de acesso — Domingos da Cunha 4",
+          "body": "Novo pedido:\n\nNome: Morador de teste\nPiso: 9\nFração/Garagem: B\nEmail: morador@example.invalid\nTelemóvel: —",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "morador@example.invalid",
+          "subject": "Acesso aprovado — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nO seu PIN pessoal é: 478000\n\nGuarde-o num local seguro.",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "morador@example.invalid",
+          "subject": "Recuperação de PIN — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nO seu PIN pessoal é: 478000",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "morador@example.invalid",
+          "subject": "Pedido de acesso — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nO seu pedido não foi aprovado. Contacte a administração.",
+          "replyTo": "admin@example.invalid"
+        }
+      ],
+      "uploads": [],
+      "props": {}
+    }
+  },
+  "validation-and-recovery": {
+    "responses": [
+      {
+        "ok": false,
+        "success": false,
+        "msg": "Erro ao registar: Nome obrigatório.",
+        "message": "Erro ao registar: Nome obrigatório."
+      },
+      {
+        "ok": false,
+        "success": false,
+        "msg": "Erro ao registar: Email obrigatório.",
+        "message": "Erro ao registar: Email obrigatório."
+      },
+      {
+        "ok": false,
+        "success": false,
+        "msg": "Erro ao registar: Piso/zona inválido para registo.",
+        "message": "Erro ao registar: Piso/zona inválido para registo."
+      },
+      {
+        "ok": false,
+        "success": false,
+        "msg": "Erro ao registar: Fração/garagem inválida para 9.",
+        "message": "Erro ao registar: Fração/garagem inválida para 9."
+      },
+      {
+        "ok": false,
+        "tipo": "invalido",
+        "msg": "PIN inválido."
+      },
+      {
+        "ok": false,
+        "msg": "Credenciais inválidas."
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": false,
+        "success": false,
+        "msg": "Email não encontrado."
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": false,
+        "msg": "Código inválido."
+      },
+      {
+        "ok": false,
+        "msg": "Código inválido."
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": false,
+        "success": false,
+        "msg": "Não existe conta aprovada com este email."
+      }
+    ],
+    "state": {
+      "sheets": {
+        "CONDOMINOS": [
+          [
+            "ID",
+            "DataRegisto",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Telemovel",
+            "Estado",
+            "PIN",
+            "PINAtivo",
+            "DataAprovacao",
+            "AprovadoPor",
+            "UltimoAcesso",
+            "Observacoes",
+            "TentativasFalhadas",
+            "BloqueadoAte"
+          ],
+          [
+            "COND_1789120800000_420",
+            "2026-09-11T10:00:00.000Z",
+            "Morador de teste",
+            "9",
+            "B",
+            "morador@example.invalid",
+            "",
+            "PENDENTE",
+            "",
+            false,
+            "",
+            "",
+            "",
+            "",
+            0,
+            ""
+          ]
+        ],
+        "CONFIG": [
+          [
+            "Chave",
+            "Valor",
+            "Descricao"
+          ],
+          [
+            "NOME_CONDOMINIO",
+            "Domingos da Cunha 4",
+            "Nome do condomínio"
+          ],
+          [
+            "CODIGO_CADEADO",
+            "0000",
+            "Código atual do cadeado"
+          ],
+          [
+            "ADMIN_EMAIL",
+            "admin@example.invalid",
+            "Email do administrador"
+          ],
+          [
+            "ADMIN_PIN",
+            "123456",
+            "PIN do administrador"
+          ],
+          [
+            "TEMPO_VISIVEL_SEGUNDOS",
+            "15",
+            "Segundos que o código fica visível"
+          ],
+          [
+            "PIN_DIGITOS",
+            "6",
+            "Número de dígitos do PIN"
+          ],
+          [
+            "MAX_TENTATIVAS_PIN",
+            "5",
+            "Tentativas antes de bloquear"
+          ],
+          [
+            "BLOQUEIO_MINUTOS",
+            "15",
+            "Minutos de bloqueio"
+          ],
+          [
+            "TEXTO_AVISO",
+            "Após utilização, confirme que a caixa fica corretamente fechada.",
+            "Aviso mostrado com o código"
+          ]
+        ],
+        "CONSULTAS": [
+          [
+            "ID",
+            "DataHora",
+            "PINUsado",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Motivo",
+            "MotivoOutro",
+            "CodigoMostrado",
+            "Resultado",
+            "UserAgent"
+          ]
+        ],
+        "ESTADO_EXTINTORES": [
+          [
+            "LAST_UPDATED",
+            "STATUS",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "CLOSED_AT",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "LAST_EVENT"
+          ]
+        ],
+        "HISTORICO_FECHOS": [
+          [
+            "TIMESTAMP",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "OPEN_NOTES",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "SOURCE",
+            "CLIENT_TS"
+          ]
+        ],
+        "LOG": [
+          [
+            "DataHora",
+            "Tipo",
+            "Acao",
+            "Email",
+            "Mensagem"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "INFO",
+            "REGISTO",
+            "morador@example.invalid",
+            "Novo pedido: Morador de teste"
+          ]
+        ],
+        "REGISTOS": [
+          [
+            "TIMESTAMP",
+            "EVENTO",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "STATUS_BEFORE",
+            "STATUS_AFTER",
+            "SOURCE",
+            "CLIENT_TS",
+            "EXTRA_JSON"
+          ]
+        ]
+      },
+      "emails": [
+        {
+          "to": "morador@example.invalid",
+          "subject": "Pedido de acesso recebido — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nRecebemos o seu pedido de acesso. Após aprovação receberá o PIN por email.",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "admin@example.invalid",
+          "subject": "Novo pedido de acesso — Domingos da Cunha 4",
+          "body": "Novo pedido:\n\nNome: Morador de teste\nPiso: 9\nFração/Garagem: B\nEmail: morador@example.invalid\nTelemóvel: —",
+          "replyTo": "admin@example.invalid"
+        }
+      ],
+      "uploads": [],
+      "props": {}
+    }
+  },
+  "settings-and-form-body": {
+    "responses": [
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "nomeCondominio": "Domingos da Cunha 4",
+        "adminEmail": "admin@example.invalid",
+        "codigoAtual": "0098",
+        "tempoVisivel": "15",
+        "maxTentativas": "5",
+        "bloqueioMinutos": "15",
+        "textoAviso": "Após utilização, confirme que a caixa fica corretamente fechada."
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "nomeCondominio": "Novo nome",
+        "tempoVisivel": 30,
+        "adminEmail": "admin@example.invalid",
+        "structure": [
+          {
+            "piso": "10",
+            "label": "10.º andar",
+            "fraccoes": [
+              "A",
+              "B"
+            ]
+          },
+          {
+            "piso": "9",
+            "label": "9.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "8",
+            "label": "8.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "7",
+            "label": "7.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "6",
+            "label": "6.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "5",
+            "label": "5.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "4",
+            "label": "4.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "3",
+            "label": "3.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "2",
+            "label": "2.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "-1",
+            "label": "Garagem p-1",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-2",
+            "label": "Garagem p-2",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-3",
+            "label": "Garagem p-3",
+            "fraccoes": [
+              "LUGAR_GARAGEM"
+            ]
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "pendentes": 0,
+        "ativos": 0,
+        "consultasHoje": 0,
+        "codigoAtual": "4567"
+      }
+    ],
+    "state": {
+      "sheets": {
+        "CONDOMINOS": [
+          [
+            "ID",
+            "DataRegisto",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Telemovel",
+            "Estado",
+            "PIN",
+            "PINAtivo",
+            "DataAprovacao",
+            "AprovadoPor",
+            "UltimoAcesso",
+            "Observacoes",
+            "TentativasFalhadas",
+            "BloqueadoAte"
+          ]
+        ],
+        "CONFIG": [
+          [
+            "Chave",
+            "Valor",
+            "Descricao"
+          ],
+          [
+            "NOME_CONDOMINIO",
+            "Novo nome",
+            "Nome do condomínio"
+          ],
+          [
+            "CODIGO_CADEADO",
+            "4567",
+            "Código atual do cadeado"
+          ],
+          [
+            "ADMIN_EMAIL",
+            "admin@example.invalid",
+            "Email do administrador"
+          ],
+          [
+            "ADMIN_PIN",
+            "123456",
+            "PIN do administrador"
+          ],
+          [
+            "TEMPO_VISIVEL_SEGUNDOS",
+            "30",
+            "Segundos que o código fica visível"
+          ],
+          [
+            "PIN_DIGITOS",
+            "6",
+            "Número de dígitos do PIN"
+          ],
+          [
+            "MAX_TENTATIVAS_PIN",
+            "5",
+            "Tentativas antes de bloquear"
+          ],
+          [
+            "BLOQUEIO_MINUTOS",
+            "15",
+            "Minutos de bloqueio"
+          ],
+          [
+            "TEXTO_AVISO",
+            "Após utilização, confirme que a caixa fica corretamente fechada.",
+            "Aviso mostrado com o código"
+          ]
+        ],
+        "CONSULTAS": [
+          [
+            "ID",
+            "DataHora",
+            "PINUsado",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Motivo",
+            "MotivoOutro",
+            "CodigoMostrado",
+            "Resultado",
+            "UserAgent"
+          ]
+        ],
+        "ESTADO_EXTINTORES": [
+          [
+            "LAST_UPDATED",
+            "STATUS",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "CLOSED_AT",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "LAST_EVENT"
+          ]
+        ],
+        "HISTORICO_FECHOS": [
+          [
+            "TIMESTAMP",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "OPEN_NOTES",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "SOURCE",
+            "CLIENT_TS"
+          ]
+        ],
+        "LOG": [
+          [
+            "DataHora",
+            "Tipo",
+            "Acao",
+            "Email",
+            "Mensagem"
+          ]
+        ],
+        "REGISTOS": [
+          [
+            "TIMESTAMP",
+            "EVENTO",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "STATUS_BEFORE",
+            "STATUS_AFTER",
+            "SOURCE",
+            "CLIENT_TS",
+            "EXTRA_JSON"
+          ]
+        ]
+      },
+      "emails": [],
+      "uploads": [],
+      "props": {}
+    }
+  },
+  "legacy-pin": {
+    "responses": [
+      {
+        "success": true,
+        "valid": false,
+        "message": "Ainda não existe PIN definido."
+      },
+      {
+        "success": false,
+        "message": "O PIN deve ter pelo menos 4 dígitos."
+      },
+      {
+        "success": false,
+        "message": "O PIN deve conter apenas dígitos."
+      },
+      {
+        "success": true,
+        "message": "PIN definido com sucesso."
+      },
+      {
+        "success": true,
+        "pinConfigured": true,
+        "updatedAt": "2026-09-11T10:00:00.000Z"
+      },
+      {
+        "success": false,
+        "message": "O PIN já está definido."
+      },
+      {
+        "success": true,
+        "valid": false,
+        "message": "PIN vazio."
+      },
+      {
+        "success": true,
+        "valid": false
+      },
+      {
+        "success": true,
+        "valid": true
+      },
+      {
+        "success": true,
+        "message": "PIN resetado."
+      },
+      {
+        "success": true,
+        "pinConfigured": false,
+        "updatedAt": ""
+      }
+    ],
+    "state": {
+      "sheets": {
+        "CONDOMINOS": [
+          [
+            "ID",
+            "DataRegisto",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Telemovel",
+            "Estado",
+            "PIN",
+            "PINAtivo",
+            "DataAprovacao",
+            "AprovadoPor",
+            "UltimoAcesso",
+            "Observacoes",
+            "TentativasFalhadas",
+            "BloqueadoAte"
+          ]
+        ],
+        "CONFIG": [
+          [
+            "Chave",
+            "Valor",
+            "Descricao"
+          ],
+          [
+            "NOME_CONDOMINIO",
+            "Domingos da Cunha 4",
+            "Nome do condomínio"
+          ],
+          [
+            "CODIGO_CADEADO",
+            "0000",
+            "Código atual do cadeado"
+          ],
+          [
+            "ADMIN_EMAIL",
+            "admin@example.invalid",
+            "Email do administrador"
+          ],
+          [
+            "ADMIN_PIN",
+            "123456",
+            "PIN do administrador"
+          ],
+          [
+            "TEMPO_VISIVEL_SEGUNDOS",
+            "15",
+            "Segundos que o código fica visível"
+          ],
+          [
+            "PIN_DIGITOS",
+            "6",
+            "Número de dígitos do PIN"
+          ],
+          [
+            "MAX_TENTATIVAS_PIN",
+            "5",
+            "Tentativas antes de bloquear"
+          ],
+          [
+            "BLOQUEIO_MINUTOS",
+            "15",
+            "Minutos de bloqueio"
+          ],
+          [
+            "TEXTO_AVISO",
+            "Após utilização, confirme que a caixa fica corretamente fechada.",
+            "Aviso mostrado com o código"
+          ]
+        ],
+        "CONSULTAS": [
+          [
+            "ID",
+            "DataHora",
+            "PINUsado",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Motivo",
+            "MotivoOutro",
+            "CodigoMostrado",
+            "Resultado",
+            "UserAgent"
+          ]
+        ],
+        "ESTADO_EXTINTORES": [
+          [
+            "LAST_UPDATED",
+            "STATUS",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "CLOSED_AT",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "LAST_EVENT"
+          ]
+        ],
+        "HISTORICO_FECHOS": [
+          [
+            "TIMESTAMP",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "OPEN_NOTES",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "SOURCE",
+            "CLIENT_TS"
+          ]
+        ],
+        "LOG": [
+          [
+            "DataHora",
+            "Tipo",
+            "Acao",
+            "Email",
+            "Mensagem"
+          ]
+        ],
+        "REGISTOS": [
+          [
+            "TIMESTAMP",
+            "EVENTO",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "STATUS_BEFORE",
+            "STATUS_AFTER",
+            "SOURCE",
+            "CLIENT_TS",
+            "EXTRA_JSON"
+          ]
+        ]
+      },
+      "emails": [
+        {
+          "to": "admin@example.invalid",
+          "subject": "[Domingos da Cunha 4] Reset do PIN Backoffice",
+          "body": "O PIN do backoffice foi resetado."
+        }
+      ],
+      "uploads": [],
+      "props": {}
+    }
+  },
+  "occurrence-lifecycle": {
+    "responses": [
+      {
+        "success": true,
+        "occurrenceId": "OCC-20260911100000-00000001",
+        "alreadyOpen": false,
+        "pendingValidation": true,
+        "floor": 9,
+        "point": "E1"
+      },
+      {
+        "success": true,
+        "occurrences": [
+          {
+            "id": "OCC-20260911100000-00000001",
+            "floor": 9,
+            "floorLabel": "9",
+            "point": "E1",
+            "location": "",
+            "reportedBy": "Morador de teste",
+            "reason": "Selo danificado",
+            "notes": "Teste",
+            "createdAt": "2026-09-11T10:00:00.000Z",
+            "photoUrl": "https://example.invalid/file/TEST-FILE-1",
+            "status": "PENDENTE_VALIDACAO"
+          }
+        ]
+      },
+      {
+        "success": true,
+        "reported": [],
+        "totalOpen": 0,
+        "updatedAt": "2026-09-11T10:00:00.000Z"
+      },
+      {
+        "success": true,
+        "occurrenceId": "OCC-20260911100000-00000001",
+        "alreadyOpen": false,
+        "pendingValidation": true,
+        "floor": 9,
+        "point": "E1"
+      },
+      {
+        "success": true,
+        "occurrenceId": "OCC-20260911100000-00000001"
+      },
+      {
+        "success": true,
+        "occurrences": [
+          {
+            "id": "OCC-20260911100000-00000001",
+            "floor": 9,
+            "floorLabel": "9",
+            "point": "E1",
+            "location": "",
+            "reportedBy": "Segundo morador",
+            "reason": "Selo danificado",
+            "notes": "Teste",
+            "createdAt": "2026-09-11T10:00:00.000Z",
+            "photoUrl": "https://example.invalid/file/TEST-FILE-1",
+            "status": "ABERTA"
+          }
+        ]
+      },
+      {
+        "success": true,
+        "reported": [
+          {
+            "floor": 9,
+            "point": "E1"
+          }
+        ],
+        "totalOpen": 1,
+        "updatedAt": "2026-09-11T10:00:00.000Z"
+      },
+      {
+        "success": true,
+        "occurrenceId": "OCC-20260911100000-00000001",
+        "alreadyOpen": true,
+        "pendingValidation": false,
+        "floor": 9,
+        "point": "E1"
+      },
+      {
+        "success": false,
+        "message": "A fotografia de fecho é obrigatória."
+      },
+      {
+        "success": true,
+        "occurrenceId": "OCC-20260911100000-00000001",
+        "floor": 9,
+        "point": "E1"
+      },
+      {
+        "success": true,
+        "reported": [],
+        "totalOpen": 0,
+        "updatedAt": "2026-09-11T10:00:00.000Z"
+      },
+      {
+        "success": true,
+        "occurrences": []
+      },
+      {
+        "success": true,
+        "occurrences": []
+      }
+    ],
+    "state": {
+      "sheets": {
+        "CONDOMINOS": [
+          [
+            "ID",
+            "DataRegisto",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Telemovel",
+            "Estado",
+            "PIN",
+            "PINAtivo",
+            "DataAprovacao",
+            "AprovadoPor",
+            "UltimoAcesso",
+            "Observacoes",
+            "TentativasFalhadas",
+            "BloqueadoAte"
+          ]
+        ],
+        "CONFIG": [
+          [
+            "Chave",
+            "Valor",
+            "Descricao"
+          ],
+          [
+            "NOME_CONDOMINIO",
+            "Domingos da Cunha 4",
+            "Nome do condomínio"
+          ],
+          [
+            "CODIGO_CADEADO",
+            "0000",
+            "Código atual do cadeado"
+          ],
+          [
+            "ADMIN_EMAIL",
+            "admin@example.invalid",
+            "Email do administrador"
+          ],
+          [
+            "ADMIN_PIN",
+            "123456",
+            "PIN do administrador"
+          ],
+          [
+            "TEMPO_VISIVEL_SEGUNDOS",
+            "15",
+            "Segundos que o código fica visível"
+          ],
+          [
+            "PIN_DIGITOS",
+            "6",
+            "Número de dígitos do PIN"
+          ],
+          [
+            "MAX_TENTATIVAS_PIN",
+            "5",
+            "Tentativas antes de bloquear"
+          ],
+          [
+            "BLOQUEIO_MINUTOS",
+            "15",
+            "Minutos de bloqueio"
+          ],
+          [
+            "TEXTO_AVISO",
+            "Após utilização, confirme que a caixa fica corretamente fechada.",
+            "Aviso mostrado com o código"
+          ]
+        ],
+        "CONSULTAS": [
+          [
+            "ID",
+            "DataHora",
+            "PINUsado",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Motivo",
+            "MotivoOutro",
+            "CodigoMostrado",
+            "Resultado",
+            "UserAgent"
+          ]
+        ],
+        "ESTADO_EXTINTORES": [
+          [
+            "LAST_UPDATED",
+            "STATUS",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "CLOSED_AT",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "LAST_EVENT"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "OK",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "2026-09-11T10:00:00.000Z",
+            "Morador de teste",
+            "Selo danificado",
+            "Adicional",
+            "TEST-FILE-1",
+            "https://example.invalid/file/TEST-FILE-1",
+            "report_OCC-20260911100000-00000001_20260911_100000.png",
+            "2026-09-11T10:00:00.000Z",
+            "Resolvido",
+            "TEST-FILE-2",
+            "https://example.invalid/file/TEST-FILE-2",
+            "fecho.png",
+            "FECHO"
+          ]
+        ],
+        "HISTORICO_FECHOS": [
+          [
+            "TIMESTAMP",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "OPEN_NOTES",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "SOURCE",
+            "CLIENT_TS"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "2026-09-11T10:00:00.000Z",
+            "Morador de teste",
+            "Selo danificado",
+            "Adicional",
+            "Resolvido",
+            "TEST-FILE-2",
+            "https://example.invalid/file/TEST-FILE-2",
+            "fecho.png",
+            "",
+            ""
+          ]
+        ],
+        "LOG": [
+          [
+            "DataHora",
+            "Tipo",
+            "Acao",
+            "Email",
+            "Mensagem"
+          ]
+        ],
+        "REGISTOS": [
+          [
+            "TIMESTAMP",
+            "EVENTO",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "STATUS_BEFORE",
+            "STATUS_AFTER",
+            "SOURCE",
+            "CLIENT_TS",
+            "EXTRA_JSON"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "REPORT_PENDENTE_VALIDACAO",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "Morador de teste",
+            "Selo danificado",
+            "Teste",
+            "TEST-FILE-1",
+            "https://example.invalid/file/TEST-FILE-1",
+            "report_OCC-20260911100000-00000001_20260911_100000.png",
+            "",
+            "PENDENTE_VALIDACAO",
+            "app",
+            "",
+            "{\"alreadyOpen\":false,\"pendingValidation\":true}"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "REPORT_ATUALIZADO_PENDENTE",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "Segundo morador",
+            "Selo danificado",
+            "Teste",
+            "",
+            "",
+            "",
+            "PENDENTE_VALIDACAO",
+            "PENDENTE_VALIDACAO",
+            "app",
+            "",
+            "{\"alreadyOpen\":false,\"pendingValidation\":true}"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "VALIDACAO_ADMIN",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "Admin",
+            "VALIDADO",
+            "Verificado",
+            "",
+            "",
+            "",
+            "PENDENTE_VALIDACAO",
+            "ABERTA",
+            "backoffice",
+            "",
+            ""
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "REPORT_ADICIONAL",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "Morador de teste",
+            "Selo danificado",
+            "Adicional",
+            "",
+            "",
+            "",
+            "ABERTA",
+            "ABERTA",
+            "app",
+            "",
+            "{\"alreadyOpen\":true,\"pendingValidation\":false}"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "FECHO",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "",
+            "FECHO",
+            "Resolvido",
+            "TEST-FILE-2",
+            "https://example.invalid/file/TEST-FILE-2",
+            "fecho.png",
+            "ABERTA",
+            "OK",
+            "",
+            "",
+            ""
+          ]
+        ]
+      },
+      "emails": [
+        {
+          "to": "admin@example.invalid",
+          "subject": "[Domingos da Cunha 4] Reporte extintor - PENDENTE DE VALIDAÇÃO",
+          "body": "Reporte de extintor recebido.\n\nEstado: PENDENTE DE VALIDAÇÃO\nOcorrência: OCC-20260911100000-00000001\nPiso: 9\nPonto: E1\nLocalização: —\nReportado por: Morador de teste\nMotivo: Selo danificado\nObservação: Teste\nFoto: https://example.invalid/file/TEST-FILE-1\n\nData/Hora: 2026-09-11T10:00:00.000Z"
+        },
+        {
+          "to": "admin@example.invalid",
+          "subject": "[Domingos da Cunha 4] Reporte extintor - PENDENTE DE VALIDAÇÃO",
+          "body": "Reporte de extintor recebido.\n\nEstado: PENDENTE DE VALIDAÇÃO\nOcorrência: OCC-20260911100000-00000001\nPiso: 9\nPonto: E1\nLocalização: —\nReportado por: Segundo morador\nMotivo: Selo danificado\nObservação: Teste\nFoto: —\n\nData/Hora: 2026-09-11T10:00:00.000Z"
+        },
+        {
+          "to": "admin@example.invalid",
+          "subject": "[Domingos da Cunha 4] Reporte extintor - ABERTA",
+          "body": "Reporte de extintor recebido.\n\nEstado: ABERTA\nOcorrência: OCC-20260911100000-00000001\nPiso: 9\nPonto: E1\nLocalização: —\nReportado por: Morador de teste\nMotivo: Selo danificado\nObservação: Adicional\nFoto: —\n\nData/Hora: 2026-09-11T10:00:00.000Z"
+        },
+        {
+          "to": "admin@example.invalid",
+          "subject": "[Domingos da Cunha 4] Ocorrência fechada",
+          "body": "Ocorrência fechada.\n\nOcorrência: OCC-20260911100000-00000001\nPiso: 9\nPonto: E1\nFoto fecho: https://example.invalid/file/TEST-FILE-2\nObservação: Resolvido"
+        }
+      ],
+      "uploads": [
+        {
+          "folder": "REPORTES_EXTINTORES",
+          "id": "TEST-FILE-1",
+          "type": "image/png",
+          "name": "report_OCC-20260911100000-00000001_20260911_100000.png",
+          "bytes": [
+            104,
+            101,
+            108,
+            108,
+            111
+          ]
+        },
+        {
+          "folder": "FECHOS_EXTINTORES",
+          "id": "TEST-FILE-2",
+          "type": "image/png",
+          "name": "fecho.png",
+          "bytes": [
+            104,
+            101,
+            108,
+            108,
+            111
+          ]
+        }
+      ],
+      "props": {}
+    }
+  },
+  "occurrence-validation-rejection": {
+    "responses": [
+      {
+        "success": true,
+        "occurrenceId": "OCC-20260911100000-00000001",
+        "alreadyOpen": false,
+        "pendingValidation": true,
+        "floor": 9,
+        "point": "E1"
+      },
+      {
+        "success": true,
+        "occurrenceId": "OCC-20260911100000-00000001"
+      },
+      {
+        "success": false,
+        "message": "Reporte pendente não encontrado."
+      },
+      {
+        "success": false,
+        "message": "Piso inválido."
+      },
+      {
+        "success": false,
+        "message": "Ponto obrigatório."
+      },
+      {
+        "success": false,
+        "message": "Nome obrigatório."
+      },
+      {
+        "success": false,
+        "message": "Motivo obrigatório."
+      },
+      {
+        "success": false,
+        "message": "Ocorrência aberta não encontrada."
+      },
+      {
+        "success": true,
+        "occurrences": []
+      }
+    ],
+    "state": {
+      "sheets": {
+        "CONDOMINOS": [
+          [
+            "ID",
+            "DataRegisto",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Telemovel",
+            "Estado",
+            "PIN",
+            "PINAtivo",
+            "DataAprovacao",
+            "AprovadoPor",
+            "UltimoAcesso",
+            "Observacoes",
+            "TentativasFalhadas",
+            "BloqueadoAte"
+          ]
+        ],
+        "CONFIG": [
+          [
+            "Chave",
+            "Valor",
+            "Descricao"
+          ],
+          [
+            "NOME_CONDOMINIO",
+            "Domingos da Cunha 4",
+            "Nome do condomínio"
+          ],
+          [
+            "CODIGO_CADEADO",
+            "0000",
+            "Código atual do cadeado"
+          ],
+          [
+            "ADMIN_EMAIL",
+            "admin@example.invalid",
+            "Email do administrador"
+          ],
+          [
+            "ADMIN_PIN",
+            "123456",
+            "PIN do administrador"
+          ],
+          [
+            "TEMPO_VISIVEL_SEGUNDOS",
+            "15",
+            "Segundos que o código fica visível"
+          ],
+          [
+            "PIN_DIGITOS",
+            "6",
+            "Número de dígitos do PIN"
+          ],
+          [
+            "MAX_TENTATIVAS_PIN",
+            "5",
+            "Tentativas antes de bloquear"
+          ],
+          [
+            "BLOQUEIO_MINUTOS",
+            "15",
+            "Minutos de bloqueio"
+          ],
+          [
+            "TEXTO_AVISO",
+            "Após utilização, confirme que a caixa fica corretamente fechada.",
+            "Aviso mostrado com o código"
+          ]
+        ],
+        "CONSULTAS": [
+          [
+            "ID",
+            "DataHora",
+            "PINUsado",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Motivo",
+            "MotivoOutro",
+            "CodigoMostrado",
+            "Resultado",
+            "UserAgent"
+          ]
+        ],
+        "ESTADO_EXTINTORES": [
+          [
+            "LAST_UPDATED",
+            "STATUS",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "CLOSED_AT",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "LAST_EVENT"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "REJEITADA",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "2026-09-11T10:00:00.000Z",
+            "Morador de teste",
+            "Selo danificado",
+            "Teste",
+            "",
+            "",
+            "",
+            "2026-09-11T10:00:00.000Z",
+            "Rejeitado pela administração",
+            "",
+            "",
+            "",
+            "REJEICAO_ADMIN"
+          ]
+        ],
+        "HISTORICO_FECHOS": [
+          [
+            "TIMESTAMP",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "OPEN_NOTES",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "SOURCE",
+            "CLIENT_TS"
+          ]
+        ],
+        "LOG": [
+          [
+            "DataHora",
+            "Tipo",
+            "Acao",
+            "Email",
+            "Mensagem"
+          ]
+        ],
+        "REGISTOS": [
+          [
+            "TIMESTAMP",
+            "EVENTO",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "STATUS_BEFORE",
+            "STATUS_AFTER",
+            "SOURCE",
+            "CLIENT_TS",
+            "EXTRA_JSON"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "REPORT_PENDENTE_VALIDACAO",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "Morador de teste",
+            "Selo danificado",
+            "Teste",
+            "",
+            "",
+            "",
+            "",
+            "PENDENTE_VALIDACAO",
+            "app",
+            "",
+            "{\"alreadyOpen\":false,\"pendingValidation\":true}"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "REJEICAO_ADMIN",
+            "OCC-20260911100000-00000001",
+            9,
+            "9",
+            "E1",
+            "",
+            "Admin",
+            "REJEITADO",
+            "",
+            "",
+            "",
+            "",
+            "PENDENTE_VALIDACAO",
+            "REJEITADA",
+            "backoffice",
+            "",
+            ""
+          ]
+        ]
+      },
+      "emails": [
+        {
+          "to": "admin@example.invalid",
+          "subject": "[Domingos da Cunha 4] Reporte extintor - PENDENTE DE VALIDAÇÃO",
+          "body": "Reporte de extintor recebido.\n\nEstado: PENDENTE DE VALIDAÇÃO\nOcorrência: OCC-20260911100000-00000001\nPiso: 9\nPonto: E1\nLocalização: —\nReportado por: Morador de teste\nMotivo: Selo danificado\nObservação: Teste\nFoto: —\n\nData/Hora: 2026-09-11T10:00:00.000Z"
+        }
+      ],
+      "uploads": [],
+      "props": {}
+    }
+  },
+  "aliases": {
+    "responses": [
+      {
+        "nomeCondominio": "Domingos da Cunha 4",
+        "tempoVisivel": 15,
+        "adminEmail": "admin@example.invalid",
+        "structure": [
+          {
+            "piso": "10",
+            "label": "10.º andar",
+            "fraccoes": [
+              "A",
+              "B"
+            ]
+          },
+          {
+            "piso": "9",
+            "label": "9.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "8",
+            "label": "8.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "7",
+            "label": "7.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "6",
+            "label": "6.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "5",
+            "label": "5.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "4",
+            "label": "4.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "3",
+            "label": "3.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "2",
+            "label": "2.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "-1",
+            "label": "Garagem p-1",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-2",
+            "label": "Garagem p-2",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-3",
+            "label": "Garagem p-3",
+            "fraccoes": [
+              "LUGAR_GARAGEM"
+            ]
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "success": true,
+        "floors": [
+          {
+            "piso": "10",
+            "label": "10.º andar",
+            "fraccoes": [
+              "A",
+              "B"
+            ]
+          },
+          {
+            "piso": "9",
+            "label": "9.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "8",
+            "label": "8.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "7",
+            "label": "7.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "6",
+            "label": "6.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "5",
+            "label": "5.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "4",
+            "label": "4.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "3",
+            "label": "3.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "2",
+            "label": "2.º andar",
+            "fraccoes": [
+              "A",
+              "B",
+              "C"
+            ]
+          },
+          {
+            "piso": "-1",
+            "label": "Garagem p-1",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-2",
+            "label": "Garagem p-2",
+            "fraccoes": [
+              "GARAGEM"
+            ]
+          },
+          {
+            "piso": "-3",
+            "label": "Garagem p-3",
+            "fraccoes": [
+              "LUGAR_GARAGEM"
+            ]
+          }
+        ]
+      },
+      {
+        "ok": true,
+        "pendentes": 0,
+        "ativos": 0,
+        "consultasHoje": 0,
+        "codigoAtual": "0000"
+      },
+      [],
+      [],
+      [],
+      {
+        "nomeCondominio": "Domingos da Cunha 4",
+        "adminEmail": "admin@example.invalid",
+        "codigoAtual": "0000",
+        "tempoVisivel": "15",
+        "maxTentativas": "5",
+        "bloqueioMinutos": "15",
+        "textoAviso": "Após utilização, confirme que a caixa fica corretamente fechada."
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true,
+        "nome": "Morador de teste",
+        "piso": "9",
+        "fracao": "B"
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true,
+        "msg": "PIN enviado para o email registado."
+      },
+      {
+        "ok": true,
+        "success": true,
+        "msg": "PIN enviado para o email registado."
+      },
+      {
+        "ok": true,
+        "success": true,
+        "msg": "PIN enviado para o email registado."
+      },
+      {
+        "ok": true,
+        "success": true,
+        "codigo": "0000",
+        "aviso": "Após utilização, confirme que a caixa fica corretamente fechada.",
+        "tempo": 15
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "ok": true,
+        "success": true
+      },
+      {
+        "success": false,
+        "message": "Não foi possível gerar PIN único."
+      },
+      {
+        "ok": true,
+        "success": true
+      }
+    ],
+    "state": {
+      "sheets": {
+        "CONDOMINOS": [
+          [
+            "ID",
+            "DataRegisto",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Telemovel",
+            "Estado",
+            "PIN",
+            "PINAtivo",
+            "DataAprovacao",
+            "AprovadoPor",
+            "UltimoAcesso",
+            "Observacoes",
+            "TentativasFalhadas",
+            "BloqueadoAte"
+          ],
+          [
+            "COND_1789120800000_420",
+            "2026-09-11T10:00:00.000Z",
+            "Morador de teste",
+            "9",
+            "B",
+            "morador@example.invalid",
+            "",
+            "REJEITADO",
+            "478000",
+            true,
+            "2026-09-11T10:00:00.000Z",
+            "Admin",
+            "2026-09-11T10:00:00.000Z",
+            "",
+            0,
+            ""
+          ]
+        ],
+        "CONFIG": [
+          [
+            "Chave",
+            "Valor",
+            "Descricao"
+          ],
+          [
+            "NOME_CONDOMINIO",
+            "Domingos da Cunha 4",
+            "Nome do condomínio"
+          ],
+          [
+            "CODIGO_CADEADO",
+            "4321",
+            "Código atual do cadeado"
+          ],
+          [
+            "ADMIN_EMAIL",
+            "admin@example.invalid",
+            "Email do administrador"
+          ],
+          [
+            "ADMIN_PIN",
+            "123456",
+            "PIN do administrador"
+          ],
+          [
+            "TEMPO_VISIVEL_SEGUNDOS",
+            "15",
+            "Segundos que o código fica visível"
+          ],
+          [
+            "PIN_DIGITOS",
+            "6",
+            "Número de dígitos do PIN"
+          ],
+          [
+            "MAX_TENTATIVAS_PIN",
+            "5",
+            "Tentativas antes de bloquear"
+          ],
+          [
+            "BLOQUEIO_MINUTOS",
+            "15",
+            "Minutos de bloqueio"
+          ],
+          [
+            "TEXTO_AVISO",
+            "Novo aviso",
+            "Aviso mostrado com o código"
+          ]
+        ],
+        "CONSULTAS": [
+          [
+            "ID",
+            "DataHora",
+            "PINUsado",
+            "Nome",
+            "Piso",
+            "Fracao",
+            "Email",
+            "Motivo",
+            "MotivoOutro",
+            "CodigoMostrado",
+            "Resultado",
+            "UserAgent"
+          ],
+          [
+            "CONS_1789120800000_420",
+            "2026-09-11T10:00:00.000Z",
+            "478000",
+            "Morador de teste",
+            "9",
+            "B",
+            "morador@example.invalid",
+            "Outro",
+            "Teste",
+            "0000",
+            "SUCESSO",
+            "Test"
+          ]
+        ],
+        "ESTADO_EXTINTORES": [
+          [
+            "LAST_UPDATED",
+            "STATUS",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "CLOSED_AT",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "LAST_EVENT"
+          ]
+        ],
+        "HISTORICO_FECHOS": [
+          [
+            "TIMESTAMP",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_AT",
+            "REPORTED_BY",
+            "REASON",
+            "OPEN_NOTES",
+            "CLOSE_NOTES",
+            "CLOSE_PHOTO_FILE_ID",
+            "CLOSE_PHOTO_FILE_URL",
+            "CLOSE_PHOTO_FILE_NAME",
+            "SOURCE",
+            "CLIENT_TS"
+          ]
+        ],
+        "LOG": [
+          [
+            "DataHora",
+            "Tipo",
+            "Acao",
+            "Email",
+            "Mensagem"
+          ],
+          [
+            "2026-09-11T10:00:00.000Z",
+            "INFO",
+            "REGISTO",
+            "morador@example.invalid",
+            "Novo pedido: Morador de teste"
+          ]
+        ],
+        "REGISTOS": [
+          [
+            "TIMESTAMP",
+            "EVENTO",
+            "OCCURRENCE_ID",
+            "FLOOR",
+            "FLOOR_LABEL",
+            "POINT",
+            "LOCATION",
+            "REPORTED_BY",
+            "REASON",
+            "NOTES",
+            "PHOTO_FILE_ID",
+            "PHOTO_FILE_URL",
+            "PHOTO_FILE_NAME",
+            "STATUS_BEFORE",
+            "STATUS_AFTER",
+            "SOURCE",
+            "CLIENT_TS",
+            "EXTRA_JSON"
+          ]
+        ]
+      },
+      "emails": [
+        {
+          "to": "morador@example.invalid",
+          "subject": "Pedido de acesso recebido — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nRecebemos o seu pedido de acesso. Após aprovação receberá o PIN por email.",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "admin@example.invalid",
+          "subject": "Novo pedido de acesso — Domingos da Cunha 4",
+          "body": "Novo pedido:\n\nNome: Morador de teste\nPiso: 9\nFração/Garagem: B\nEmail: morador@example.invalid\nTelemóvel: —",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "morador@example.invalid",
+          "subject": "Acesso aprovado — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nO seu PIN pessoal é: 478000\n\nGuarde-o num local seguro.",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "morador@example.invalid",
+          "subject": "Recuperação de PIN — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nO seu PIN pessoal é: 478000",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "morador@example.invalid",
+          "subject": "Recuperação de PIN — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nO seu PIN pessoal é: 478000",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "morador@example.invalid",
+          "subject": "Recuperação de PIN — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nO seu PIN pessoal é: 478000",
+          "replyTo": "admin@example.invalid"
+        },
+        {
+          "to": "morador@example.invalid",
+          "subject": "Pedido de acesso — Domingos da Cunha 4",
+          "body": "Olá Morador de teste,\n\nO seu pedido não foi aprovado. Contacte a administração.",
+          "replyTo": "admin@example.invalid"
+        }
+      ],
+      "uploads": [],
+      "props": {}
+    }
+  }
+}

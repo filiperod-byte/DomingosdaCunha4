@@ -1,118 +1,29 @@
-# Instalar backend unificado no Google Apps Script
+# Preparar o backend modular no Apps Script
 
-Este ficheiro explica como aplicar o backend unificado da V2.
+Esta refatorização mantém o contrato da interface atual, mas conserva falhas de autenticação e autorização do backend anterior. **Usar primeiro um ambiente de teste; não publicar esta etapa isoladamente no endpoint público.** Consultar [arquitetura, limitações e próximos passos](../backend/README.md).
 
-## Objetivo
+## Gerar e testar
 
-A V2 usa GitHub Pages como frontend e Google Apps Script como backend.
+Na raiz do repositório, com Node.js 20 ou posterior:
 
-O backend deve ter apenas:
-
-- um `doGet(e)`
-- um `doPost(e)`
-- um router único para os módulos:
-  - Extintores
-  - Garagem / Cadeado
-
-## Ficheiro a usar
-
-Copiar o conteúdo completo de:
-
-```text
-V2/backend-unificado.gs
+```sh
+node backend/build.cjs
+node --test backend/tests/backend.test.cjs
+node backend/build.cjs --check
 ```
 
-para o Google Apps Script.
+O código fonte está em `backend/src/`. O ficheiro gerado para o editor Google é `V2/backend-unificado.gs`.
 
-## Atenção importante
+## Validar numa cópia
 
-No Apps Script, todos os ficheiros `.gs` são carregados ao mesmo tempo.
+1. Criar uma spreadsheet e pasta Drive de teste, com dados fictícios. Configurar os identificadores e o email de teste em `backend/src/config.js` e gerar novamente o ficheiro `.gs`. A configuração original aponta para recursos existentes: substituí-la antes de executar a cópia.
+2. Criar um projeto Apps Script de teste com runtime V8. Copiar o conteúdo gerado para um ficheiro do projeto, sem manter outro backend com as mesmas funções globais.
+3. Executar `setupApp()` no editor. É o alias público da rotina `setupBackend_()` e prepara as folhas necessárias. Autorizar apenas os recursos de teste pretendidos. A inicialização é manual: as consultas HTTP já não criam folhas.
+4. Validar os fluxos numa implantação de teste com acesso restrito. Se o acesso restrito impedir os pedidos da interface estática, validar as funções no editor e concluir a autenticação antes de expor o endpoint.
+5. Verificar registo, aprovação, login, consulta do código, reporte, aprovação e fecho com fotografia, bem como emails, fuso horário e permissões dos ficheiros. Os testes locais não substituem esta integração.
 
-Por isso, não basta renomear ficheiros antigos.
+## Quando a versão estiver pronta para produção
 
-Se existirem vários ficheiros `.gs` com:
+Após corrigir autenticação e permissões e validar a integração, gerar com a configuração correta, atualizar o código no projeto Apps Script de produção e publicar uma nova versão da implantação existente. Se for mantida a implantação, o URL `/exec` mantém-se; uma implantação nova exige atualizar o endpoint usado pela interface.
 
-```js
-const CONFIG = ...
-function doGet(e) { ... }
-function doPost(e) { ... }
-```
-
-vai dar conflito.
-
-## Instalação recomendada
-
-1. Abrir o projeto no Google Apps Script.
-2. Criar uma cópia de segurança do código antigo fora do Apps Script, por exemplo no GitHub ou num ficheiro `.txt`.
-3. No ficheiro principal `.gs`, colar todo o conteúdo de `V2/backend-unificado.gs`.
-4. Nos outros ficheiros `.gs` antigos, apagar o conteúdo ou comentar tudo com:
-
-```js
-/*
-  código antigo aqui dentro
-*/
-```
-
-5. Os ficheiros `.html` antigos (`Index.html`, `Admin.html`, `Style.html`) podem ficar. Já não são usados pela V2, mas não criam conflito se não forem chamados.
-6. Guardar o projeto.
-7. Executar manualmente:
-
-```js
-setupBackend_()
-```
-
-8. Executar manualmente:
-
-```js
-setupApp()
-```
-
-9. Autorizar permissões quando o Google pedir.
-10. Fazer nova implementação do Web App:
-
-```text
-Deploy / Implementar → Manage deployments / Gerir implementações → Editar → Nova versão
-```
-
-11. Confirmar configuração:
-
-```text
-Execute as: Me / Eu
-Who has access: Anyone / Qualquer pessoa
-```
-
-12. Publicar a nova versão.
-
-## Testes
-
-Abrir no browser:
-
-```text
-https://script.google.com/macros/s/AKfycbxgAehbnaj2kGv-3K6PDRzPXHbiFF4nCimJ6Adje4-d917-MFhcHE9xjLOb-8cwqKdzQw/exec?action=health
-```
-
-Deve devolver JSON com:
-
-```json
-{
-  "success": true
-}
-```
-
-Depois testar:
-
-```text
-https://filiperod-byte.github.io/DomingosdaCunha4/V2/garagem.html
-```
-
-E:
-
-```text
-https://filiperod-byte.github.io/DomingosdaCunha4/V2/garagem-admin.html
-```
-
-## Nota
-
-A app antiga da garagem não precisa de ser apagada enquanto ideia/projeto.
-
-O que não pode continuar é ter código antigo ativo com `doGet`, `doPost` ou `CONFIG` duplicados dentro do mesmo projeto Apps Script.
+A atualização dos ficheiros no GitHub e a atualização da implantação Google são operações distintas. Nenhuma implantação Google foi alterada por esta proposta. Guardar a versão anterior para permitir voltar atrás.

@@ -19,3 +19,9 @@ Definições recomendadas do deployment:
 
 - Executar como: **Eu**
 - Quem tem acesso: **Qualquer pessoa**
+
+
+
+## Backend modular (proposta de reestruturação)
+
+O código fonte do backend passa a estar em [`backend/src/`](../backend/src/). O ficheiro `backend-unificado.gs` é gerado por `node backend/build.cjs`. Ver [arquitetura e testes](../backend/README.md) e [instalação](INSTALAR_BACKEND.md). Esta etapa preserva o contrato existente e requer uma fase seguinte de autenticação e permissões antes de publicação pública.
