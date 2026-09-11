@@ -2,7 +2,7 @@
 function createAppsScriptApplication_() {
   const domain = createCondominiumDomain_(GARAGE_RESIDENTIAL_STRUCTURE, OPEN_STATUSES, PENDING_STATUSES);
   const ports = createAppsScriptPorts_(CONFIG, REQUIRED_HEADERS, domain);
-  return createCondominiumApplication_(ports, CONFIG, domain);
+  return createSecureApplication_(createCondominiumApplication_(ports, CONFIG, domain), ports);
 }
 
 function parseRequestBody_(e) {

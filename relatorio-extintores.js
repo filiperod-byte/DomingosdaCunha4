@@ -27,7 +27,7 @@ function bind(){
 }
 
 async function loadConfig(){
-  const r=await fetch('config.json',{cache:'no-store'});
+  const r=await dc4Fetch('config.json',{cache:'no-store'});
   if(!r.ok) throw new Error('config.json não encontrado.');
   return r.json();
 }
@@ -45,13 +45,13 @@ async function loadData(){
 async function apiGet(action){
   const u=new URL(CFG.backendUrl);
   u.searchParams.set('action',action);
-  const r=await fetch(u,{cache:'no-store'});
+  const r=await dc4Fetch(u,{cache:'no-store'});
   const t=await r.text();
   try{return JSON.parse(t)}catch(e){throw new Error('Resposta inválida do backend.');}
 }
 
 async function apiPost(data){
-  const r=await fetch(CFG.backendUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
+  const r=await dc4Fetch(CFG.backendUrl,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(data)});
   const t=await r.text();
   try{return JSON.parse(t)}catch(e){throw new Error('Resposta inválida do backend.');}
 }
@@ -198,3 +198,4 @@ function buildPlainSummary(){
 }
 
 function showPdfLink(url){const a=$('pdfLink');a.href=url;a.classList.remove('hidden');}
+

@@ -101,6 +101,7 @@ function harness(source, options = {}) {
   source = source.replace(/SPREADSHEET_ID:\s*'[^']*'/, "SPREADSHEET_ID: 'TEST-SHEET'")
     .replace(/ROOT_FOLDER_ID:\s*'[^']*'/, "ROOT_FOLDER_ID: 'TEST-DRIVE'")
     .replace(/ADMIN_EMAIL:\s*'[^']*'/, "ADMIN_EMAIL: 'admin@example.invalid'");
+  if (options.legacyCore) source = source.replace('createSecureApplication_(createCondominiumApplication_(ports, CONFIG, domain), ports)', 'createCondominiumApplication_(ports, CONFIG, domain)');
   vm.runInContext(source, context);
   const post = (action, data = {}) => context.doPost({ postData: { contents: JSON.stringify({ action, ...data }) } });
   const get = action => context.doGet({ parameter: { action } });

@@ -12,7 +12,7 @@ for (const [name, result] of Object.entries(expected)) {
 }
 
 test('consultas não escrevem nem voltam a abrir a mesma spreadsheet', () => {
-  const b = harness(bundled()); b.initialize();
+  const b = harness(bundled(), { legacyCore: true }); b.initialize();
   for (const action of ['status', 'health', 'garage.dashboard', 'garage.publicConfig', 'garage.approved', 'garage.history']) {
     const before = { ...b.counts }; b.get(action);
     assert.equal(b.counts.writes, before.writes, action);
@@ -21,21 +21,21 @@ test('consultas não escrevem nem voltam a abrir a mesma spreadsheet', () => {
 });
 
 test('consultas numa instalação vazia não criam folhas', () => {
-  const b = harness(bundled());
+  const b = harness(bundled(), { legacyCore: true });
   assert.equal(b.get('health').success, false);
   assert.equal(b.counts.writes, 0);
   assert.equal(b.sheets.size, 0);
 });
 
 test('instalação repetida preserva dados existentes', () => {
-  const b = harness(bundled()); b.initialize();
+  const b = harness(bundled(), { legacyCore: true }); b.initialize();
   b.post('garage.register', { nome: 'Teste', email: 'teste@example.invalid', piso: '9', fracao: 'B' });
   const before = b.snapshot(); b.initialize();
   assert.deepEqual(b.snapshot(), before);
 });
 
 test('definir PIN preserva outras propriedades e liberta o lock em erro', () => {
-  const b = harness(bundled()); b.initialize(); b.props.UNRELATED = 'preservar';
+  const b = harness(bundled(), { legacyCore: true }); b.initialize(); b.props.UNRELATED = 'preservar';
   assert.equal(b.post('setPin', { pin: '123456' }).success, true);
   assert.equal(b.props.UNRELATED, 'preservar');
   assert.equal(b.post('setPin', { pin: '654321' }).success, false);
@@ -43,7 +43,7 @@ test('definir PIN preserva outras propriedades e liberta o lock em erro', () => 
 });
 
 test('operações sobre linhas inválidas não alteram cabeçalhos ou dados', () => {
-  const b = harness(bundled()); b.initialize(); const before = b.snapshot();
+  const b = harness(bundled(), { legacyCore: true }); b.initialize(); const before = b.snapshot();
   for (const action of ['garage.approve', 'garage.reject', 'garage.block', 'garage.unblock', 'garage.regeneratePin']) {
     for (const row of [1, 0, -1, 2, 1.5]) assert.equal(b.post(action, { row }).success, false);
   }
@@ -51,13 +51,13 @@ test('operações sobre linhas inválidas não alteram cabeçalhos ou dados', ()
 });
 
 test('configuração é atualizada entre pedidos', () => {
-  const b = harness(bundled()); b.initialize(); b.get('garage.publicConfig');
+  const b = harness(bundled(), { legacyCore: true }); b.initialize(); b.get('garage.publicConfig');
   b.post('garage.saveConfig', { configs: { NOME_CONDOMINIO: 'Nome novo' } });
   assert.equal(b.get('garage.publicConfig').nomeCondominio, 'Nome novo');
 });
 
 test('moradores funcionam com colunas reordenadas', () => {
-  const b = harness(bundled()); b.initialize();
+  const b = harness(bundled(), { legacyCore: true }); b.initialize();
   const sheet = [...b.sheets.values()].find(s => s.rows[0].includes('PINAtivo'));
   sheet.rows.forEach(row => row.reverse());
   assert.equal(b.post('garage.register', { nome: 'Teste', email: 'teste@example.invalid', piso: '9', fracao: 'B' }).success, true);

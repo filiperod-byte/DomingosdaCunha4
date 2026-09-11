@@ -1,29 +1,32 @@
-# Preparar o backend modular no Apps Script
+# Instalar o backend modular com sessões
 
-Esta refatorização mantém o contrato da interface atual, mas conserva falhas de autenticação e autorização do backend anterior. **Usar primeiro um ambiente de teste; não publicar esta etapa isoladamente no endpoint público.** Consultar [arquitetura, limitações e próximos passos](../backend/README.md).
+As alterações incluem a interface GitHub e o Apps Script. Guardar o código no editor Google não atualiza uma implantação versionada `/exec`. Não substituir apenas uma das partes em produção: os clientes antigos não enviam a sessão agora obrigatória.
 
-## Gerar e testar
+## Preparar o código
 
-Na raiz do repositório, com Node.js 20 ou posterior:
+O ficheiro completo para copiar é [`backend-unificado.gs`](backend-unificado.gs). Não copiar os testes nem os ficheiros JavaScript da interface para o Apps Script. O fonte está em `backend/src/` e pode ser gerado com:
 
 ```sh
 node backend/build.cjs
-node --test backend/tests/backend.test.cjs
+node --test backend/tests/*.test.cjs
 node backend/build.cjs --check
 ```
 
-O código fonte está em `backend/src/`. O ficheiro gerado para o editor Google é `V2/backend-unificado.gs`.
+## Primeiro validar numa cópia
 
-## Validar numa cópia
+1. Guardar uma cópia do código Google atual e registar a versão da implantação atual.
+2. Criar cópias de teste da spreadsheet e da pasta Drive; no início do `.gs`, adaptar `SPREADSHEET_ID`, `ROOT_FOLDER_ID` e `ADMIN_EMAIL` aos recursos de teste. Não usar dados pessoais reais nos testes.
+3. Copiar o ficheiro `.gs` completo para um projeto Apps Script V8. Não manter outro ficheiro com `doGet`, `doPost` ou as mesmas constantes globais. Preservar separadamente quaisquer funções próprias que não pertençam a este backend.
+4. Executar `setupApp()` uma vez. Autorizar os serviços Google para os recursos de teste. A inicialização preserva os dados existentes e deixa de ocorrer em cada pedido.
+5. Na folha `CONFIG`, confirmar `ADMIN_EMAIL` e definir `ADMIN_PIN` com 6 a 12 dígitos próprios. `123456` e `000000` são recusados. Os PINs dos moradores continuam a ter 6 dígitos; confirmar `PINAtivo=TRUE` nos moradores aprovados que devem entrar.
+6. Criar uma implantação de teste e configurar uma cópia da interface desta branch para esse URL (ambos `config.json` e `V2/config.json`). Validar administrador, morador, QR, reportes/fotografias, bloqueio, logout e emails. Depois de alterar o PIN administrativo, voltar a entrar.
 
-1. Criar uma spreadsheet e pasta Drive de teste, com dados fictícios. Configurar os identificadores e o email de teste em `backend/src/config.js` e gerar novamente o ficheiro `.gs`. A configuração original aponta para recursos existentes: substituí-la antes de executar a cópia.
-2. Criar um projeto Apps Script de teste com runtime V8. Copiar o conteúdo gerado para um ficheiro do projeto, sem manter outro backend com as mesmas funções globais.
-3. Executar `setupApp()` no editor. É o alias público da rotina `setupBackend_()` e prepara as folhas necessárias. Autorizar apenas os recursos de teste pretendidos. A inicialização é manual: as consultas HTTP já não criam folhas.
-4. Validar os fluxos numa implantação de teste com acesso restrito. Se o acesso restrito impedir os pedidos da interface estática, validar as funções no editor e concluir a autenticação antes de expor o endpoint.
-5. Verificar registo, aprovação, login, consulta do código, reporte, aprovação e fecho com fotografia, bem como emails, fuso horário e permissões dos ficheiros. Os testes locais não substituem esta integração.
+## Publicação coordenada
 
-## Quando a versão estiver pronta para produção
+Preparar o novo código no editor do projeto Google de produção, com os identificadores corretos, sem publicar ainda uma nova versão. Confirmar o PIN administrativo próprio na base de dados. Manter uma cópia anterior para recuperação.
 
-Após corrigir autenticação e permissões e validar a integração, gerar com a configuração correta, atualizar o código no projeto Apps Script de produção e publicar uma nova versão da implantação existente. Se for mantida a implantação, o URL `/exec` mantém-se; uma implantação nova exige atualizar o endpoint usado pela interface.
+Depois de validar a cópia, publicar os ficheiros da interface desta branch e atualizar a implantação Google existente para uma nova versão, na mesma janela de manutenção. Manter a implantação preserva o URL `/exec`; se criar outra, atualizar ambos os `config.json`. O service worker tem nova versão para renovar os ficheiros da app; fechar/reabrir a app e confirmar a atualização nos dispositivos.
 
-A atualização dos ficheiros no GitHub e a atualização da implantação Google são operações distintas. Nenhuma implantação Google foi alterada por esta proposta. Guardar a versão anterior para permitir voltar atrás.
+É necessário voltar a entrar na app. A administração de extintores passa a usar o login da administração em `V2/admin.html`. O reset anónimo do PIN antigo foi desativado; a recuperação administrativa faz-se pelo editor autorizado da folha CONFIG.
+
+Os testes locais não validam permissões Google, quotas, entrega real de emails nem funcionamento visual no telemóvel. A branch continua em rascunho até à validação dessa integração. Nenhum endpoint Google foi alterado automaticamente.

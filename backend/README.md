@@ -2,7 +2,19 @@
 
 O backend continua a executar no Apps Script e a guardar os dados no Sheets. A lógica passa a organizar-se por funções do condomínio, com os serviços Google concentrados num adaptador. A interface existente mantém as ações e respostas anteriores, incluindo os aliases `garage.*`.
 
-**Esta proposta é uma base de refatorização, não uma versão com autenticação corrigida. Não publicar esta etapa isoladamente no endpoint público.** As falhas herdadas de autorização precisam de uma alteração coordenada entre backend e interface, descrita abaixo.
+A segunda etapa acrescenta `security.js` à entrada HTTP e `session-client.js` à interface. Ambos devem ser instalados em conjunto. A integração real com Google e os testes visuais no navegador continuam pendentes; a proposta permanece em rascunho até essa validação.
+
+## Sessões e permissões
+
+As ações administrativas exigem uma sessão de administrador; consultas do código exigem sessão de morador e os reportes recebem a identidade validada no servidor. O acesso antigo por `validatePin`, `setPin` e `resetPin` deixa de estar exposto. A entrada administrativa é `V2/admin.html`.
+
+Tokens são guardados em `sessionStorage`, enviados no corpo POST, guardados como hash no servidor e expiram após 30 minutos (administração) ou 8 horas (morador). Existe uma sessão por conta: novo login termina a anterior. Bloqueio, desativação e alteração de PIN invalidam sessões nos pedidos seguintes. Logout revoga a sessão no servidor quando há ligação; sem rede permanece a expiração. Não se usa o valor de `dc4_admin_unlocked` como autorização no servidor.
+
+Há limites globais por janela: 10 logins administrativos e 30 logins de moradores por 15 minutos, e 10 pedidos públicos de registo/recuperação por hora. Contam também pedidos bem-sucedidos. Isto limita tentativas e spam, mas um atacante pode esgotar a janela e impedir temporariamente acessos legítimos. O Apps Script não fornece aqui um mecanismo robusto de limitação por IP. A proteção contra abuso e o modelo de credenciais devem evoluir na migração.
+
+O PIN administrativo tem 6 a 12 dígitos. Os valores de fábrica `123456` e `000000` são recusados. Alterar diretamente `ADMIN_PIN` na folha CONFIG antes de validar a instalação, usando um valor próprio. Não partilhar o PIN no GitHub nem nesta conversa.
+
+Persistem limitações: PINs de moradores e o PIN administrativo no Sheets não estão cifrados; as fotografias conservam partilha por ligação; não foi realizada uma auditoria completa de XSS ou de ficheiros enviados. A sessão no navegador não protege contra XSS. Restringir editores da base de dados e planear autenticação dedicada na migração.
 
 ## Organização
 
@@ -29,7 +41,7 @@ Requer Node.js 20 ou posterior, sem dependências npm:
 
 ```sh
 node backend/build.cjs
-node --test backend/tests/backend.test.cjs
+node --test backend/tests/*.test.cjs
 node backend/build.cjs --check
 ```
 
@@ -37,7 +49,7 @@ Editar `backend/src/`, gerar e incluir também `V2/backend-unificado.gs` no comm
 
 Os testes executam apenas em memória, sem rede, emails reais ou acesso a folhas. `tests/compatibility.json` contém resultados obtidos do backend original no commit `c89622f3f70645290e02e0865c44111f4a07e3c3`, usando dados, identificadores, relógio e destinatários fictícios. Oito cenários comparam respostas, persistência, notificações e fotografias. Outros testes verificam consultas sem escritas, inicialização, propriedades, linhas inválidas, colunas reordenadas e execução sem serviços Google.
 
-**Compatibilidade não prova segurança:** os resultados de referência incluem comportamentos vulneráveis herdados. A integração real com Google, permissões Drive, quotas, entrega de email e formatação no fuso horário não foram validadas por estes testes.
+**Compatibilidade não prova segurança:** os testes de referência executam explicitamente apenas o núcleo legado, sem a política HTTP. Os testes de `security.test.cjs` e `client.test.cjs` verificam separadamente a fronteira autenticada e o cliente. Os resultados de referência incluem comportamentos vulneráveis que já não são expostos pela entrada HTTP. A integração real com Google, permissões Drive, quotas, entrega de email e formatação no fuso horário não foram validadas por estes testes.
 
 ## Alterações de comportamento intencionais
 
@@ -48,7 +60,7 @@ Os testes executam apenas em memória, sem rede, emails reais ou acesso a folhas
 
 ## Etapas seguintes
 
-1. **Autenticação e permissões no servidor.** O login atual não cria uma sessão autenticada e as ações administrativas continuam acessíveis sem autorização no servidor. Existem respostas que expõem PINs, código do cadeado e dados pessoais; `saveConfig` aceita chaves arbitrárias; `failedAttempt` continua sem contar tentativas. Corrigir as rotas, a recuperação de acesso e a interface em conjunto antes de uma publicação pública.
+1. **Validar integração e reforçar credenciais.** Testar Apps Script, Drive e interface em conjunto; substituir gradualmente os PINs partilhados e o armazenamento de credenciais no Sheets por autenticação dedicada.
 2. **Modelo do condomínio.** Unificar identidade e permissões, introduzir identificadores estáveis e tratar extintores como um tipo de equipamento/ocorrência. O PIN legado deve ser retirado de forma coordenada. Rever também fotografias públicas por ligação, autoria dos reportes e destinatários fornecidos pelo cliente.
 3. **Migração de infraestrutura.** Implementar adaptadores para a plataforma escolhida e uma nova entrada HTTP, migrar e verificar os dados, trocar o endpoint da interface e retirar o anterior após validação. As portas são atualmente síncronas; fornecedores com SDK assíncrono exigirão adaptar chamadas para `async/await`. Não é uma migração sem alterações ao código.
 

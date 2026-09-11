@@ -24,4 +24,4 @@ Definições recomendadas do deployment:
 
 ## Backend modular (proposta de reestruturação)
 
-O código fonte do backend passa a estar em [`backend/src/`](../backend/src/). O ficheiro `backend-unificado.gs` é gerado por `node backend/build.cjs`. Ver [arquitetura e testes](../backend/README.md) e [instalação](INSTALAR_BACKEND.md). Esta etapa preserva o contrato existente e requer uma fase seguinte de autenticação e permissões antes de publicação pública.
+O código fonte do backend passa a estar em [`backend/src/`](../backend/src/). O ficheiro `backend-unificado.gs` é gerado por `node backend/build.cjs`. Ver [arquitetura e testes](../backend/README.md) e [instalação](INSTALAR_BACKEND.md). A interface e o backend incluem sessões validadas no servidor e devem ser instalados em conjunto. Falta validar a integração real com Google antes de publicar.

@@ -83,7 +83,7 @@ const scenarios = {
 };
 
 function runScenario(source, name) {
-  const b = harness(source);
+  const b = harness(source, { legacyCore: true });
   b.initialize();
   const responses = scenarios[name](b);
   return JSON.parse(JSON.stringify({ responses, state: b.snapshot() }));
