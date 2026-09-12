@@ -1,5 +1,6 @@
-const DC4_CACHE = 'dc4-pwa-v3-20260708';
+const DC4_CACHE = 'dc4-pwa-v4-sessions-20260911';
 const APP_SHELL = [
+  '/DomingosdaCunha4/session-client.js',
   '/DomingosdaCunha4/',
   '/DomingosdaCunha4/V2/index.html',
   '/DomingosdaCunha4/V2/app.css',
@@ -45,3 +46,4 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+

@@ -1,118 +1,32 @@
-# Instalar backend unificado no Google Apps Script
+# Instalar o backend modular com sessões
 
-Este ficheiro explica como aplicar o backend unificado da V2.
+As alterações incluem a interface GitHub e o Apps Script. Guardar o código no editor Google não atualiza uma implantação versionada `/exec`. Não substituir apenas uma das partes em produção: os clientes antigos não enviam a sessão agora obrigatória.
 
-## Objetivo
+## Preparar o código
 
-A V2 usa GitHub Pages como frontend e Google Apps Script como backend.
+O ficheiro completo para copiar é [`backend-unificado.gs`](backend-unificado.gs). Não copiar os testes nem os ficheiros JavaScript da interface para o Apps Script. O fonte está em `backend/src/` e pode ser gerado com:
 
-O backend deve ter apenas:
-
-- um `doGet(e)`
-- um `doPost(e)`
-- um router único para os módulos:
-  - Extintores
-  - Garagem / Cadeado
-
-## Ficheiro a usar
-
-Copiar o conteúdo completo de:
-
-```text
-V2/backend-unificado.gs
+```sh
+node backend/build.cjs
+node --test backend/tests/*.test.cjs
+node backend/build.cjs --check
 ```
 
-para o Google Apps Script.
+## Primeiro validar numa cópia
 
-## Atenção importante
+1. Guardar uma cópia do código Google atual e registar a versão da implantação atual.
+2. Criar cópias de teste da spreadsheet e da pasta Drive; no início do `.gs`, adaptar `SPREADSHEET_ID`, `ROOT_FOLDER_ID` e `ADMIN_EMAIL` aos recursos de teste. Não usar dados pessoais reais nos testes.
+3. Copiar o ficheiro `.gs` completo para um projeto Apps Script V8. Não manter outro ficheiro com `doGet`, `doPost` ou as mesmas constantes globais. Preservar separadamente quaisquer funções próprias que não pertençam a este backend.
+4. Executar `setupApp()` uma vez. Autorizar os serviços Google para os recursos de teste. A inicialização preserva os dados existentes e deixa de ocorrer em cada pedido.
+5. Na folha `CONFIG`, confirmar `ADMIN_EMAIL` e definir `ADMIN_PIN` com 6 a 12 dígitos próprios. `123456` e `000000` são recusados. Os PINs dos moradores continuam a ter 6 dígitos; confirmar `PINAtivo=TRUE` nos moradores aprovados que devem entrar.
+6. Criar uma implantação de teste e configurar uma cópia da interface desta branch para esse URL (ambos `config.json` e `V2/config.json`). Validar administrador, morador, QR, reportes/fotografias, bloqueio, logout e emails. Depois de alterar o PIN administrativo, voltar a entrar.
 
-No Apps Script, todos os ficheiros `.gs` são carregados ao mesmo tempo.
+## Publicação coordenada
 
-Por isso, não basta renomear ficheiros antigos.
+Preparar o novo código no editor do projeto Google de produção, com os identificadores corretos, sem publicar ainda uma nova versão. Confirmar o PIN administrativo próprio na base de dados. Manter uma cópia anterior para recuperação.
 
-Se existirem vários ficheiros `.gs` com:
+Depois de validar a cópia, publicar os ficheiros da interface desta branch e atualizar a implantação Google existente para uma nova versão, na mesma janela de manutenção. Manter a implantação preserva o URL `/exec`; se criar outra, atualizar ambos os `config.json`. O service worker tem nova versão para renovar os ficheiros da app; fechar/reabrir a app e confirmar a atualização nos dispositivos.
 
-```js
-const CONFIG = ...
-function doGet(e) { ... }
-function doPost(e) { ... }
-```
+É necessário voltar a entrar na app. A administração de extintores passa a usar o login da administração em `V2/admin.html`. O reset anónimo do PIN antigo foi desativado; a recuperação administrativa faz-se pelo editor autorizado da folha CONFIG.
 
-vai dar conflito.
-
-## Instalação recomendada
-
-1. Abrir o projeto no Google Apps Script.
-2. Criar uma cópia de segurança do código antigo fora do Apps Script, por exemplo no GitHub ou num ficheiro `.txt`.
-3. No ficheiro principal `.gs`, colar todo o conteúdo de `V2/backend-unificado.gs`.
-4. Nos outros ficheiros `.gs` antigos, apagar o conteúdo ou comentar tudo com:
-
-```js
-/*
-  código antigo aqui dentro
-*/
-```
-
-5. Os ficheiros `.html` antigos (`Index.html`, `Admin.html`, `Style.html`) podem ficar. Já não são usados pela V2, mas não criam conflito se não forem chamados.
-6. Guardar o projeto.
-7. Executar manualmente:
-
-```js
-setupBackend_()
-```
-
-8. Executar manualmente:
-
-```js
-setupApp()
-```
-
-9. Autorizar permissões quando o Google pedir.
-10. Fazer nova implementação do Web App:
-
-```text
-Deploy / Implementar → Manage deployments / Gerir implementações → Editar → Nova versão
-```
-
-11. Confirmar configuração:
-
-```text
-Execute as: Me / Eu
-Who has access: Anyone / Qualquer pessoa
-```
-
-12. Publicar a nova versão.
-
-## Testes
-
-Abrir no browser:
-
-```text
-https://script.google.com/macros/s/AKfycbxgAehbnaj2kGv-3K6PDRzPXHbiFF4nCimJ6Adje4-d917-MFhcHE9xjLOb-8cwqKdzQw/exec?action=health
-```
-
-Deve devolver JSON com:
-
-```json
-{
-  "success": true
-}
-```
-
-Depois testar:
-
-```text
-https://filiperod-byte.github.io/DomingosdaCunha4/V2/garagem.html
-```
-
-E:
-
-```text
-https://filiperod-byte.github.io/DomingosdaCunha4/V2/garagem-admin.html
-```
-
-## Nota
-
-A app antiga da garagem não precisa de ser apagada enquanto ideia/projeto.
-
-O que não pode continuar é ter código antigo ativo com `doGet`, `doPost` ou `CONFIG` duplicados dentro do mesmo projeto Apps Script.
+Os testes locais não validam permissões Google, quotas, entrega real de emails nem funcionamento visual no telemóvel. A branch continua em rascunho até à validação dessa integração. Nenhum endpoint Google foi alterado automaticamente.

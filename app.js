@@ -98,7 +98,7 @@ function applyAutoReporterUI() {
 }
 
 async function loadConfig() {
-  const res = await fetch("config.json", { cache: "no-store" });
+  const res = await dc4Fetch("config.json", { cache: "no-store" });
   if (!res.ok) throw new Error("Não foi possível carregar o config.json");
   return res.json();
 }
@@ -499,7 +499,7 @@ async function apiPost(payload) {
 
   let response;
   try {
-    response = await fetch(baseUrl, { method: "POST", body: formData });
+    response = await dc4Fetch(baseUrl, { method: "POST", body: formData });
   } catch (error) {
     throw new Error("Falha de ligação ao backend (POST bloqueado / CORS).");
   }
@@ -514,7 +514,7 @@ async function apiPost(payload) {
 }
 
 async function fetchJson(url) {
-  const response = await fetch(url, { cache: "no-store" });
+  const response = await dc4Fetch(url, { cache: "no-store" });
   const text = await response.text();
   if (!response.ok) throw new Error(`Erro HTTP ${response.status}`);
   try {
@@ -579,3 +579,4 @@ function formatBytes(bytes) {
   }
   return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
+
