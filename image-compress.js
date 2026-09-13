@@ -210,8 +210,7 @@ function estimateDataUrlBytesForCompression(dataUrl) {
     const legend = document.querySelector('.legend');
     if (!legend) return;
     legend.innerHTML = `
-      <span class="pill"><span class="dot ok"></span> Sem ocorrência</span>
-      <span class="pill"><span class="dot pending"></span> A aguardar validação</span>
+      <span class="pill"><span class="dot ok"></span> Sem ocorrência validada</span>
       <span class="pill"><span class="dot alert"></span> Ocorrência aberta</span>
     `;
   }
@@ -279,24 +278,14 @@ function estimateDataUrlBytesForCompression(dataUrl) {
     updateLegendText();
 
     try {
-      const [openResult, pendingResult] = await Promise.allSettled([
-        apiGet('openOccurrences'),
-        apiGet('pendingOccurrences')
-      ]);
-
-      if (openResult.status === 'fulfilled') {
-        asOccurrenceArray(openResult.value).forEach((item) => registerOccurrence(item, 'open'));
+      // O mapa dos moradores usa apenas o estado publicado, sem listas administrativas.
+      const result = await apiGet('status');
+      if (!result || result.success === false || !Array.isArray(result.reported)) {
+        throw new Error('Não foi possível consultar o estado publicado.');
       }
-      if (pendingResult.status === 'fulfilled') {
-        asOccurrenceArray(pendingResult.value).forEach((item) => registerOccurrence(item, 'pending'));
-      }
-
+      result.reported.forEach((item) => registerOccurrence(item, 'open'));
       REPORTED_SET = new Set(openSet);
-      els.lastRefresh.textContent = `Atualizado às ${formatTime(new Date())}`;
-
-      if (openResult.status === 'rejected' && pendingResult.status === 'rejected') {
-        throw openResult.reason || pendingResult.reason;
-      }
+      els.lastRefresh.textContent = `Estado publicado às ${formatTime(new Date())}`;
     } catch (error) {
       console.error('Erro ao carregar estados:', error);
       clearOccurrenceState();

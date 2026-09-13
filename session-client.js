@@ -27,6 +27,8 @@
     else if (options.body instanceof FormData) Object.assign(payload, Object.fromEntries(options.body));
     else if (options.body) Object.assign(payload, JSON.parse(options.body));
     const action = String(payload.action || 'status').replace(/^garage([A-Z])/, (_, c) => 'garage.' + c.toLowerCase());
+    payload.action = action;
+    const adminPage = /\/(?:V2\/(?:admin|acessos-admin|config-admin|garagem-admin)|backoffice|relatorio-extintores)\.html$/.test(new URL(location.href).pathname);
     const role = ['report', 'garage.getCode', 'garage.loginPin'].includes(action) ? 'resident' : 'admin';
     const session = read(role) || (action === 'report' ? read('admin') : null);
     if (session && session.expiresAt > Date.now()) payload.token = session.token;
@@ -35,7 +37,7 @@
     if (result.token && ['admin', 'resident'].includes(result.role)) sessionStorage.setItem(storageKey(result.role), JSON.stringify({ token: result.token, expiresAt: result.expiresAt }));
     if (result.code === 'AUTH_REQUIRED') {
       clear(role);
-      if (role === 'admin') location.assign(new URL('V2/admin.html', root));
+      if (role === 'admin' && adminPage) location.assign(new URL('V2/admin.html', root));
       throw new Error(result.message || 'Volte a entrar na app.');
     }
     return response;
