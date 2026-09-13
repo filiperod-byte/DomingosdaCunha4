@@ -1,5 +1,6 @@
-const DC4_CACHE = 'dc4-pwa-v4-sessions-20260911';
+const DC4_CACHE = 'dc4-pwa-v3.1.0-20260913';
 const APP_SHELL = [
+  '/DomingosdaCunha4/app-version.js?v=3.1.0',
   '/DomingosdaCunha4/session-client.js',
   '/DomingosdaCunha4/',
   '/DomingosdaCunha4/V2/index.html',
