@@ -1,8 +1,9 @@
 <!doctype html>
 <html lang="pt-PT">
 <head>
-  <script src="../app-version.js?v=3.1.1" defer></script>
-  <script src="../session-client.js?v=3.1.1"></script>
+  <script src="../app-navigation.js?v=3.2.0" defer></script>
+  <script src="../app-version.js?v=3.2.0" defer></script>
+  <script src="../session-client.js?v=3.2.0"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#1A2F5A">
@@ -22,7 +23,7 @@
 </head>
 <body>
   <main class="app">
-    <header class="admin-head"><div class="head-row"><a class="back-mini" href="index.html" aria-label="Voltar à app">←</a><div><div class="head-title">Área de administração</div><div class="head-sub" id="lead">Faça login uma vez e escolha o módulo que pretende gerir.</div></div></div></header>
+    <header class="admin-head"><div class="head-row"><div><div class="head-title">Área de administração</div><div class="head-sub" id="lead">Faça login uma vez e escolha o módulo que pretende gerir.</div></div></div></header>
     <section class="admin-intro"><div class="intro-icon">🛠️</div><div><div class="intro-title">Gestão do condomínio</div><div class="intro-text" id="introText">Acesso reservado à administração. Depois do login, os módulos ficam disponíveis sem novo PIN.</div></div></section>
     <section class="content">
       <section id="loginBox" class="login-card"><div class="section-title">Entrar na administração</div><div class="field"><label>Email</label><input class="input" id="email" type="email" placeholder="admin@email.com" autocomplete="email"></div><div class="field"><label>PIN de administrador</label><input class="input" id="pin" type="password" inputmode="numeric" maxlength="12" placeholder="••••••" autocomplete="current-password"></div><div id="msg"></div><button class="btn btn-primary" id="loginBtn" onclick="login()">Entrar na administração</button><div class="fineprint">Esta sessão desbloqueia a gestão de acessos e os módulos administrativos.</div></section>
@@ -31,7 +32,7 @@
         <a class="admin-card" href="../backoffice.html"><div class="card-icon" style="background:#FEE2E2">🧯</div><div><div class="card-title">Extintores</div><div class="card-desc">Validar reportes, consultar fotografias, fechar ocorrências e imprimir QR codes.</div><span class="badge live">Reportes e QR codes</span></div></a>
         <a class="admin-card" href="../relatorio-extintores.html"><div class="card-icon" style="background:#F5F3FF">📊</div><div><div class="card-title">Relatório de extintores</div><div class="card-desc">Consultar ocorrências por tipo de anomalia, filtrar, gerar PDF e preparar envio por email.</div><span class="badge report">Relatório V2.1</span></div></a>
         <a class="admin-card" href="config-admin.html"><div class="card-icon" style="background:#FFFBEB">⚙️</div><div><div class="card-title">Configurações gerais</div><div class="card-desc">Nome do condomínio, email da administração, tempo visível do código e PIN de administrador.</div><span class="badge settings">Configuração da app</span></div></a>
-      </div><div class="admin-actions"><button class="btn btn-danger" onclick="logout()">Terminar sessão de administração</button><a class="btn btn-outline" href="index.html">← Voltar à app</a></div></section>
+      </div><div class="admin-actions"><button class="btn btn-danger" onclick="logout()">Terminar sessão de administração</button></div></section>
     </section>
   </main>
 <script>
@@ -46,3 +47,4 @@ document.getElementById('pin').addEventListener('keydown',e=>{if(e.key==='Enter'
 </script>
 </body>
 </html>
+
