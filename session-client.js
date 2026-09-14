@@ -38,8 +38,11 @@
     if (result.code === 'AUTH_REQUIRED') {
       clear(role);
       if (role === 'admin' && adminPage) location.assign(new URL('V2/admin.html', root));
-      throw new Error(result.message || 'Volte a entrar na app.');
+      const error = new Error(result.message || 'Volte a entrar na app.');
+      error.code = result.code;
+      throw error;
     }
     return response;
   };
 })();
+

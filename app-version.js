@@ -1,7 +1,7 @@
 /* Versão da interface: atualizar este valor e as referências ?v= em cada publicação. */
 (function () {
   'use strict';
-  const VERSION = '3.2.0';
+  const VERSION = '3.3.0';
   function mount() {
     if (document.getElementById('dc4-version')) return;
     const style = document.createElement('style');
@@ -14,11 +14,12 @@
     badge.title = 'Versão da interface da app';
     badge.setAttribute('aria-label', 'Informação da versão ' + VERSION);
     badge.addEventListener('click', function () {
-      window.alert('App do Condomínio — v' + VERSION + '\nPublicação: 13/09/2026\n\nIndica este número quando reportares um problema.\nEste indicador identifica a interface; não verifica a versão do serviço de dados.');
+      window.alert('App do Condomínio — v' + VERSION + '\nPublicação: 14/09/2026\n\nIndica este número quando reportares um problema.\nEste indicador identifica a interface; não verifica a versão do serviço de dados.');
     });
     document.body.appendChild(badge);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', mount, {once:true});
   else mount();
 })();
+
 
