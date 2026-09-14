@@ -6,7 +6,7 @@ const vm=require('node:vm');
 const root=path.join(__dirname,'../..');
 function setup(hasSession=false){
  const elements=new Map();
- function el(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',disabled:false,open:false,options:[],classList:{add(){},remove(){}},appendChild(){},focus(){},showModal(){this.open=true},close(){this.open=false},reset(){el('reason').value='';el('notes').value=''}});return elements.get(id)}
+ function el(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',disabled:false,open:false,options:[],classList:{add(){},remove(){}},appendChild(child){(this.children ||= []).push(child)},replaceChildren(){this.children=[]},focus(){},showModal(){this.open=true},close(){this.open=false},reset(){el('reason').value='';el('notes').value=''}});return elements.get(id)}
  const c=vm.createContext({URL,URLSearchParams,Date,console,Response,navigator:{userAgent:'test'},location:{search:'?floor=9&point=E1'},document:{getElementById:el,addEventListener(){},createElement:()=>({})},window:{dc4HasSession:()=>hasSession},sessionStorage:{setItem(){}},setTimeout:()=>0,clearTimeout(){}});
  vm.runInContext(fs.readFileSync(path.join(root,'qr-report.js'),'utf8'),c);
  vm.runInContext("CFG={features:{}};POINT={floor:9,point:'E1',location:'Patamar'};",c);
@@ -58,4 +58,10 @@ test('resposta HTML nunca é tratada como reporte enviado',async()=>{
 test('QR antigo do piso zero é encaminhado para reporte e não para administração',()=>{
  const routes=[];vm.runInNewContext(fs.readFileSync(path.join(root,'qr-entry.js'),'utf8'),{URL,URLSearchParams,document:{currentScript:{src:'https://example.invalid/app/qr-entry.js'}},location:{search:'?floor=0&point=CF1',replace:u=>routes.push(u)}});
  const url=new URL(routes[0]);assert.equal(url.pathname,'/app/qrcode-report.html');assert.equal(url.searchParams.get('floor'),'0');assert.equal(url.searchParams.get('point'),'CF1');
+});
+
+test('QR apresenta o motivo público e recomenda não repetir a mesma situação',async()=>{
+ const {c,el}=setup();c.apiGet=async()=>({success:true,reported:[{floor:9,point:'E1',reason:'Extintor em falta',reportedAt:'2026-09-14T10:00:00.000Z'}]});
+ await c.loadExisting();const text=el('existingBox').children.map(e=>e.textContent).join(' ');
+ assert.match(text,/Motivo: Extintor em falta/);assert.match(text,/não precisa de a reportar novamente/);assert.match(text,/Registada em:/);
 });

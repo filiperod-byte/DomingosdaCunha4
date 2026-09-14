@@ -1,10 +1,10 @@
-const DC4_CACHE = 'dc4-pwa-v3.3.0-20260914';
+const DC4_CACHE = 'dc4-pwa-v3.4.0-20260914';
 const APP_SHELL = [
-  '/DomingosdaCunha4/qr-entry.js?v=3.3.0',
-  '/DomingosdaCunha4/qr-report.js?v=3.3.0',
+  '/DomingosdaCunha4/qr-entry.js?v=3.4.0',
+  '/DomingosdaCunha4/qr-report.js?v=3.4.0',
   '/DomingosdaCunha4/qrcode-report.html',
-  '/DomingosdaCunha4/app-navigation.js?v=3.3.0',
-  '/DomingosdaCunha4/app-version.js?v=3.3.0',
+  '/DomingosdaCunha4/app-navigation.js?v=3.4.0',
+  '/DomingosdaCunha4/app-version.js?v=3.4.0',
   '/DomingosdaCunha4/session-client.js',
   '/DomingosdaCunha4/',
   '/DomingosdaCunha4/V2/index.html',
@@ -51,6 +51,7 @@ self.addEventListener('fetch', event => {
     })
   );
 });
+
 
 
 

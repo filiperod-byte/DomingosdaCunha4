@@ -57,6 +57,7 @@ const GARAGE_RESIDENTIAL_STRUCTURE = {
 };
 
 
+
 // --- domain.js ---
 // Regras puras: não dependem de Sheets, HTTP ou serviços Google.
 function createCondominiumDomain_(residentialStructure, openStatuses, pendingStatuses) {
@@ -90,6 +91,7 @@ return { safeText_, toInt_, normalizePoint_, normalizePin_, formatFloorLabel_, i
 }
 
 
+
 // --- notifications.js ---
 // Conteúdo das notificações separado do transporte de email.
 function createNotificationService_(ports, CONFIG, domain) {
@@ -118,6 +120,7 @@ return { sendReportEmail_, sendCloseEmail_, sendPinResetEmail_, emailRegisto, em
 }
 
 
+
 // --- occurrences.js ---
 // Casos de uso dos extintores. Os registos legados mantêm o contrato atual.
 function createOccurrenceService_(ports, CONFIG, domain, notifications, getAdminEmail_) {
@@ -127,14 +130,29 @@ function createOccurrenceService_(ports, CONFIG, domain, notifications, getAdmin
   const generateOccurrenceId_ = () => ports.ids.occurrence();
   const saveIncomingPhoto_ = options => ports.files.save(options);
   const { sendReportEmail_, sendCloseEmail_ } = notifications;
-function handleGetStatus_() {
+function handleGetStatus_(payload) {
   const openRows = getOpenStateRows_();
-  return {
-    success:true,
-    reported: openRows.map(row => ({ floor: toInt_(row.FLOOR), point: String(row.POINT || '').trim() })),
+  const withDetails = payload && payload.details === 'public';
+  // Só categorias previstas no formulário: nunca publicar texto livre, autor, notas ou fotografias.
+  const categories = ['Extintor em falta', 'Extintor danificado', 'Suporte vazio',
+    'Selo / verificação em falta', 'Acesso obstruído', 'Outro'];
+  const result = {
+    success: true,
+    reported: openRows.map(row => {
+      const item = { floor: toInt_(row.FLOOR), point: String(row.POINT || '').trim() };
+      if (withDetails) {
+        const reason = String(row.REASON || '').trim();
+        item.reason = categories.includes(reason) ? reason : 'Outra anomalia';
+        const date = new Date(row.REPORTED_AT);
+        item.reportedAt = row.REPORTED_AT && !isNaN(date.getTime()) ? date.toISOString() : '';
+      }
+      return item;
+    }),
     totalOpen: openRows.length,
     updatedAt: isoNow_()
   };
+  if (withDetails) result.publicDetailsVersion = 1;
+  return result;
 }
 
 function publicOccurrenceFromRow_(row) {
@@ -362,6 +380,7 @@ function getPendingStateRows_() { return ports.occurrences.list().filter(r => is
 }
 
 
+
 // --- legacy-pin.js ---
 // Compatibilidade com o PIN do backoffice antigo. Não constitui uma sessão autenticada.
 function createLegacyPinService_(ports, CONFIG, domain, notifications, getAdminEmail_) {
@@ -409,6 +428,7 @@ function clearPin_() { const p = ports.properties; p.deleteProperty(CONFIG.PROPS
   return { status: handleGetPinStatus_, set: handlePostSetPin_, validate: handlePostValidatePin_,
     reset: handlePostResetPin_, configured: isPinConfigured_, clear: clearPin_ };
 }
+
 
 
 // --- residents.js ---
@@ -550,6 +570,7 @@ function createResidentService_(ports, domain, notifications) {
 }
 
 
+
 // --- accesses.js ---
 // Consulta e gestão de códigos de recursos comuns. Independente da tecnologia de armazenamento.
 function createAccessService_(ports) {
@@ -598,6 +619,7 @@ function createAccessService_(ports) {
 
   return { getCode: getCode, dashboard: dashboard, history: history, changeCode: changeCode };
 }
+
 
 
 // --- application.js ---
@@ -687,6 +709,7 @@ function createCondominiumApplication_(ports, config, domain) {
   }
   return { dispatch: dispatch, initialize: () => ports.initialize(), clearLegacyPin: pins.clear };
 }
+
 
 
 // --- security.js ---
@@ -793,6 +816,7 @@ function createSecureApplication_(app, ports) {
   }
   return { dispatch, initialize: app.initialize, clearLegacyPin: app.clearLegacyPin };
 }
+
 
 
 // --- apps-script-ports.js ---
@@ -982,6 +1006,7 @@ function setupApp() { const c = getSheet('CONFIG'); getSheet('CONDOMINOS'); getS
 }
 
 
+
 // --- entrypoints.js ---
 // Única fronteira HTTP/Apps Script. Sem estado de pedidos guardado globalmente.
 function createAppsScriptApplication_() {
@@ -1026,3 +1051,4 @@ function resetPinManualmente_() {
   createAppsScriptApplication_().clearLegacyPin();
   Logger.log('PIN removido.');
 }
+

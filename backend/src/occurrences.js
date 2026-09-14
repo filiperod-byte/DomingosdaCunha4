@@ -6,14 +6,29 @@ function createOccurrenceService_(ports, CONFIG, domain, notifications, getAdmin
   const generateOccurrenceId_ = () => ports.ids.occurrence();
   const saveIncomingPhoto_ = options => ports.files.save(options);
   const { sendReportEmail_, sendCloseEmail_ } = notifications;
-function handleGetStatus_() {
+function handleGetStatus_(payload) {
   const openRows = getOpenStateRows_();
-  return {
-    success:true,
-    reported: openRows.map(row => ({ floor: toInt_(row.FLOOR), point: String(row.POINT || '').trim() })),
+  const withDetails = payload && payload.details === 'public';
+  // Só categorias previstas no formulário: nunca publicar texto livre, autor, notas ou fotografias.
+  const categories = ['Extintor em falta', 'Extintor danificado', 'Suporte vazio',
+    'Selo / verificação em falta', 'Acesso obstruído', 'Outro'];
+  const result = {
+    success: true,
+    reported: openRows.map(row => {
+      const item = { floor: toInt_(row.FLOOR), point: String(row.POINT || '').trim() };
+      if (withDetails) {
+        const reason = String(row.REASON || '').trim();
+        item.reason = categories.includes(reason) ? reason : 'Outra anomalia';
+        const date = new Date(row.REPORTED_AT);
+        item.reportedAt = row.REPORTED_AT && !isNaN(date.getTime()) ? date.toISOString() : '';
+      }
+      return item;
+    }),
     totalOpen: openRows.length,
     updatedAt: isoNow_()
   };
+  if (withDetails) result.publicDetailsVersion = 1;
+  return result;
 }
 
 function publicOccurrenceFromRow_(row) {
@@ -239,3 +254,4 @@ function getPendingStateRows_() { return ports.occurrences.list().filter(r => is
     reject: handlePostRejectOccurrence_, close: handlePostCloseOccurrence_
   };
 }
+

@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="pt-PT">
 <head>
-  <script src="qr-entry.js?v=3.3.0"></script>
-  <script src="app-navigation.js?v=3.3.0" defer></script>
-  <script src="app-version.js?v=3.3.0" defer></script>
-  <script src="session-client.js?v=3.3.0"></script>
+  <script src="qr-entry.js?v=3.4.0"></script>
+  <script src="app-navigation.js?v=3.4.0" defer></script>
+  <script src="app-version.js?v=3.4.0" defer></script>
+  <script src="session-client.js?v=3.4.0"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <title>Controlo de Extintores</title>
@@ -22,8 +22,9 @@
   <div id="reportOverlay" class="overlay" aria-hidden="true"><div class="modal" role="dialog" aria-modal="true" aria-labelledby="modalTitle"><div class="modal-head"><div><h2 id="modalTitle" class="modal-title">Reportar extintor</h2><p id="modalSubtitle" class="modal-subtitle">Selecione um ponto.</p></div><button id="closeModalBtn" class="icon-btn" type="button" aria-label="Fechar">✕</button></div><div class="modal-body"><div id="alreadyReportedBox" class="alert-box">Este extintor já tem uma ocorrência aberta. Pode submeter informação adicional, se necessário.</div><form id="reportForm" class="form-grid"><input type="hidden" id="hiddenFloor"><input type="hidden" id="hiddenPoint"><input type="hidden" id="hiddenLocation"><div class="field"><label for="reporterName">Nome</label><input id="reporterName" type="text" placeholder="O seu nome" required autocomplete="name"></div><div class="field"><label for="reportReason">Motivo</label><select id="reportReason" required><option value="">Selecionar motivo</option></select></div><div class="field"><label for="reportNote">Observação <span style="color:var(--muted);font-weight:600">(opcional)</span></label><textarea id="reportNote" maxlength="500" placeholder="Ex.: extintor em falta, suporte vazio, acesso obstruído..."></textarea></div><div class="field"><label>Fotografia</label><div class="photo-box"><div class="photo-actions"><button id="openCameraBtn" class="btn btn-secondary" type="button">Usar câmara</button><button id="pickFileBtn" class="btn btn-secondary" type="button">Escolher foto</button></div><div id="photoMeta" class="photo-meta">Sem fotografia selecionada.</div><input class="hidden" id="cameraInput" type="file" accept="image/*" capture="environment"><input class="hidden" id="fileInput" type="file" accept="image/*"></div></div><div class="modal-actions"><button id="cancelBtn" class="btn btn-secondary" type="button">Cancelar</button><button id="submitBtn" class="btn btn-primary" type="submit">Enviar reporte</button></div></form></div></div></div>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script>function goBackToApp(){try{if(document.referrer&&document.referrer.includes('/DomingosdaCunha4/V2/')){history.back();return}}catch(e){}window.location.href='V2/index.html'}</script>
-  <script src="app.js?v=3.3.0" defer></script><script src="image-compress.js?v=3.3.0" defer></script><script src="report-text-fix.js?v=3.3.0" defer></script>
+  <script src="app.js?v=3.4.0" defer></script><script src="image-compress.js?v=3.4.0" defer></script><script src="report-text-fix.js?v=3.4.0" defer></script>
 </body>
 </html>
+
 
 

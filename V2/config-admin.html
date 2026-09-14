@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="pt-PT">
 <head>
-  <script src="../app-navigation.js?v=3.3.0" defer></script>
-  <script src="../app-version.js?v=3.3.0" defer></script>
-  <script src="../session-client.js?v=3.3.0"></script>
+  <script src="../app-navigation.js?v=3.4.0" defer></script>
+  <script src="../app-version.js?v=3.4.0" defer></script>
+  <script src="../session-client.js?v=3.4.0"></script>
   <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover"><meta name="theme-color" content="#1A2F5A">
   <title>Configurações gerais</title>
   <link rel="preconnect" href="https://fonts.googleapis.com"><link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
@@ -16,6 +16,7 @@
 <script>
 let BACKEND_URL='',ADMIN_EMAIL='';function authed(){return dc4HasSession('admin')}function logout(){dc4Logout('admin');sessionStorage.removeItem('dc4_admin_unlocked');sessionStorage.removeItem('dc4_admin_email');sessionStorage.removeItem('extintores_bo_unlocked');location.href='admin.html'}async function loadConfig(){const r=await dc4Fetch('config.json',{cache:'no-store'});const c=await r.json();BACKEND_URL=c.backendUrl;ADMIN_EMAIL=sessionStorage.getItem('dc4_admin_email')||c.adminEmail||''}async function apiGet(action){const u=new URL(BACKEND_URL);u.searchParams.set('action',action);const r=await dc4Fetch(u,{cache:'no-store'});const t=await r.text();try{return JSON.parse(t)}catch(e){throw new Error('Resposta inválida do backend.')}}async function apiPost(action,data={}){const r=await dc4Fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action},data))});const t=await r.text();try{return JSON.parse(t)}catch(e){throw new Error('Resposta inválida do backend.')}}function setMsg(id,type,text){document.getElementById(id).innerHTML='<div class="msg '+type+'">'+escapeHtml(text)+'</div>'}function toast(t){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('show'),2500)}function escapeHtml(s){return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
 document.addEventListener('DOMContentLoaded',async()=>{if(!authed()){location.replace('admin.html');return}await loadConfig();await loadDefinicoes()});async function loadDefinicoes(){try{const c=await apiGet('garage.adminConfig');document.getElementById('cfg-nome').value=c.nomeCondominio||'';document.getElementById('cfg-admin-email').value=c.adminEmail||''}catch(e){toast('Erro ao carregar definições')}}async function guardarConfigs(){const configs={NOME_CONDOMINIO:document.getElementById('cfg-nome').value.trim(),ADMIN_EMAIL:document.getElementById('cfg-admin-email').value.trim()};const r=await apiPost('garage.saveConfig',{configs});if(r.ok||r.success){setMsg('cfg-msg','ok','Configurações guardadas.');toast('Guardado')}else setMsg('cfg-msg','err',r.msg||'Erro ao guardar')}async function guardarPinAdmin(){const pin=document.getElementById('cfg-admin-pin').value.trim();if(!/^\d{6,12}$/.test(pin)){setMsg('pin-msg','err','O PIN deve ter 6 a 12 dígitos.');return}const r=await apiPost('garage.saveConfig',{configs:{ADMIN_PIN:pin}});if(r.ok||r.success){document.getElementById('cfg-admin-pin').value='';setMsg('pin-msg','ok','PIN alterado.');toast('PIN alterado')}else setMsg('pin-msg','err',r.msg||'Erro ao alterar')}
-</script><script src="admin-config-fix.js?v=3.3.0" defer></script></body></html>
+</script><script src="admin-config-fix.js?v=3.4.0" defer></script></body></html>
+
 
 
