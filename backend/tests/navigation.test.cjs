@@ -28,7 +28,7 @@ test('submenus administrativos voltam à administração',()=>{
 });
 test('regresso ao menu restaura identidade apenas com sessão ativa',()=>{
  const active=mount('V2/index.html','screen-start',true,'#menu');assert.deepEqual(active.screens,['screen-home']);assert.equal(active.restores(),1);assert.equal(active.button.hidden,true);
- const expired=mount('V2/index.html','screen-start',false,'#menu');assert.deepEqual(expired.screens,[]);assert.equal(expired.restores(),0);
+ const expired=mount('V2/index.html','screen-start',false,'#menu');assert.deepEqual(expired.screens,['screen-home']);assert.equal(expired.restores(),0);
 });
 test('registo, recuperação e estados têm destinos definidos; menu principal sem voltar',()=>{
  const m=mount('V2/index.html','screen-home');const parent=m.context.window.DC4Navigation.parentFor;
@@ -37,4 +37,9 @@ test('registo, recuperação e estados têm destinos definidos; menu principal s
  assert.equal(parent('V2/index.html','screen-recover','screen-first-use').screen,'screen-first-use');
  assert.equal(parent('V2/garagem.html','screen-contacto','screen-bloqueado').screen,'screen-bloqueado');
  assert.equal(parent('V2/garagem.html','screen-motivo').menu,true);
+});
+
+test('voltar dos extintores mantém o destino menu mesmo sem sessão local',()=>{
+ const m=mount('index.html','',false);m.button.click();
+ assert.deepEqual(m.routes,['https://example.invalid/app/V2/index.html#menu']);
 });

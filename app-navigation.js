@@ -67,7 +67,7 @@
         document.getElementById(target.screen)?.querySelector('input,button,a')?.focus({preventScroll:true});
       } else {
         const url = new URL(target.url || 'V2/index.html',root);
-        if (target.menu && window.dc4HasSession?.('resident')) url.hash = 'menu';
+        if (target.menu) url.hash = 'menu';
         location.assign(url.href);
       }
     });
@@ -77,8 +77,8 @@
     if (page === 'V2/index.html' && !qrEntry) {
       if (window.dc4HasSession?.('resident')) {
         if (typeof window.restoreUser === 'function') window.restoreUser();
-        window.irPara?.('screen-home');
       }
+      if (location.hash === '#menu' || window.dc4HasSession?.('resident')) window.irPara?.('screen-home');
       if (location.hash === '#menu') history.replaceState(null,'',location.pathname + location.search);
     }
     document.querySelectorAll('.screen').forEach(screen => new MutationObserver(update).observe(screen,{attributes:true,attributeFilter:['class']}));
