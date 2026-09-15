@@ -97,6 +97,8 @@ function estimateDataUrlBytesForCompression(dataUrl) {
 // Fachada inspirada no prédio real + estados verde/amarelo/vermelho.
 (function applyFacadeOverrides() {
   const occurrenceMap = new Map();
+  let statusLoaded = false;
+  let statusRequest = null;
   const openSet = new Set();
   const pendingSet = new Set();
 
@@ -275,6 +277,7 @@ function estimateDataUrlBytesForCompression(dataUrl) {
   }
 
   loadStatuses = async function loadStatusesOverride() {
+    statusLoaded = false;
     clearOccurrenceState();
     updateLegendText();
 
@@ -284,8 +287,14 @@ function estimateDataUrlBytesForCompression(dataUrl) {
       if (!result || result.success === false || !Array.isArray(result.reported)) {
         throw new Error('Não foi possível consultar o estado publicado.');
       }
+      statusLoaded = true;
       result.reported.forEach((item) => registerOccurrence(item, 'open'));
       REPORTED_SET = new Set(openSet);
+      if(typeof SELECTED_POINT !== 'undefined' && SELECTED_POINT){
+        const detail=occurrenceMap.get(makeKey(SELECTED_POINT.floor,SELECTED_POINT.point));
+        els.alreadyReportedBox.classList.toggle('show',!!detail);
+        if(detail)window.dc4RenderOccurrence(els.alreadyReportedBox,{reason:detail.reason,description:detail.description,reportedAt:detail.createdAt});
+      }
       els.lastRefresh.textContent = `Estado publicado às ${formatTime(new Date())}`;
     } catch (error) {
       console.error('Erro ao carregar estados:', error);
@@ -343,8 +352,8 @@ function estimateDataUrlBytesForCompression(dataUrl) {
       (floor.extinguishers || []).forEach((ext) => {
         const key = makeKey(floor.floor, ext.point);
         const detail = occurrenceMap.get(key) || null;
-        const stateClass = detail?.type === 'pending' ? 'pending' : detail?.type === 'open' ? 'alert' : 'ok';
-        const stateText = detail?.type === 'pending' ? ' - a aguardar validação' : detail?.type === 'open' ? ' - ocorrência aberta' : ' - sem ocorrência';
+        const stateClass = !statusLoaded ? 'pending' : detail?.type === 'pending' ? 'pending' : detail?.type === 'open' ? 'alert' : 'ok';
+        const stateText = !statusLoaded ? ' - estado por confirmar' : detail?.type === 'pending' ? ' - a aguardar validação' : detail?.type === 'open' ? ' - ocorrência aberta' : ' - sem ocorrência';
 
         const btn = document.createElement('button');
         btn.type = 'button';
@@ -411,8 +420,8 @@ function estimateDataUrlBytesForCompression(dataUrl) {
         reportedAt: existing.createdAt
       });
     } else {
-      els.alreadyReportedBox.classList.remove('show');
-      els.alreadyReportedBox.innerHTML = 'Este extintor já tem uma ocorrência aberta. Pode submeter informação adicional, se necessário.';
+      els.alreadyReportedBox.classList.toggle('show', !statusLoaded);
+      els.alreadyReportedBox.textContent = statusLoaded ? '' : 'Estado por confirmar. Aguarde a consulta ou use Atualizar estado antes de enviar um reporte repetido.';
     }
 
     els.hiddenFloor.value = String(ext.floor);
@@ -430,5 +439,30 @@ function estimateDataUrlBytesForCompression(dataUrl) {
     }, 40);
   };
 
-  document.addEventListener('DOMContentLoaded', updateLegendText);
+  document.addEventListener('DOMContentLoaded', () => {
+    updateLegendText();
+    const label=document.getElementById('lastRefresh');
+    if(!label)return;
+    label.textContent='A consultar estado…';
+    const button=document.createElement('button');
+    button.type='button';button.textContent='Atualizar estado';button.className='btn btn-secondary';
+    button.addEventListener('click', async()=>{
+      if(statusRequest)return;
+      button.disabled=true;label.textContent='A consultar estado…';
+      statusRequest=loadStatuses();
+      try{
+        await statusRequest;renderBuilding();
+        if(SELECTED_POINT && els.overlay.classList.contains('show')){
+          const detail=occurrenceMap.get(makeKey(SELECTED_POINT.floor,SELECTED_POINT.point));
+          if(detail){
+            els.alreadyReportedBox.classList.add('show');
+            window.dc4RenderOccurrence(els.alreadyReportedBox,{reason:detail.reason,description:detail.description,reportedAt:detail.createdAt});
+          }else{
+            els.alreadyReportedBox.textContent=statusLoaded?'Sem ocorrência validada.':'Estado por confirmar.';
+          }
+        }
+      }finally{statusRequest=null;button.disabled=false;}
+    });
+    label.after(button);
+  });
 })();

@@ -90,7 +90,7 @@ test('menu apresenta os mesmos detalhes que o QR e preserva a identidade autenti
  const {c,el}=setup(true);
  const source=fs.readFileSync(path.join(root,'image-compress.js'),'utf8');
  const start=source.indexOf('openModal = function openModalOverride(ext)');
- const end=source.indexOf("  document.addEventListener('DOMContentLoaded', updateLegendText)",start);
+ const end=source.indexOf("  document.addEventListener('DOMContentLoaded'",start);
  c.els={};for(const id of ['modalTitle','modalSubtitle','alreadyReportedBox','hiddenFloor','hiddenPoint','hiddenLocation','reporterName','overlay','reportReason'])c.els[id]=el(id);
  c.els.overlay.setAttribute=()=>{};c.document.body={style:{}};c.clearPhotoInputs=()=>{};c.AUTO_REPORTER_NAME='Morador de teste';c.window.setTimeout=()=>{};
  vm.runInContext(source.slice(start,end),c);

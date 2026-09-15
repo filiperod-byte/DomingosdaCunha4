@@ -1,11 +1,11 @@
-const DC4_CACHE = 'dc4-pwa-v3.5.0-20260915';
+const DC4_CACHE = 'dc4-pwa-v3.5.1-20260915';
 const APP_SHELL = [
-  '/DomingosdaCunha4/occurrence-view.js?v=3.5.0',
-  '/DomingosdaCunha4/qr-entry.js?v=3.5.0',
-  '/DomingosdaCunha4/qr-report.js?v=3.5.0',
+  '/DomingosdaCunha4/occurrence-view.js?v=3.5.1',
+  '/DomingosdaCunha4/qr-entry.js?v=3.5.1',
+  '/DomingosdaCunha4/qr-report.js?v=3.5.1',
   '/DomingosdaCunha4/qrcode-report.html',
-  '/DomingosdaCunha4/app-navigation.js?v=3.5.0',
-  '/DomingosdaCunha4/app-version.js?v=3.5.0',
+  '/DomingosdaCunha4/app-navigation.js?v=3.5.1',
+  '/DomingosdaCunha4/app-version.js?v=3.5.1',
   '/DomingosdaCunha4/session-client.js',
   '/DomingosdaCunha4/',
   '/DomingosdaCunha4/V2/index.html',
@@ -38,6 +38,15 @@ self.addEventListener('fetch', event => {
   if (url.origin !== location.origin) return;
 
   if (url.pathname.includes('/macros/') || url.searchParams.has('action')) return;
+
+  // Consultas explícitas e documentos devem procurar a versão publicada primeiro.
+  if(req.cache === 'no-store' || req.mode === 'navigate'){
+    event.respondWith(fetch(req).catch(()=>caches.match(req).then(cached=>{
+      if(cached)return cached;
+      return Response.error();
+    })));
+    return;
+  }
 
   event.respondWith(
     caches.match(req).then(cached => {

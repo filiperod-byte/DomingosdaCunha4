@@ -18,6 +18,8 @@ async function initApp() {
     fillReasonOptions();
     document.getElementById("buildingName").textContent = APP_CONFIG.building?.name || "Condomínio";
     applyAutoReporterUI();
+    renderBuilding();
+    hideBuildingLoading();
     await loadStatuses();
     renderBuilding();
     handleDeepLink();
@@ -579,4 +581,3 @@ function formatBytes(bytes) {
   }
   return `${value.toFixed(value >= 10 || unitIndex === 0 ? 0 : 1)} ${units[unitIndex]}`;
 }
-
