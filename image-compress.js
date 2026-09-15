@@ -398,45 +398,13 @@ function estimateDataUrlBytesForCompression(dataUrl) {
     els.building.classList.remove('hidden');
   };
 
+  // O menu e o QR usam o mesmo formulário, incluindo recuperação da sessão.
   openModal = function openModalOverride(ext) {
-    SELECTED_POINT = ext;
-    SELECTED_FILE = null;
-    clearPhotoInputs();
-
-    const targetLabel = `${ext.floorLabel} - ${ext.label}`;
-    els.modalTitle.textContent = 'Reportar extintor';
-    els.modalSubtitle.textContent = AUTO_REPORTER_NAME
-      ? `Ponto selecionado: ${targetLabel} · Reportado por: ${AUTO_REPORTER_NAME}`
-      : `Ponto selecionado: ${targetLabel}`;
-
-    const existing = ext.existingOccurrence;
-    els.alreadyReportedBox.className = 'alert-box';
-
-    if (existing) {
-      els.alreadyReportedBox.classList.add('open', 'show');
-      window.dc4RenderOccurrence(els.alreadyReportedBox, {
-        reason: existing.reason,
-        description: existing.description,
-        reportedAt: existing.createdAt
-      });
-    } else {
-      els.alreadyReportedBox.classList.toggle('show', !statusLoaded);
-      els.alreadyReportedBox.textContent = statusLoaded ? '' : 'Estado por confirmar. Aguarde a consulta ou use Atualizar estado antes de enviar um reporte repetido.';
-    }
-
-    els.hiddenFloor.value = String(ext.floor);
-    els.hiddenPoint.value = ext.point;
-    els.hiddenLocation.value = ext.location || '';
-    els.reporterName.value = AUTO_REPORTER_NAME || els.reporterName.value || '';
-
-    els.overlay.classList.add('show');
-    els.overlay.setAttribute('aria-hidden', 'false');
-    document.body.style.overflow = 'hidden';
-
-    window.setTimeout(() => {
-      if (AUTO_REPORTER_NAME) els.reportReason.focus();
-      else els.reporterName.focus();
-    }, 40);
+    const url=new URL('qrcode-report.html', location.href);
+    url.searchParams.set('floor', String(ext.floor));
+    url.searchParams.set('point', ext.point);
+    url.searchParams.set('from', 'map');
+    location.assign(url.href);
   };
 
   document.addEventListener('DOMContentLoaded', () => {

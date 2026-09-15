@@ -57,7 +57,6 @@ const GARAGE_RESIDENTIAL_STRUCTURE = {
 };
 
 
-
 // --- domain.js ---
 // Regras puras: não dependem de Sheets, HTTP ou serviços Google.
 function createCondominiumDomain_(residentialStructure, openStatuses, pendingStatuses) {
@@ -91,7 +90,6 @@ return { safeText_, toInt_, normalizePoint_, normalizePin_, formatFloorLabel_, i
 }
 
 
-
 // --- notifications.js ---
 // Conteúdo das notificações separado do transporte de email.
 function createNotificationService_(ports, CONFIG, domain) {
@@ -118,7 +116,6 @@ function emailPINRecuperacao(email,nome,pin) { safeSendEmail_(email, 'Recuperaç
 function getConfiguredAdminEmail_() { const e = getConfig('ADMIN_EMAIL') || CONFIG.ADMIN_EMAIL || ''; return isRealEmail_(e) ? e : ''; }
 return { sendReportEmail_, sendCloseEmail_, sendPinResetEmail_, emailRegisto, emailAdminNovoPedido, emailAprovacao, emailRejeicao, emailPINRecuperacao };
 }
-
 
 
 // --- occurrences.js ---
@@ -381,7 +378,6 @@ function getPendingStateRows_() { return ports.occurrences.list().filter(r => is
 }
 
 
-
 // --- legacy-pin.js ---
 // Compatibilidade com o PIN do backoffice antigo. Não constitui uma sessão autenticada.
 function createLegacyPinService_(ports, CONFIG, domain, notifications, getAdminEmail_) {
@@ -429,7 +425,6 @@ function clearPin_() { const p = ports.properties; p.deleteProperty(CONFIG.PROPS
   return { status: handleGetPinStatus_, set: handlePostSetPin_, validate: handlePostValidatePin_,
     reset: handlePostResetPin_, configured: isPinConfigured_, clear: clearPin_ };
 }
-
 
 
 // --- residents.js ---
@@ -571,7 +566,6 @@ function createResidentService_(ports, domain, notifications) {
 }
 
 
-
 // --- accesses.js ---
 // Consulta e gestão de códigos de recursos comuns. Independente da tecnologia de armazenamento.
 function createAccessService_(ports) {
@@ -620,7 +614,6 @@ function createAccessService_(ports) {
 
   return { getCode: getCode, dashboard: dashboard, history: history, changeCode: changeCode };
 }
-
 
 
 // --- application.js ---
@@ -710,7 +703,6 @@ function createCondominiumApplication_(ports, config, domain) {
   }
   return { dispatch: dispatch, initialize: () => ports.initialize(), clearLegacyPin: pins.clear };
 }
-
 
 
 // --- security.js ---
@@ -819,7 +811,6 @@ function createSecureApplication_(app, ports) {
 }
 
 
-
 // --- apps-script-ports.js ---
 // Adaptadores Google. Cada pedido recebe uma instância nova (sem cache entre pedidos).
 function createAppsScriptPorts_(CONFIG, REQUIRED_HEADERS, domain) {
@@ -856,10 +847,10 @@ function getHeaders_(sheet) { const lastCol = sheet.getLastColumn(); if (lastCol
 
 function getSheetObjects_(sheetName) {
   const sheet = getSheet_(sheetName);
-  const headers = getHeaders_(sheet);
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2 || !headers.length) return [];
-  return sheet.getRange(2,1,lastRow-1,headers.length).getValues().map((row, idx) => {
+  const values=sheet.getDataRange().getValues();
+  if(values.length<2)return [];
+  const headers=values[0].map(v=>String(v||'').trim());
+  return values.slice(1).map((row, idx) => {
     const obj = { _rowIndex: idx + 2 };
     headers.forEach((h,i) => obj[h] = row[i]);
     return obj;
@@ -1007,7 +998,6 @@ function setupApp() { const c = getSheet('CONFIG'); getSheet('CONDOMINOS'); getS
 }
 
 
-
 // --- entrypoints.js ---
 // Única fronteira HTTP/Apps Script. Sem estado de pedidos guardado globalmente.
 function createAppsScriptApplication_() {
@@ -1034,7 +1024,12 @@ function routeRequest_(method, event) {
   const action = method === 'GET'
     ? (rawAction === null || rawAction === undefined ? '' : String(rawAction).trim()) || 'status'
     : String(rawAction || '').trim();
+  const startedAt=Date.now();
   const result = createAppsScriptApplication_().dispatch(method, action, payload);
+  if(action === 'status' && payload.details === 'public'){
+    result.serviceVersion='3.6.0-rc1';
+    result.serverDurationMs=Math.max(0,Date.now()-startedAt);
+  }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
 
@@ -1052,4 +1047,3 @@ function resetPinManualmente_() {
   createAppsScriptApplication_().clearLegacyPin();
   Logger.log('PIN removido.');
 }
-

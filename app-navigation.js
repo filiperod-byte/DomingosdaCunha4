@@ -52,13 +52,13 @@
     function update() {
       const screen = current();
       if (screen !== lastScreen) { previous = lastScreen; lastScreen = screen; }
-      const target = parentFor(page,screen,previous);
+      const target = page === 'qrcode-report.html' && new URLSearchParams(location.search).get('from') === 'map' ? {url:'index.html'} : parentFor(page,screen,previous);
       button.hidden = !target;
-      button.title = target?.url ? 'Voltar à administração' : target?.menu ? 'Voltar ao menu da app' : 'Voltar ao ecrã anterior';
+      button.title = target?.url === 'index.html' ? 'Voltar aos extintores' : target?.url ? 'Voltar à administração' : target?.menu ? 'Voltar ao menu da app' : 'Voltar ao ecrã anterior';
     }
     button.addEventListener('click', () => {
       const screen = current();
-      const target = parentFor(page,screen,previous);
+      const target = page === 'qrcode-report.html' && new URLSearchParams(location.search).get('from') === 'map' ? {url:'index.html'} : parentFor(page,screen,previous);
       if (!target) return;
       if (screen === 'screen-codigo' && typeof window.hideCode === 'function') window.hideCode();
       if (target.screen && typeof window.irPara === 'function') {
