@@ -18,3 +18,8 @@ test('texto livre não é publicado como motivo e pendentes não aparecem',()=>{
  const {add,details}=setup();add({REASON:'Nome e telefone privados'});add({POINT:'E2',STATUS:'PENDENTE_VALIDACAO'});
  const result=details();assert.equal(result.reported.length,1);assert.equal(result.reported[0].reason,'Outra anomalia');assert.doesNotMatch(JSON.stringify(result),/telefone/);
 });
+test('diagnóstico público identifica serviço e tempo sem credenciais',()=>{
+ const {details}=setup();const r=details();
+ assert.equal(r.serviceVersion,'3.6.0-rc1');assert.ok(r.serverDurationMs>=0);
+ assert.doesNotMatch(JSON.stringify(r),/ADMIN_PIN|SPREADSHEET_ID|token/);
+});

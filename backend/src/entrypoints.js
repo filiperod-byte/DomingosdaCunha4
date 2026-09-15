@@ -23,7 +23,12 @@ function routeRequest_(method, event) {
   const action = method === 'GET'
     ? (rawAction === null || rawAction === undefined ? '' : String(rawAction).trim()) || 'status'
     : String(rawAction || '').trim();
+  const startedAt=Date.now();
   const result = createAppsScriptApplication_().dispatch(method, action, payload);
+  if(action === 'status' && payload.details === 'public'){
+    result.serviceVersion='3.6.0-rc1';
+    result.serverDurationMs=Math.max(0,Date.now()-startedAt);
+  }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
 }
 

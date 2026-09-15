@@ -8,7 +8,7 @@ function mount(page,initialScreen,hasSession=true,hash=''){
  let active=initialScreen;
  const elements=new Map(),routes=[],screens=[];let hiddenCodes=0,restores=0;
  function element(){return {children:[],setAttribute(){},appendChild(e){this.children.push(e);if(e.id)elements.set(e.id,e)},prepend(e){this.appendChild(e)},addEventListener(event,callback){this[event]=callback}}}
- const context={URL,document:{currentScript:{src:'https://example.invalid/app/app-navigation.js'},readyState:'complete',head:element(),body:element(),getElementById:id=>elements.get(id)||null,createElement:element,querySelector:()=>active?{id:active}:null,querySelectorAll:()=>[]},location:{pathname:'/app/'+page,search:'',hash,assign:url=>routes.push(url)},history:{replaceState(){}},window:{dc4HasSession:()=>hasSession,hideCode:()=>hiddenCodes++,restoreUser:()=>restores++,irPara:id=>{active=id;screens.push(id)}}};
+ const context={URL,URLSearchParams,document:{currentScript:{src:'https://example.invalid/app/app-navigation.js'},readyState:'complete',head:element(),body:element(),getElementById:id=>elements.get(id)||null,createElement:element,querySelector:()=>active?{id:active}:null,querySelectorAll:()=>[]},location:{pathname:'/app/'+page,search:'',hash,assign:url=>routes.push(url)},history:{replaceState(){}},window:{dc4HasSession:()=>hasSession,hideCode:()=>hiddenCodes++,restoreUser:()=>restores++,irPara:id=>{active=id;screens.push(id)}}};
  vm.runInNewContext(source,context);
  return {context,button:elements.get('dc4-back'),routes,screens,hiddenCodes:()=>hiddenCodes,restores:()=>restores};
 }

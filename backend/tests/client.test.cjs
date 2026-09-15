@@ -38,3 +38,13 @@ test('ficheiros JavaScript e scripts inline alterados têm sintaxe válida',()=>
   if(entry.endsWith('.html'))for(const match of fs.readFileSync(file,'utf8').matchAll(/<script\b[^>]*>([\s\S]*?)<\/script>/gi))if(match[1].trim())new vm.Script(match[1],{filename:entry});
  }
 });
+
+test('consultas públicas iguais em simultâneo partilham pedido e mantêm respostas independentes',async()=>{
+ const b=harness(bundled());b.initialize();const c=client(b);
+ const url=endpoint+'?action=status&details=public';
+ const [a,d]=await Promise.all([c.dc4Fetch(url),c.dc4Fetch(url)]);
+ assert.equal((await a.json()).success,true);assert.equal((await d.json()).success,true);
+ assert.equal(c.requests.filter(r=>r.url===endpoint).length,1);
+ assert.equal(c.dc4Diagnostics().length,1);
+ assert.ok(c.dc4Diagnostics()[0].totalMs>=0);
+});

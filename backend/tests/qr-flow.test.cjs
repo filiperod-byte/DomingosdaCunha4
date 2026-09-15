@@ -86,18 +86,16 @@ test('G4 existe apenas no piso -2 e o QR reconhece o novo ponto',()=>{
  assert.equal(c.findPointFromUrl().point,'G4');
 });
 
-test('menu apresenta os mesmos detalhes que o QR e preserva a identidade autenticada',()=>{
- const {c,el}=setup(true);
+
+test('mapa abre o mesmo formulário QR com ponto e origem explícitos',()=>{
+ const {c}=setup(true);const routes=[];
+ c.location.href='https://example.invalid/app/index.html';
+ c.location.assign=url=>routes.push(url);
  const source=fs.readFileSync(path.join(root,'image-compress.js'),'utf8');
  const start=source.indexOf('openModal = function openModalOverride(ext)');
  const end=source.indexOf("  document.addEventListener('DOMContentLoaded'",start);
- c.els={};for(const id of ['modalTitle','modalSubtitle','alreadyReportedBox','hiddenFloor','hiddenPoint','hiddenLocation','reporterName','overlay','reportReason'])c.els[id]=el(id);
- c.els.overlay.setAttribute=()=>{};c.document.body={style:{}};c.clearPhotoInputs=()=>{};c.AUTO_REPORTER_NAME='Morador de teste';c.window.setTimeout=()=>{};
  vm.runInContext(source.slice(start,end),c);
- const occurrence={reason:'Outro',description:'Manómetro sem pressão.\nNecessita de inspeção.',reportedAt:'2026-09-14T10:00:00.000Z'};
- c.renderExisting(occurrence);
- c.openModal({floor:-2,point:'G4',floorLabel:'-2',label:'Extintor 4',existingOccurrence:{...occurrence,createdAt:occurrence.reportedAt}});
- assert.deepEqual(el('alreadyReportedBox').children.map(e=>e.textContent),el('existingBox').children.map(e=>e.textContent));
- assert.equal(el('reporterName').value,'Morador de teste');
- assert.equal(el('hiddenPoint').value,'G4');
+ c.openModal({floor:-2,point:'G4'});
+ const url=new URL(routes[0]);assert.equal(url.pathname,'/app/qrcode-report.html');
+ assert.equal(url.searchParams.get('floor'),'-2');assert.equal(url.searchParams.get('point'),'G4');assert.equal(url.searchParams.get('from'),'map');
 });

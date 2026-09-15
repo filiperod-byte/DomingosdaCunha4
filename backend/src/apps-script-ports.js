@@ -33,10 +33,10 @@ function getHeaders_(sheet) { const lastCol = sheet.getLastColumn(); if (lastCol
 
 function getSheetObjects_(sheetName) {
   const sheet = getSheet_(sheetName);
-  const headers = getHeaders_(sheet);
-  const lastRow = sheet.getLastRow();
-  if (lastRow < 2 || !headers.length) return [];
-  return sheet.getRange(2,1,lastRow-1,headers.length).getValues().map((row, idx) => {
+  const values=sheet.getDataRange().getValues();
+  if(values.length<2)return [];
+  const headers=values[0].map(v=>String(v||'').trim());
+  return values.slice(1).map((row, idx) => {
     const obj = { _rowIndex: idx + 2 };
     headers.forEach((h,i) => obj[h] = row[i]);
     return obj;

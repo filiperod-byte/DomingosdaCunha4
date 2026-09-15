@@ -1,0 +1,21 @@
+{
+  "environment": "remote test client; not the resident phone",
+  "samples": [
+    {
+      "action": "status",
+      "totalMs": 21762,
+      "success": true,
+      "serviceVersion": null,
+      "serverDurationMs": null,
+      "publicDetailsVersion": 2
+    },
+    {
+      "action": "garage.publicConfig",
+      "totalMs": 21764,
+      "success": null,
+      "serviceVersion": null,
+      "serverDurationMs": null,
+      "publicDetailsVersion": null
+    }
+  ]
+}
