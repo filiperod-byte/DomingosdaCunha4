@@ -2,7 +2,8 @@
 (function () {
   'use strict';
   const root = new URL('.', document.currentScript.src);
-  const page = location.pathname.slice(root.pathname.length) || 'index.html';
+  const relativePage = location.pathname.slice(root.pathname.length);
+  const page = !relativePage || relativePage.endsWith('/') ? relativePage + 'index.html' : relativePage;
   function parentFor(page, screen, previous) {
     if (page === 'V2/index.html') {
       const parents = {
@@ -71,12 +72,14 @@
       }
     });
     // Regresso de um módulo ao menu, mantendo a sessão do morador.
-    if (page === 'V2/index.html' && location.hash === '#menu') {
+    const params = new URLSearchParams(location.search);
+    const qrEntry = params.has('floor') && params.has('point');
+    if (page === 'V2/index.html' && !qrEntry) {
       if (window.dc4HasSession?.('resident')) {
         if (typeof window.restoreUser === 'function') window.restoreUser();
         window.irPara?.('screen-home');
       }
-      history.replaceState(null,'',location.pathname + location.search);
+      if (location.hash === '#menu') history.replaceState(null,'',location.pathname + location.search);
     }
     document.querySelectorAll('.screen').forEach(screen => new MutationObserver(update).observe(screen,{attributes:true,attributeFilter:['class']}));
     update();
