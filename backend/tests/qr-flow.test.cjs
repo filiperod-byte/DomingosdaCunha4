@@ -7,7 +7,7 @@ const root=path.join(__dirname,'../..');
 function setup(hasSession=false){
  const elements=new Map();
  function el(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',disabled:false,open:false,options:[],classList:{add(){},remove(){}},appendChild(child){(this.children ||= []).push(child)},replaceChildren(){this.children=[]},focus(){},showModal(){this.open=true},close(){this.open=false},reset(){el('reason').value='';el('notes').value=''}});return elements.get(id)}
- const c=vm.createContext({URL,URLSearchParams,Date,console,Response,navigator:{userAgent:'test'},location:{search:'?floor=9&point=E1'},document:{getElementById:el,addEventListener(){},createElement:()=>({})},window:{dc4HasSession:()=>hasSession},sessionStorage:{setItem(){}},setTimeout:()=>0,clearTimeout(){}});
+ const c=vm.createContext({URL,URLSearchParams,Date,console,Response,navigator:{userAgent:'test'},location:{search:'?floor=9&point=E1'},document:{getElementById:el,addEventListener(){},createElement:()=>({style:{}})},window:{dc4HasSession:()=>hasSession},sessionStorage:{setItem(){}},setTimeout:()=>0,clearTimeout(){}});
  vm.runInContext(fs.readFileSync(path.join(root,'qr-report.js'),'utf8'),c);
  vm.runInContext("CFG={features:{}};POINT={floor:9,point:'E1',location:'Patamar'};",c);
  el('reason').value='Selo danificado';el('notes').value='Texto a preservar';
@@ -64,4 +64,15 @@ test('QR apresenta o motivo público e recomenda não repetir a mesma situação
  const {c,el}=setup();c.apiGet=async()=>({success:true,reported:[{floor:9,point:'E1',reason:'Extintor em falta',reportedAt:'2026-09-14T10:00:00.000Z'}]});
  await c.loadExisting();const text=el('existingBox').children.map(e=>e.textContent).join(' ');
  assert.match(text,/Motivo: Extintor em falta/);assert.match(text,/não precisa de a reportar novamente/);assert.match(text,/Registada em:/);
+});
+
+test('QR mostra descrição de Outro como texto, preservando linhas sem interpretar HTML',()=>{
+ const {c,el}=setup();const description='Manómetro sem pressão.\n<img src=x onerror=alert(1)>';
+ c.renderExisting({reason:'Outro',description});
+ const children=el('existingBox').children;
+ assert.ok(children.some(e=>e.textContent==='Descrição: '+description));
+ assert.ok(children.every(e=>!e.innerHTML));
+ assert.doesNotMatch(children.map(e=>e.textContent).join(' '),/descrição completa é consultada/);
+ c.renderExisting({reason:'Outro',description:''});
+ assert.match(el('existingBox').children.map(e=>e.textContent).join(' '),/não tem uma descrição registada/);
 });

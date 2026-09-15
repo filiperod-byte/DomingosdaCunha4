@@ -71,8 +71,8 @@ O adaptador Sheets ainda lê tabelas inteiras em várias operações e conserva 
 Ver [instruções de instalação](../V2/INSTALAR_BACKEND.md). Alterar o GitHub não atualiza o Apps Script publicado. Esta branch não altera o endpoint, as folhas ou o Drive em produção.
 
 
-## Consulta pública do motivo (interface v3.4.0)
+## Consulta pública da ocorrência (interface v3.4.1)
 
-`status` com `details=public` acrescenta `reason` e `reportedAt` aos pontos com ocorrência aberta e `publicDetailsVersion: 1` à resposta. O pedido sem esse parâmetro conserva o contrato anterior. Só são publicadas as categorias previstas no formulário; texto livre é apresentado como «Outra anomalia». Não são incluídos nomes, observações, fotografias ou reportes pendentes. Ao alterar as categorias do formulário, rever também esta lista no serviço de ocorrências.
+`status` com `details=public` acrescenta `reason`, `description` (NOTES) e `reportedAt` aos pontos com ocorrência aberta e `publicDetailsVersion: 2` à resposta. O pedido sem esse parâmetro conserva o contrato anterior. A descrição das ocorrências abertas fica disponível sem login, incluindo registos existentes. Autor, fotografias e reportes pendentes não são incluídos. O formulário informa que a descrição será pública após validação. O cliente apresenta texto com textContent, sem interpretar HTML.
 
-A interface continua a funcionar com o backend anterior, mas só consegue mostrar o motivo após atualizar o ficheiro Apps Script e a versão da implantação. Esta alteração não exige executar `setupApp()` nem mudar os dados da spreadsheet. Preservar a configuração dos recursos Google ao substituir o código.
+Substituir o código Apps Script pelo ficheiro gerado e atualizar a implementação existente para uma nova versão. Não é necessário executar setupApp.

@@ -9,7 +9,7 @@ function createOccurrenceService_(ports, CONFIG, domain, notifications, getAdmin
 function handleGetStatus_(payload) {
   const openRows = getOpenStateRows_();
   const withDetails = payload && payload.details === 'public';
-  // Só categorias previstas no formulário: nunca publicar texto livre, autor, notas ou fotografias.
+  // Descrição da ocorrência aberta autorizada para consulta pública; excluir autor e fotografias.
   const categories = ['Extintor em falta', 'Extintor danificado', 'Suporte vazio',
     'Selo / verificação em falta', 'Acesso obstruído', 'Outro'];
   const result = {
@@ -19,6 +19,7 @@ function handleGetStatus_(payload) {
       if (withDetails) {
         const reason = String(row.REASON || '').trim();
         item.reason = categories.includes(reason) ? reason : 'Outra anomalia';
+        item.description = String(row.NOTES || '').trim();
         const date = new Date(row.REPORTED_AT);
         item.reportedAt = row.REPORTED_AT && !isNaN(date.getTime()) ? date.toISOString() : '';
       }
@@ -27,7 +28,7 @@ function handleGetStatus_(payload) {
     totalOpen: openRows.length,
     updatedAt: isoNow_()
   };
-  if (withDetails) result.publicDetailsVersion = 1;
+  if (withDetails) result.publicDetailsVersion = 2;
   return result;
 }
 
