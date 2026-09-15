@@ -1,9 +1,9 @@
 <!doctype html>
 <html lang="pt-PT">
 <head>
-  <script src="app-navigation.js?v=3.6.0-rc1" defer></script>
-  <script src="app-version.js?v=3.6.0-rc1" defer></script>
-  <script src="session-client.js?v=3.6.0-rc1"></script>
+  <script src="app-navigation.js?v=3.6.0" defer></script>
+  <script src="app-version.js?v=3.6.0" defer></script>
+  <script src="session-client.js?v=3.6.0"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#1A2F5A">
@@ -13,7 +13,7 @@
     *{box-sizing:border-box}html,body{margin:0;padding:0;min-height:100%;background:linear-gradient(180deg,#EEF4FF 0%,var(--bg) 56%);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;color:var(--text)}button,input,select,textarea{font:inherit}.app{width:min(100%,520px);margin:0 auto;padding:0 16px 28px}.top{background:var(--navy);color:#fff;margin:0 -16px 0;padding:22px 20px 44px;border-radius:0 0 26px 26px;box-shadow:0 8px 24px rgba(26,47,90,.16)}.top-row{display:flex;align-items:flex-start;gap:12px}.back{width:40px;height:40px;border:0;border-radius:14px;background:rgba(255,255,255,.14);color:#fff;font-size:22px;font-weight:900;text-decoration:none;display:flex;align-items:center;justify-content:center;flex-shrink:0}.title{font-size:24px;font-weight:900;line-height:1.12;margin:0}.sub{font-size:13px;color:rgba(255,255,255,.76);line-height:1.45;margin:6px 0 0}.intro{margin:-22px 0 14px;background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:var(--shadow);display:flex;gap:12px;align-items:center}.intro-icon{width:54px;height:54px;border-radius:17px;background:#FEE2E2;display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}.intro-title{font-size:15px;font-weight:900;color:var(--navy)}.intro-text{font-size:12px;color:var(--muted);line-height:1.42;margin-top:3px}.card{background:#fff;border:1px solid var(--border);border-radius:18px;padding:16px;box-shadow:var(--shadow);margin-bottom:10px}.point-title{font-size:18px;font-weight:900;color:var(--navy);margin:0}.point-meta{font-size:13px;color:var(--muted);line-height:1.45;margin-top:6px}.status{display:inline-flex;align-items:center;gap:7px;border-radius:999px;padding:7px 10px;font-size:12px;font-weight:900;margin-top:10px}.status:before{content:"";width:9px;height:9px;border-radius:50%;background:currentColor}.status.ok{background:#F0FDF4;color:#166534}.status.pending{background:#FFFBEB;color:#92400E}.status.open{background:#FEF2F2;color:#991B1B}.existing{display:grid;gap:5px;margin-top:10px;font-size:13px;color:var(--muted);line-height:1.4}.existing strong{color:var(--text)}.existing a{color:var(--blue);font-weight:900}.field{margin-top:12px}.field label{display:block;margin-bottom:7px;color:var(--navy);font-size:13px;font-weight:900}.input{width:100%;border:1.5px solid var(--border);background:#fff;color:var(--text);border-radius:14px;padding:14px;outline:none}.input:focus{border-color:var(--blue);box-shadow:0 0 0 3px rgba(37,99,235,.10)}textarea.input{min-height:96px;resize:vertical}.photo-box{border:1px dashed #CBD5E1;border-radius:16px;padding:12px;background:#F8FAFC}.photo-actions{display:grid;grid-template-columns:1fr 1fr;gap:9px}.btn{appearance:none;border:0;border-radius:14px;padding:14px 15px;cursor:pointer;font-weight:900;text-decoration:none;display:flex;align-items:center;justify-content:center;gap:8px;width:100%}.btn:active{transform:scale(.98)}.btn-primary{background:var(--blue);color:#fff}.btn-navy{background:var(--navy);color:#fff}.btn-secondary{background:#fff;color:var(--navy);border:1.5px solid var(--border)}.btn:disabled{opacity:.58;cursor:not-allowed}.hidden{display:none!important}.photo-meta{font-size:12px;color:var(--muted);margin-top:9px;line-height:1.35;word-break:break-word}.hint{font-size:12px;color:var(--muted);line-height:1.45;margin-top:6px}.msg{padding:12px 13px;border-radius:13px;margin:10px 0 0;font-size:13px;font-weight:800;line-height:1.4}.msg.err{background:#FEF2F2;color:#991B1B;border:1px solid #FECACA}.msg.ok{background:#F0FDF4;color:#166534;border:1px solid #BBF7D0}.msg.info{background:var(--blue-lt);color:#1D4ED8;border:1px solid #DBEAFE}.toast{position:fixed;left:50%;bottom:20px;transform:translateX(-50%) translateY(30px);width:min(calc(100% - 28px),520px);padding:14px 16px;border-radius:16px;background:var(--navy);color:#fff;box-shadow:var(--shadow);opacity:0;pointer-events:none;transition:.2s;z-index:40}.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}.spinner{width:18px;height:18px;border-radius:50%;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;display:inline-block;animation:spin .75s linear infinite}@keyframes spin{to{transform:rotate(360deg)}}
     #authDialog{width:min(calc(100% - 24px),480px);max-height:calc(100dvh - 32px);overflow:auto;padding:20px;border:1px solid var(--border);border-radius:18px;color:var(--text);box-shadow:var(--shadow)}#authDialog::backdrop{background:rgba(15,23,42,.6)}#authDialog .btn{margin-top:12px;min-height:44px}#authDialog h2{color:var(--navy)}
   </style>
-  <script src="occurrence-view.js?v=3.6.0-rc1" defer></script>
+  <script src="occurrence-view.js?v=3.6.0" defer></script>
 </head>
 <body>
   <main class="app">
@@ -52,7 +52,7 @@
     </form>
   </dialog>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
-<script src="qr-report.js?v=3.6.0-rc1" defer></script>
+<script src="qr-report.js?v=3.6.0" defer></script>
 
 </body>
 </html>

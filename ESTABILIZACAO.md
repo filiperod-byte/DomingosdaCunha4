@@ -1,6 +1,6 @@
 # Estabilização — 3.6.0-rc1
 
-Estado: candidata isolada, não publicada na app dos moradores.
+Estado: interface 3.6.0 validada para publicação; backend 3.6.0-rc1 confirmado no serviço.
 
 ## Diagnóstico confirmado
 
@@ -61,3 +61,20 @@ estabilização até à validação. A branch não é um endereço de aplicaçã
 
 A sessão continua por separador, em sessionStorage, com validade controlada pelo
 servidor. Não foi criada sessão persistente entre fechos da aplicação.
+
+## Validação após implementação
+
+Serviço confirmado: 3.6.0-rc1. Consulta status com detalhes:
+serverDurationMs=367; tempo total externo=24696 ms. A maior parte da espera
+não pertence ao trecho medido; não atribuir ao telemóvel ou Sheets sem mais dados.
+
+Chromium 153 executado com Playwright e viewport 390x844. Passaram os percursos:
+menu com sessão, mapa com quatro extintores no piso -2, G4 para formulário,
+descrição, regresso ao mapa e menu, QR sem sessão, autenticação no envio e rede
+indisponível. API simulada e service worker desativado nestes testes; não houve
+escritas reais. A instalação pelo download original falhou, mas uma distribuição
+alternativa do Chromium permitiu executar os testes.
+
+Teste em aparelho físico e atualização de uma PWA já instalada continuam pendentes.
+O backend pode manter o identificador rc1: não é necessário voltar a implementá-lo
+apenas para alterar esse identificador.
