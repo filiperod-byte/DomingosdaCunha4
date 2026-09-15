@@ -28,27 +28,7 @@ async function loadExisting(){
 }
 function renderExisting(o){
  $('statusBadge').className='status open';$('statusBadge').textContent='Ocorrência aberta';
- const box=$('existingBox');box.replaceChildren();
- const title=document.createElement('strong');title.textContent='Anomalia já registada';box.appendChild(title);
- const reason=document.createElement('div');
- reason.textContent=o.reason ? 'Motivo: '+o.reason : 'O motivo ainda não está disponível nesta consulta.';
- box.appendChild(reason);
- const description=typeof o.description==='string'?o.description.trim():'';
- if(description){
-  const detail=document.createElement('div');detail.style.whiteSpace='pre-wrap';detail.style.overflowWrap='anywhere';
-  detail.textContent='Descrição: '+description;box.appendChild(detail);
- }else if(o.reason==='Outro'||o.reason==='Outra anomalia'){
-  const missing=document.createElement('div');missing.textContent=typeof o.description==='string'?'Esta ocorrência não tem uma descrição registada.':'A descrição ainda não está disponível nesta consulta.';box.appendChild(missing);
- }
- if(o.reportedAt){
-  const date=new Date(o.reportedAt);
-  if(!isNaN(date.getTime())){const line=document.createElement('div');line.textContent='Registada em: '+new Intl.DateTimeFormat('pt-PT',{dateStyle:'short',timeStyle:'short',timeZone:'Europe/Lisbon'}).format(date);box.appendChild(line);}
- }
- const hint=document.createElement('div');
- hint.textContent=o.reason
-  ? 'Se é a mesma situação, não precisa de a reportar novamente. Use o formulário apenas para uma anomalia diferente ou informação adicional.'
-  : 'Já existe uma ocorrência aberta neste ponto. Não é possível comparar o motivo enquanto o serviço não disponibilizar esse detalhe.';
- box.appendChild(hint);
+ window.dc4RenderOccurrence($('existingBox'),o);
 }
 
 function asList(p){if(!p)return[];if(Array.isArray(p))return p;return p.occurrences||p.items||p.data||[];}
@@ -125,4 +105,3 @@ async function compressImage(file,opt){if(!/^image\/(jpeg|jpg|png|webp)$/i.test(
 function loadImg(file){return new Promise((res,rej)=>{const url=URL.createObjectURL(file);const img=new Image();img.onload=()=>{URL.revokeObjectURL(url);res(img)};img.onerror=()=>{URL.revokeObjectURL(url);rej(new Error('Não foi possível preparar a fotografia.'))};img.src=url;});}
 function readFile(file){return new Promise((res,rej)=>{const fr=new FileReader();fr.onload=()=>res(String(fr.result));fr.onerror=()=>rej(new Error('Não foi possível ler a fotografia.'));fr.readAsDataURL(file);});}
 function estimate(dataUrl){return Math.round((String(dataUrl).split(',')[1]||'').length*.75);}function makeKey(f,p){return Number(f)+':'+String(p||'').trim().toUpperCase();}function escapeHtml(s){return String(s||'').replace(/[&<>\"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));}function setMsg(type,text){$('msg').innerHTML='<div class="msg '+type+'">'+escapeHtml(text)+'</div>';}function toast(t){const e=$('toast');e.textContent=t;e.classList.add('show');clearTimeout(toast._t);toast._t=setTimeout(()=>e.classList.remove('show'),3200);}function formatBytes(bytes){const u=['B','KB','MB','GB'];let v=bytes||0,i=0;while(v>=1024&&i<u.length-1){v/=1024;i++;}return v.toFixed(v>=10||i===0?0:1)+' '+u[i];}
-

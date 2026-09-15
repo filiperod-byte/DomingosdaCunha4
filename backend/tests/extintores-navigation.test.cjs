@@ -10,7 +10,7 @@ test('mapa consulta apenas status e mantém os pontos com ocorrências abertas',
  const start=source.indexOf('loadStatuses = async function loadStatusesOverride()');
  const end=source.indexOf('  renderBuilding =',start);
  const actions=[],registered=[],openSet=new Set();
- const context=vm.createContext({Set,Date,console,clearOccurrenceState(){openSet.clear()},updateLegendText(){},apiGet:async action=>{actions.push(action);return {success:true,reported:[{floor:9,point:'E1'}]}},registerOccurrence(item,type){registered.push({item,type});openSet.add(item.floor+':'+item.point)},openSet,els:{lastRefresh:{}},formatTime:()=> '12:00',showToast(){}});
+ const context=vm.createContext({Set,Date,console,clearOccurrenceState(){openSet.clear()},updateLegendText(){},apiGet:async (action,params)=>{assert.equal(params.details,'public');actions.push(action);return {success:true,reported:[{floor:9,point:'E1'}]}},registerOccurrence(item,type){registered.push({item,type});openSet.add(item.floor+':'+item.point)},openSet,els:{lastRefresh:{}},formatTime:()=> '12:00',showToast(){}});
  vm.runInContext(source.slice(start,end),context);
  await context.loadStatuses();
  assert.deepEqual(actions,['status']);

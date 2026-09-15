@@ -118,6 +118,7 @@ function estimateDataUrlBytesForCompression(dataUrl) {
     .facade-row.garage .floor-body{background:linear-gradient(180deg,#B86A4C,#8F4935)!important;border-color:#9B5A43!important}
     .facade-row.garage .facade-inner{min-height:70px;grid-template-columns:1fr auto!important}
     .facade-row.garage .garage-zone{background:linear-gradient(180deg,#F4D7C4,#D99A78)!important;border:1px dashed rgba(86,45,31,.42)!important;color:#5B2F22!important;font-weight:800}
+    .facade-row.garage .extinguishers:has(> :nth-child(4)){display:grid;grid-template-columns:repeat(2, minmax(0,1fr));width:max-content}
     .facade-row.garage .ext-btn{box-shadow:0 7px 16px rgba(73,34,20,.26)}
     .dot.pending{background:#F59E0B}
     .ext-btn.pending{background:linear-gradient(180deg,#FBBF24,#D97706)!important;color:#fff!important}
@@ -195,7 +196,7 @@ function estimateDataUrlBytesForCompression(dataUrl) {
       location: item.location || item.LOCATION || '',
       reportedBy: item.reportedBy || item.REPORTED_BY || '',
       reason: item.reason || item.REASON || '',
-      notes: item.notes || item.NOTES || '',
+      description: item.description,
       createdAt: item.createdAt || item.reportedAt || item.REPORTED_AT || '',
       photoUrl: item.photoUrl || item.PHOTO_FILE_URL || '',
       status: item.status || item.STATUS || ''
@@ -279,7 +280,7 @@ function estimateDataUrlBytesForCompression(dataUrl) {
 
     try {
       // O mapa dos moradores usa apenas o estado publicado, sem listas administrativas.
-      const result = await apiGet('status');
+      const result = await apiGet('status', {details:'public'});
       if (!result || result.success === false || !Array.isArray(result.reported)) {
         throw new Error('Não foi possível consultar o estado publicado.');
       }
@@ -403,22 +404,12 @@ function estimateDataUrlBytesForCompression(dataUrl) {
     els.alreadyReportedBox.className = 'alert-box';
 
     if (existing) {
-      const typeLabel = existing.type === 'pending'
-        ? 'Já existe um reporte neste extintor a aguardar validação.'
-        : 'Já existe uma ocorrência aberta neste extintor.';
-
-      els.alreadyReportedBox.classList.add(existing.type === 'pending' ? 'pending' : 'open');
-      els.alreadyReportedBox.classList.add('show');
-      els.alreadyReportedBox.innerHTML = `
-        <div class="existing-report-title">${escapeHtmlLocal(typeLabel)}</div>
-        <div class="existing-report-grid">
-          ${existing.createdAt ? `<div><strong>Data:</strong> ${escapeHtmlLocal(displayDate(existing.createdAt))}</div>` : ''}
-          ${existing.reportedBy ? `<div><strong>Reportado por:</strong> ${escapeHtmlLocal(existing.reportedBy)}</div>` : ''}
-          ${existing.reason ? `<div><strong>Motivo:</strong> ${escapeHtmlLocal(existing.reason)}</div>` : ''}
-          ${existing.notes ? `<div><strong>Observação:</strong> ${escapeHtmlLocal(existing.notes)}</div>` : ''}
-          ${existing.photoUrl ? `<div><strong>Foto:</strong> <a href="${escapeHtmlLocal(existing.photoUrl)}" target="_blank" rel="noopener noreferrer">Abrir fotografia</a></div>` : ''}
-        </div>
-      `;
+      els.alreadyReportedBox.classList.add('open', 'show');
+      window.dc4RenderOccurrence(els.alreadyReportedBox, {
+        reason: existing.reason,
+        description: existing.description,
+        reportedAt: existing.createdAt
+      });
     } else {
       els.alreadyReportedBox.classList.remove('show');
       els.alreadyReportedBox.innerHTML = 'Este extintor já tem uma ocorrência aberta. Pode submeter informação adicional, se necessário.';

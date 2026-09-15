@@ -8,6 +8,7 @@ function setup(hasSession=false){
  const elements=new Map();
  function el(id){if(!elements.has(id))elements.set(id,{value:'',textContent:'',innerHTML:'',disabled:false,open:false,options:[],classList:{add(){},remove(){}},appendChild(child){(this.children ||= []).push(child)},replaceChildren(){this.children=[]},focus(){},showModal(){this.open=true},close(){this.open=false},reset(){el('reason').value='';el('notes').value=''}});return elements.get(id)}
  const c=vm.createContext({URL,URLSearchParams,Date,console,Response,navigator:{userAgent:'test'},location:{search:'?floor=9&point=E1'},document:{getElementById:el,addEventListener(){},createElement:()=>({style:{}})},window:{dc4HasSession:()=>hasSession},sessionStorage:{setItem(){}},setTimeout:()=>0,clearTimeout(){}});
+ vm.runInContext(fs.readFileSync(path.join(root,'occurrence-view.js'),'utf8'),c);
  vm.runInContext(fs.readFileSync(path.join(root,'qr-report.js'),'utf8'),c);
  vm.runInContext("CFG={features:{}};POINT={floor:9,point:'E1',location:'Patamar'};",c);
  el('reason').value='Selo danificado';el('notes').value='Texto a preservar';
@@ -75,4 +76,28 @@ test('QR mostra descrição de Outro como texto, preservando linhas sem interpre
  assert.doesNotMatch(children.map(e=>e.textContent).join(' '),/descrição completa é consultada/);
  c.renderExisting({reason:'Outro',description:''});
  assert.match(el('existingBox').children.map(e=>e.textContent).join(' '),/não tem uma descrição registada/);
+});
+
+test('G4 existe apenas no piso -2 e o QR reconhece o novo ponto',()=>{
+ const {c}=setup();const config=JSON.parse(fs.readFileSync(path.join(root,'config.json'),'utf8'));
+ assert.deepEqual(config.building.floors.find(f=>f.floor===-2).extinguishers.map(e=>e.point),['G1','G2','G3','G4']);
+ for(const floor of [-1,-3])assert.equal(config.building.floors.find(f=>f.floor===floor).extinguishers.length,3);
+ c.NEW_CONFIG=config;vm.runInContext('CFG=NEW_CONFIG',c);c.location.search='?floor=-2&point=G4';
+ assert.equal(c.findPointFromUrl().point,'G4');
+});
+
+test('menu apresenta os mesmos detalhes que o QR e preserva a identidade autenticada',()=>{
+ const {c,el}=setup(true);
+ const source=fs.readFileSync(path.join(root,'image-compress.js'),'utf8');
+ const start=source.indexOf('openModal = function openModalOverride(ext)');
+ const end=source.indexOf("  document.addEventListener('DOMContentLoaded', updateLegendText)",start);
+ c.els={};for(const id of ['modalTitle','modalSubtitle','alreadyReportedBox','hiddenFloor','hiddenPoint','hiddenLocation','reporterName','overlay','reportReason'])c.els[id]=el(id);
+ c.els.overlay.setAttribute=()=>{};c.document.body={style:{}};c.clearPhotoInputs=()=>{};c.AUTO_REPORTER_NAME='Morador de teste';c.window.setTimeout=()=>{};
+ vm.runInContext(source.slice(start,end),c);
+ const occurrence={reason:'Outro',description:'Manómetro sem pressão.\nNecessita de inspeção.',reportedAt:'2026-09-14T10:00:00.000Z'};
+ c.renderExisting(occurrence);
+ c.openModal({floor:-2,point:'G4',floorLabel:'-2',label:'Extintor 4',existingOccurrence:{...occurrence,createdAt:occurrence.reportedAt}});
+ assert.deepEqual(el('alreadyReportedBox').children.map(e=>e.textContent),el('existingBox').children.map(e=>e.textContent));
+ assert.equal(el('reporterName').value,'Morador de teste');
+ assert.equal(el('hiddenPoint').value,'G4');
 });
