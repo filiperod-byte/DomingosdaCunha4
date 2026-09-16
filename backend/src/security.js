@@ -48,15 +48,23 @@ function createSecureApplication_(app, ports) {
       if (method === 'POST' && p._method === 'GET') method = 'GET';
       if (method === 'GET' && publicGet.has(action)) return app.dispatch(method, action, p);
       if (method === 'POST' && ['garage.loginAdmin', 'garage.loginPin'].includes(action)) {
+        const timings = {};
+        let checkpoint = now();
+        const mark = key => { const t = now(); timings[key] = Math.max(0, t - checkpoint); checkpoint = t; };
         const admin = action === 'garage.loginAdmin';
         if (!throttle(admin ? 'admin-login' : 'resident-login', admin ? 10 : 30, 15 * 60 * 1000)) return deny('Demasiadas tentativas. Aguarde 15 minutos.', 'RATE_LIMITED');
+        mark('rateLimitMs');
         const pin = String(p.pin || '');
         if (!/^\d{6,12}$/.test(pin) || (admin && ['123456', '000000'].includes(pin))) return deny('Credenciais inválidas.', 'INVALID_CREDENTIALS');
         const resident = admin ? null : ports.residents.list().find(r => String(r.pin) === pin);
         if (admin ? !ports.settings.get('ADMIN_PIN') || !ports.settings.get('ADMIN_EMAIL') : !active(resident)) return deny('Credenciais inválidas ou acesso indisponível.', 'INVALID_CREDENTIALS');
+        mark('validationMs');
         const result = app.dispatch(method, action, p);
+        mark('accessUpdateMs');
         if (!(result.ok || result.success)) return deny('Credenciais inválidas.', 'INVALID_CREDENTIALS');
-        return Object.assign({}, result, issue(admin ? 'admin' : 'resident', resident));
+        const session = issue(admin ? 'admin' : 'resident', resident);
+        mark('sessionMs');
+        return Object.assign({}, result, session, { loginTimingsMs: timings });
       }
       if (method === 'POST' && ['garage.register', 'garage.resendPin', 'garage.recoverCode'].includes(action)) {
         if (!throttle('public-mail', 10, 60 * 60 * 1000)) return deny('Limite de pedidos atingido. Tente mais tarde.', 'RATE_LIMITED');

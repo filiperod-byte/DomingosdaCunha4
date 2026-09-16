@@ -3,6 +3,11 @@ function createAppsScriptPorts_(CONFIG, REQUIRED_HEADERS, domain) {
   const { safeText_, toInt_, normalizePoint_ } = domain;
   let spreadsheet;
   let settingsCache;
+  let residentsCache;
+  function residentRows() {
+    if (!residentsCache) residentsCache = getSheetObjects_('CONDOMINOS');
+    return residentsCache;
+  }
 function setupIfNeeded_() {
   const ss = getSpreadsheet_();
   ensureSheetStructure_(ss, CONFIG.SHEETS.REGISTOS, REQUIRED_HEADERS.REGISTOS);
@@ -164,14 +169,14 @@ function setupApp() { const c = getSheet('CONFIG'); getSheet('CONDOMINOS'); getS
     events: { append: record => appendObjectRow_(CONFIG.SHEETS.REGISTOS, record) },
     closures: { append: record => appendObjectRow_(CONFIG.SHEETS.FECHOS, record) },
     residents: {
-      list: () => getSheetObjects_('CONDOMINOS').map(row => decode(row, residentFields)),
+      list: () => residentRows().map(row => decode(row, residentFields)),
       get: row => {
-        const record = getSheetObjects_('CONDOMINOS').find(record => record._rowIndex === row);
+        const record = residentRows().find(record => record._rowIndex === row);
         if (!record) throw new Error('Morador não encontrado.');
         return decode(record, residentFields);
       },
-      add: record => appendObjectRow_('CONDOMINOS', encode(record, residentFields)),
-      update: (row, patch) => updateObjectRow_('CONDOMINOS', row, encode(patch, residentFields))
+      add: record => { try { return appendObjectRow_('CONDOMINOS', encode(record, residentFields)); } finally { residentsCache = undefined; } },
+      update: (row, patch) => { try { return updateObjectRow_('CONDOMINOS', row, encode(patch, residentFields)); } finally { residentsCache = undefined; } }
     },
     consultations: {
       list: () => getSheetObjects_('CONSULTAS').map(row => decode(row, consultationFields)),

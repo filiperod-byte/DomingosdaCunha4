@@ -6,7 +6,7 @@ const path = require('node:path');
 const FIXED = '2026-09-11T10:00:00.000Z';
 
 function harness(source, options = {}) {
-  const counts = { opens: 0, writes: 0, mails: 0, locks: 0, releases: 0, files: 0 };
+  const counts = { reads: 0, opens: 0, writes: 0, mails: 0, locks: 0, releases: 0, files: 0 };
   const sheets = new Map();
   const emails = [];
   const uploads = [];
@@ -25,7 +25,7 @@ function harness(source, options = {}) {
       if (![row, column, height, width].every(value => Number.isInteger(value) && value > 0)) throw new Error('Intervalo inválido.');
       const self = this;
       return {
-        getValues() { return Array.from({ length: height }, (_, i) => Array.from({ length: width }, (_, j) => self.rows[row - 1 + i]?.[column - 1 + j] ?? '')); },
+        getValues() { counts.reads++; return Array.from({ length: height }, (_, i) => Array.from({ length: width }, (_, j) => self.rows[row - 1 + i]?.[column - 1 + j] ?? '')); },
         setValues(values) {
           counts.writes++;
           values.forEach((valuesRow, i) => valuesRow.forEach((value, j) => {
