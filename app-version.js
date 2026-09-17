@@ -1,7 +1,7 @@
 /* Versão da interface: atualizar este valor e as referências ?v= em cada publicação. */
 (function () {
   'use strict';
-  const VERSION = '3.7.0';
+  const VERSION = '3.7.1';
   function mount() {
     if (document.getElementById('dc4-version')) return;
     const style = document.createElement('style');
