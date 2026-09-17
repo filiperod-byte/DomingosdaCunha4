@@ -1,12 +1,13 @@
+if(new URLSearchParams(location.search).get('category') !== 'extintor') {
 /* Reutiliza autenticação, fotografia e transporte do reporte dedicado ao extintor. */
 let GENERAL_ITEMS=[],GENERAL_REQUEST=null,GENERAL_CONFIRM=new URLSearchParams(location.search).get('confirm')||'',GENERAL_READY=false;
 const GC=window.DC4_OCCURRENCE_CATALOG;
 findPointFromUrl=function(){const p=new URLSearchParams(location.search);if(p.get('scope')==='general')return {scope:'general',floor:null,label:'Prédio / Zonas gerais'};if(!p.has('floor')||!p.get('floor').trim()||!GC.floors.includes(Number(p.get('floor'))))throw new Error('Piso inválido.');return{scope:'floor',floor:Number(p.get('floor')),label:'Piso '+Number(p.get('floor'))};};
 fillReasons=function(){
- const cats=GC.categories.filter(c=>c.scope==='both'||c.scope===POINT.scope);
+ const cats=GC.categories.filter(c=>c.scope==='both'||c.scope===POINT.scope);if(POINT.scope==='floor')cats.unshift({id:'extintor',label:'Extintores / Segurança contra incêndio',reasons:[]});
  $('category').replaceChildren(new Option('Escolher tipo de problema',''),...cats.map(c=>new Option(c.label,c.id)));
  const requested=new URLSearchParams(location.search).get('category');if(cats.some(c=>c.id===requested))$('category').value=requested;
- const update=()=>{const cat=cats.find(c=>c.id===$('category').value);$('reason').replaceChildren(new Option('Selecionar motivo',''),...(cat?.reasons||[]).map(r=>new Option(r,r)));renderGeneralExisting();};
+ const update=()=>{if($('category').value==='extintor'){const u=new URL(location.href);u.searchParams.set('category','extintor');u.searchParams.delete('confirm');location.assign(u.href);return;}const cat=cats.find(c=>c.id===$('category').value);$('reason').replaceChildren(new Option('Selecionar motivo',''),...(cat?.reasons||[]).map(r=>new Option(r,r)));renderGeneralExisting();};
  $('category').onchange=update;update();$('locationDetail').required=POINT.scope==='general';
 };
 renderPoint=function(){document.title='Comunicar problema · '+POINT.label;$('introText').textContent='Escolha o tipo de problema. O login só é necessário ao enviar.';$('pointCard').innerHTML='<p class="point-title">'+escapeHtml(POINT.label)+'</p><span class="status pending" id="statusBadge">A consultar ocorrências…</span><div class="existing" id="existingBox"></div><button class="btn btn-secondary" id="refreshGeneral" type="button">Atualizar ocorrências</button>';$('refreshGeneral').onclick=loadExisting;};
@@ -25,3 +26,14 @@ sendReport=async function(){if(BUSY)return;BUSY=true;$('submitBtn').disabled=tru
  setMsg('ok',confirmed?'Confirmação registada. Não foi criada outra ocorrência.':'Reporte recebido. Aguarda validação da administração.');await loadExisting();
  }catch(e){if(e.code==='AUTH_REQUIRED'){openAuth();$('authMsg').textContent='A sessão terminou. Entre para concluir sem perder os dados.';}else setMsg('err',e.message+(GENERAL_REQUEST?' O envio não foi confirmado. Use «Repetir envio»; será reutilizado o mesmo pedido para evitar duplicados.':''));}
  finally{BUSY=false;$('submitBtn').disabled=false;$('submitBtn').textContent=GENERAL_REQUEST?'Repetir envio':'Submeter reporte';freezeGeneral(!!GENERAL_REQUEST);}}
+
+}
+
+else {
+ const originalFind=findPointFromUrl, originalReasons=fillReasons, originalRender=renderPoint, originalLoad=loadExisting;
+ findPointFromUrl=function(){const p=new URLSearchParams(location.search);if(p.get('point'))return originalFind();const f=Number(p.get('floor'));if(!p.has('floor')||!p.get('floor').trim()||!CFG.building.floors.some(x=>Number(x.floor)===f))throw new Error('Piso inválido.');return {floor:f,point:'',label:'Selecionar equipamento'};};
+ fillReasons=function(){originalReasons();$('category').replaceChildren(new Option('Extintor / Segurança contra incêndio','extintor'));$('locationDetail').closest('.field').hidden=true;$('notes').required=false;$('notes').maxLength=500;
+ const field=document.createElement('div');field.className='field';const label=document.createElement('label');label.htmlFor='equipment';label.textContent='Equipamento';const select=document.createElement('select');select.id='equipment';select.className='input';select.add(new Option('Escolher equipamento',''));CFG.building.floors.find(f=>Number(f.floor)===Number(POINT.floor)).extinguishers.forEach(e=>select.add(new Option(e.label+' · '+e.point,e.point)));select.value=POINT.point;select.onchange=()=>{if(!select.value)return;const u=new URL(location.href);u.searchParams.set('point',select.value);location.replace(u.href);};field.append(label,select);$('category').closest('.field').after(field);};
+ renderPoint=function(){if(POINT.point){originalRender();$('introText').textContent='Piso e equipamento selecionados. Preencha o motivo da ocorrência.';}else{$('pointCard').textContent='Piso '+POINT.floor+' · Escolha o equipamento para consultar e reportar.';$('submitBtn').disabled=true;}};
+ loadExisting=async function(){if(POINT.point)return originalLoad();};
+}
