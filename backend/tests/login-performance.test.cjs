@@ -8,7 +8,7 @@ test('login lê moradores uma vez, mede etapas e vê bloqueios no pedido seguint
  const before=b.counts.reads;
  const r=b.post('garage.loginPin',{pin:'654321'});
  assert.ok(r.token);assert.equal(b.counts.reads-before,3); // lista + cabeçalhos/linha da atualização
- assert.equal(r.serviceVersion,'3.6.1-rc1');assert.ok(r.serverDurationMs>=0);
+ assert.equal(r.serviceVersion,'3.7.0-rc1');assert.ok(r.serverDurationMs>=0);
  assert.deepEqual(Object.keys(r.loginTimingsMs).sort(),['accessUpdateMs','rateLimitMs','sessionMs','validationMs']);
  assert.ok(Object.values(r.loginTimingsMs).every(v=>typeof v==='number'&&v>=0));
  s.rows[1][s.rows[0].indexOf('Estado')]='BLOQUEADO';

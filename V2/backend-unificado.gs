@@ -1,6 +1,27 @@
 // GERADO por node backend/build.cjs. Editar backend/src, não este ficheiro.
 // Refatoração de compatibilidade: consultar backend/README.md antes de publicar.
 
+// --- ../../occurrence-catalog.js ---
+/* Catálogo partilhado entre interface e backend. */
+const DC4_OCCURRENCE_CATALOG = {
+  floors: [10,9,8,7,6,5,4,3,2,0,-1,-2,-3],
+  statuses: {RECEBIDO:'Recebido',EM_ANALISE:'Em análise',AGENDADO:'Intervenção agendada',RESOLVIDO:'Resolvido',REJEITADO:'Não validado'},
+  categories: [
+    {id:'iluminacao',label:'Iluminação',scope:'floor',reasons:['Luz apagada','Luz intermitente','Sensor / temporizador','Outro']},
+    {id:'portas',label:'Portas e portas corta-fogo',scope:'floor',reasons:['Não fecha corretamente','Fechadura / puxador','Porta danificada','Acesso obstruído','Outro']},
+    {id:'limpeza',label:'Limpeza',scope:'both',reasons:['Sujidade','Resíduos abandonados','Derrame','Outro']},
+    {id:'conservacao',label:'Pavimento, paredes e teto',scope:'floor',reasons:['Dano / peça solta','Infiltração / humidade','Outro']},
+    {id:'elevadores',label:'Elevadores',scope:'general',reasons:['Fora de serviço','Portas não abrem / fecham','Ruído / funcionamento irregular','Outro']},
+    {id:'portao',label:'Portão da garagem',scope:'general',reasons:['Não abre / fecha','Sensor / comando','Ruído / dano','Outro']},
+    {id:'entrada',label:'Porta de entrada / intercomunicador',scope:'general',reasons:['Não abre / fecha','Código / chave / fechadura','Intercomunicador','Outro']},
+    {id:'agua',label:'Abastecimento de água / bombas',scope:'general',reasons:['Falta de água','Pressão irregular','Fuga de água','Ruído nas bombas','Outro']},
+    {id:'exterior',label:'Exterior / fachada',scope:'general',reasons:['Dano / peça solta','Infiltração','Outro']},
+    {id:'outro',label:'Outro problema',scope:'both',reasons:['Outro']}
+  ]
+};
+if (typeof window !== 'undefined') window.DC4_OCCURRENCE_CATALOG = DC4_OCCURRENCE_CATALOG;
+
+
 // --- config.js ---
 // Configuração e esquema atuais. Não colocar credenciais neste ficheiro.
 const CONFIG = {
@@ -616,6 +637,78 @@ function createAccessService_(ports) {
 }
 
 
+// --- general-occurrences.js ---
+// Eventos duráveis: uma linha contém o estado e o recibo do pedido, sob lock.
+function createGeneralOccurrenceService_(ports) {
+  function invalid(message) { const e=new Error(message); e.code='VALIDATION_ERROR'; throw e; }
+  const catalog = DC4_OCCURRENCE_CATALOG;
+  const publicStates = ['EM_ANALISE','AGENDADO','RESOLVIDO'];
+  const text = (v,max) => String(v == null ? '' : v).trim().slice(0,max);
+  const hash = v => ports.crypto.hashPin(JSON.stringify(v),'dc4-general-v1');
+  const all = () => ports.general.list().map(r => ({...r, data:JSON.parse(r.DATA_JSON)}));
+  function latest(events) {
+    const map = new Map(); events.forEach(e => map.set(e.data.id,e.data)); return [...map.values()];
+  }
+  function publicItem(o) {
+    return {id:o.id,scope:o.scope,floor:o.floor,category:o.category,reason:o.reason,
+      location:o.publicLocation,description:o.publicDescription,status:o.status,
+      reportedAt:o.reportedAt,updatedAt:o.updatedAt,scheduledFor:o.scheduledFor||'',
+      resolution:o.publicResolution||'',confirmations:(o.confirmations||[]).length};
+  }
+  function list() { return {success:true,occurrences:latest(all()).filter(o=>publicStates.includes(o.status)).map(publicItem)}; }
+  function adminList() { return {success:true,occurrences:latest(all())}; }
+  function mutate(action,p,change) {
+    try { return ports.lock.run(()=>{
+      const requestId=text(p.requestId,100),actor=p._actor;
+      if(!actor || !/^[a-zA-Z0-9_-]{16,80}$/.test(requestId))invalid('Identificador de envio inválido. Atualize a página.');
+      const clean={...p};['token','action','_method','requestId','_actor','_actorName','adminEmail'].forEach(k=>delete clean[k]);
+      const digest=hash(clean),events=all();
+      const old=events.find(e=>e.REQUEST_ID===requestId&&e.ACTOR_ID===actor&&e.ACTION===action);
+      if(old){if(old.PAYLOAD_HASH!==digest)invalid('O pedido já foi recebido com outro conteúdo. Consulte as ocorrências antes de criar um novo.');return {success:true,occurrenceId:old.data.id,replayed:true};}
+      const state=change(latest(events));
+      const at=ports.clock.now().toISOString();state.updatedAt=at;
+      state.revision=(state.revision||0)+1;
+      ports.general.append({EVENT_ID:ports.crypto.uuid(),REQUEST_ID:requestId,ACTOR_ID:actor,ACTION:action,PAYLOAD_HASH:digest,AT:at,DATA_JSON:JSON.stringify(state)});
+      return {success:true,occurrenceId:state.id};
+    }); } catch (e) { return {success:false,code:e.code||'RETRY_SAME_REQUEST',message:e.code?e.message:'Não foi possível confirmar a gravação. Repita o mesmo envio.'}; }
+  }
+  function report(p) {return mutate('report',p,()=>{
+    const scope=p.scope,floor=scope==='floor'?Number(p.floor):null;
+    if(!['floor','general'].includes(scope)||scope==='floor'&&(p.floor==null||String(p.floor).trim()===''||!catalog.floors.includes(floor)))invalid('Localização inválida.');
+    const cat=catalog.categories.find(c=>c.id===p.category&&(c.scope==='both'||c.scope===scope));
+    if(!cat||!cat.reasons.includes(p.reason))invalid('Tipo ou motivo inválido.');
+    const description=text(p.description,2000),location=text(p.location,160);
+    if(!description)invalid('Descreva o problema.');
+    if(scope==='general'&&!location)invalid('Indique o equipamento ou local onde observou o problema.');
+    const photoData=String(p.photoBase64||'');
+    if(photoData.length>1600000||photoData&&!['image/jpeg','image/png','image/webp'].includes(p.photoType))invalid('Fotografia inválida ou demasiado grande.');
+    const id='GER-'+ports.crypto.uuid(),at=ports.clock.now().toISOString();
+    const photo=ports.files.save({base64:photoData,mimeType:p.photoType,fileName:'ocorrencia-'+id+'.jpg',folderName:'OCORRENCIAS_GERAIS_PRIVADAS',occurrenceId:id,prefix:'geral',private:true});
+    return {id,scope,floor,category:cat.id,reason:p.reason,location,description,
+      reportedBy:p._actorName,reporterId:p._actor,photoUrl:photo.fileUrl||'',
+      status:'RECEBIDO',reportedAt:at,publicLocation:'',publicDescription:'',internalNotes:'',confirmations:[],history:[{at,status:'RECEBIDO'}]};
+  });}
+  function update(p){return mutate('update',p,items=>{
+    const old=items.find(o=>o.id===p.occurrenceId);if(!old)invalid('Ocorrência não encontrada.');
+    if(Number(p.revision)!==old.revision)invalid('Esta ocorrência foi alterada. Atualize a lista antes de guardar.');
+    if(!Object.prototype.hasOwnProperty.call(catalog.statuses,p.status))invalid('Estado inválido.');
+    const description=text(p.publicDescription,2000),resolution=text(p.publicResolution,2000);
+    if(publicStates.includes(p.status)&&!description)invalid('Preencha a descrição para os moradores.');
+    if(p.status==='RESOLVIDO'&&!resolution)invalid('Indique o que foi feito para resolver.');
+    const scheduledFor=text(p.scheduledFor,10);
+    if(scheduledFor&&(!/^\d{4}-\d{2}-\d{2}$/.test(scheduledFor)||isNaN(Date.parse(scheduledFor))))invalid('Data inválida.');
+    if(p.status==='AGENDADO'&&!scheduledFor)invalid('Indique a data da intervenção.');
+    return {...old,status:p.status,publicDescription:description,publicLocation:text(p.publicLocation,160),publicResolution:resolution,scheduledFor,
+      internalNotes:text(p.internalNotes,4000),history:[...(old.history||[]),{at:ports.clock.now().toISOString(),status:p.status,by:p._actorName}].slice(-100)};
+  });}
+  function confirm(p){return mutate('confirm',p,items=>{
+    const old=items.find(o=>o.id===p.occurrenceId);if(!old||!['EM_ANALISE','AGENDADO'].includes(old.status))invalid('Esta ocorrência já não está aberta para confirmação.');
+    return {...old,confirmations:[...new Set([...(old.confirmations||[]),p._actor])]};
+  });}
+  return {list,adminList,report,update,confirm};
+}
+
+
 // --- application.js ---
 // Composição dos módulos e contrato de pedidos independente do transporte HTTP.
 // As ações garage.* são aliases de compatibilidade, não a organização interna da app.
@@ -631,6 +724,7 @@ function createCondominiumApplication_(ports, config, domain) {
     return domain.isRealEmail_(active) ? active : '';
   }
   const occurrences = createOccurrenceService_(ports, config, domain, notifications, adminEmail);
+  const general = createGeneralOccurrenceService_(ports);
   const pins = createLegacyPinService_(ports, config, domain, notifications, adminEmail);
   const residents = createResidentService_(ports, domain, notifications);
   const accesses = createAccessService_(ports);
@@ -640,6 +734,11 @@ function createCondominiumApplication_(ports, config, domain) {
   function route(method, names, handler) {
     names.split(' ').forEach(name => routes[method][name] = handler);
   }
+  route('GET','general.status',general.list);
+  route('GET','general.admin',general.adminList);
+  route('POST','general.report',general.report);
+  route('POST','general.update',general.update);
+  route('POST','general.confirm',general.confirm);
   route('GET', 'status', occurrences.status);
   route('GET', 'pinStatus', pins.status);
   route('GET', 'openOccurrences', occurrences.open);
@@ -745,9 +844,9 @@ function createSecureApplication_(app, ports) {
       state.count++; write(key, state); return true;
     });
   }
-  const publicGet = new Set(['status', 'garage.publicConfig', 'garage.structure']);
-  const adminGet = new Set(['health', 'openOccurrences', 'pendingOccurrences', 'garage.dashboard', 'garage.pending', 'garage.approved', 'garage.history', 'garage.adminConfig']);
-  const adminPost = new Set(['approveOccurrence', 'rejectOccurrence', 'closeOccurrence', 'garage.approve', 'garage.reject', 'garage.block', 'garage.unblock', 'garage.regeneratePin', 'garage.changeCode', 'garage.saveConfig']);
+  const publicGet = new Set(['general.status', 'status', 'garage.publicConfig', 'garage.structure']);
+  const adminGet = new Set(['general.admin', 'health', 'openOccurrences', 'pendingOccurrences', 'garage.dashboard', 'garage.pending', 'garage.approved', 'garage.history', 'garage.adminConfig']);
+  const adminPost = new Set(['general.update', 'approveOccurrence', 'rejectOccurrence', 'closeOccurrence', 'garage.approve', 'garage.reject', 'garage.block', 'garage.unblock', 'garage.regeneratePin', 'garage.changeCode', 'garage.saveConfig']);
   function dispatch(method, action, input) {
     try {
       action = canonical(action);
@@ -787,6 +886,9 @@ function createSecureApplication_(app, ports) {
       if (['pinStatus', 'setPin', 'validatePin', 'resetPin'].includes(action)) return deny('Entre pela área de administração da app.', 'LEGACY_LOGIN_DISABLED');
       const session = verify(p.token);
       if (!session) return deny('Sessão terminada ou inválida. Volte a entrar.');
+      p._actor = session.role + ':' + session.id;
+      p._actorName = session.role === 'resident' ? session.resident.name : 'Administração';
+      if (method === 'POST' && ['general.report','general.confirm'].includes(action)) return app.dispatch(method,action,p);
       if (method === 'POST' && action === 'auth.logout') {
         ports.properties.deleteProperty(session.key); return { ok: true, success: true };
       }
@@ -898,7 +1000,7 @@ function saveIncomingPhoto_(opts) {
   if (!mimeType) mimeType = 'image/jpeg';
   if (!fileName) fileName = buildDefaultPhotoName_(opts.prefix || 'file', opts.occurrenceId || Utilities.getUuid(), mimeType);
   const file = getOrCreateSubfolder_(safeText_(opts.folderName)).createFile(Utilities.newBlob(Utilities.base64Decode(finalBase64), mimeType, fileName));
-  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (err) { Logger.log(err); }
+  try { if (!opts.private) file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (err) { Logger.log(err); }
   return { fileId:file.getId(), fileUrl:file.getUrl(), fileName:file.getName() };
 }
 
@@ -962,6 +1064,8 @@ function setupApp() { const c = getSheet('CONFIG'); getSheet('CONDOMINOS'); getS
     return (prefix || 'ID') + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
   }
   return {
+    general: {list: () => getSheetObjects_('OCORRENCIAS_GERAIS'), append: row => appendObjectRow_('OCORRENCIAS_GERAIS',row)},
+    initializeGeneral: () => withScriptLock_(() => ensureSheetStructure_(getSpreadsheet_(),'OCORRENCIAS_GERAIS',['EVENT_ID','REQUEST_ID','ACTOR_ID','ACTION','PAYLOAD_HASH','AT','DATA_JSON'])),
     initialize: function () {
       return withScriptLock_(function () {
         setupIfNeeded_();
@@ -1039,8 +1143,8 @@ function routeRequest_(method, event) {
     : String(rawAction || '').trim();
   const startedAt=Date.now();
   const result = createAppsScriptApplication_().dispatch(method, action, payload);
-  if((action === 'status' && payload.details === 'public') || result.token && ['garage.loginPin','garage.loginAdmin','garageLoginPin','garageLoginAdmin'].includes(action)){
-    result.serviceVersion='3.6.1-rc1';
+  if(action === 'general.status' || (action === 'status' && payload.details === 'public') || result.token && ['garage.loginPin','garage.loginAdmin','garageLoginPin','garageLoginAdmin'].includes(action)){
+    result.serviceVersion='3.7.0-rc1';
     result.serverDurationMs=Math.max(0,Date.now()-startedAt);
   }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
@@ -1059,4 +1163,11 @@ function setupApp() { return setupBackend_(); }
 function resetPinManualmente_() {
   createAppsScriptApplication_().clearLegacyPin();
   Logger.log('PIN removido.');
+}
+
+// Executar uma vez para acrescentar apenas a folha de ocorrências gerais.
+function setupGeneralOccurrences() {
+  const domain=createCondominiumDomain_(GARAGE_RESIDENTIAL_STRUCTURE,OPEN_STATUSES,PENDING_STATUSES);
+  createAppsScriptPorts_(CONFIG,REQUIRED_HEADERS,domain).initializeGeneral();
+  Logger.log('Folha OCORRENCIAS_GERAIS preparada. Dados existentes preservados.');
 }

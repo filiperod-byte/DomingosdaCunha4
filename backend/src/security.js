@@ -37,9 +37,9 @@ function createSecureApplication_(app, ports) {
       state.count++; write(key, state); return true;
     });
   }
-  const publicGet = new Set(['status', 'garage.publicConfig', 'garage.structure']);
-  const adminGet = new Set(['health', 'openOccurrences', 'pendingOccurrences', 'garage.dashboard', 'garage.pending', 'garage.approved', 'garage.history', 'garage.adminConfig']);
-  const adminPost = new Set(['approveOccurrence', 'rejectOccurrence', 'closeOccurrence', 'garage.approve', 'garage.reject', 'garage.block', 'garage.unblock', 'garage.regeneratePin', 'garage.changeCode', 'garage.saveConfig']);
+  const publicGet = new Set(['general.status', 'status', 'garage.publicConfig', 'garage.structure']);
+  const adminGet = new Set(['general.admin', 'health', 'openOccurrences', 'pendingOccurrences', 'garage.dashboard', 'garage.pending', 'garage.approved', 'garage.history', 'garage.adminConfig']);
+  const adminPost = new Set(['general.update', 'approveOccurrence', 'rejectOccurrence', 'closeOccurrence', 'garage.approve', 'garage.reject', 'garage.block', 'garage.unblock', 'garage.regeneratePin', 'garage.changeCode', 'garage.saveConfig']);
   function dispatch(method, action, input) {
     try {
       action = canonical(action);
@@ -79,6 +79,9 @@ function createSecureApplication_(app, ports) {
       if (['pinStatus', 'setPin', 'validatePin', 'resetPin'].includes(action)) return deny('Entre pela área de administração da app.', 'LEGACY_LOGIN_DISABLED');
       const session = verify(p.token);
       if (!session) return deny('Sessão terminada ou inválida. Volte a entrar.');
+      p._actor = session.role + ':' + session.id;
+      p._actorName = session.role === 'resident' ? session.resident.name : 'Administração';
+      if (method === 'POST' && ['general.report','general.confirm'].includes(action)) return app.dispatch(method,action,p);
       if (method === 'POST' && action === 'auth.logout') {
         ports.properties.deleteProperty(session.key); return { ok: true, success: true };
       }

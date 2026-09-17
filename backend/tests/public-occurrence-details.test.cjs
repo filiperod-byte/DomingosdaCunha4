@@ -20,6 +20,6 @@ test('texto livre não é publicado como motivo e pendentes não aparecem',()=>{
 });
 test('diagnóstico público identifica serviço e tempo sem credenciais',()=>{
  const {details}=setup();const r=details();
- assert.equal(r.serviceVersion,'3.6.1-rc1');assert.ok(r.serverDurationMs>=0);
+ assert.equal(r.serviceVersion,'3.7.0-rc1');assert.ok(r.serverDurationMs>=0);
  assert.doesNotMatch(JSON.stringify(r),/ADMIN_PIN|SPREADSHEET_ID|token/);
 });

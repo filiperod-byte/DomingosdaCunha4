@@ -67,7 +67,7 @@ test('moradores funcionam com colunas reordenadas', () => {
 
 test('aplicação executa um ciclo de morador sem serviços Google', () => {
   const context = vm.createContext({});
-  for (const name of ['config', 'domain', 'notifications', 'occurrences', 'legacy-pin', 'residents', 'accesses', 'application']) {
+  for (const name of ['../../occurrence-catalog', 'config', 'domain', 'notifications', 'occurrences', 'legacy-pin', 'residents', 'accesses', 'general-occurrences', 'application']) {
     const source = fs.readFileSync(path.join(__dirname, '../src', name + '.js'), 'utf8');
     assert.doesNotMatch(source, /\b(?:SpreadsheetApp|DriveApp|MailApp|PropertiesService|LockService|Session|Utilities|ContentService)\b/);
     vm.runInContext(source, context);

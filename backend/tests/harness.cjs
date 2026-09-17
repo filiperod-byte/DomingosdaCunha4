@@ -6,7 +6,7 @@ const path = require('node:path');
 const FIXED = '2026-09-11T10:00:00.000Z';
 
 function harness(source, options = {}) {
-  const counts = { reads: 0, opens: 0, writes: 0, mails: 0, locks: 0, releases: 0, files: 0 };
+  const counts = { shares: 0, reads: 0, opens: 0, writes: 0, mails: 0, locks: 0, releases: 0, files: 0 };
   const sheets = new Map();
   const emails = [];
   const uploads = [];
@@ -50,7 +50,7 @@ function harness(source, options = {}) {
         counts.files++;
         const id = 'TEST-FILE-' + (++fileId);
         uploads.push({ folder: name, id, type: blob.type, name: blob.name, bytes: Array.from(blob.bytes) });
-        return { setSharing() {}, getId: () => id, getUrl: () => 'https://example.invalid/file/' + id, getName: () => blob.name };
+        return { setSharing() { counts.shares++; }, getId: () => id, getUrl: () => 'https://example.invalid/file/' + id, getName: () => blob.name };
       } };
       folders.set(name, folder);
       return folder;

@@ -33,8 +33,8 @@
     else if (options.body) Object.assign(payload, JSON.parse(options.body));
     const action = String(payload.action || 'status').replace(/^garage([A-Z])/, (_, c) => 'garage.' + c.toLowerCase());
     payload.action = action;
-    const adminPage = /\/(?:V2\/(?:admin|acessos-admin|config-admin|garagem-admin)|backoffice|relatorio-extintores)\.html$/.test(new URL(location.href).pathname);
-    const role = ['report', 'garage.getCode', 'garage.loginPin'].includes(action) ? 'resident' : 'admin';
+    const adminPage = /\/(?:V2\/(?:admin|acessos-admin|config-admin|garagem-admin)|backoffice|relatorio-extintores|occurrences-admin|floor-qrcodes)\.html$/.test(new URL(location.href).pathname);
+    const role = ['general.report','general.confirm','report', 'garage.getCode', 'garage.loginPin'].includes(action) ? 'resident' : 'admin';
     const session = read(role) || (action === 'report' ? read('admin') : null);
     if (session && session.expiresAt > Date.now()) payload.token = session.token;
     const startedAt=Date.now();
@@ -60,7 +60,7 @@
     const action=url.searchParams.get('action')||'status';
     const publicRead=(options.method||'GET').toUpperCase()==='GET' &&
       url.origin==='https://script.google.com' &&
-      ['status','garage.publicConfig','garage.structure'].includes(action);
+      ['general.status','status','garage.publicConfig','garage.structure'].includes(action);
     if(!publicRead)return request(input,options);
     const key=url.href;
     if(!pendingReads.has(key)){

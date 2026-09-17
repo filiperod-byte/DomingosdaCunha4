@@ -25,13 +25,14 @@ const fs=require('fs'),path=require('path'),assert=require('assert/strict');
  });
  await page.addInitScript(()=>{sessionStorage.setItem('dc4_session_resident',JSON.stringify({token:'synthetic',expiresAt:Date.now()+3600000}));sessionStorage.setItem('dc4_user',JSON.stringify({nome:'Teste',piso:'9',fracao:'B'}))});
  await page.goto(base+'V2/index.html');await page.locator('#screen-home.active').waitFor();
- await page.getByText('Controlo de extintores',{exact:true}).click();
+ await page.getByText('Ocorrências',{exact:true}).click();
+ await page.getByText('Mapa dos extintores',{exact:true}).click();
  await page.locator('.ext-btn[data-floor="-2"][data-point="G4"]').waitFor();
  assert.equal(await page.locator('.ext-btn[data-floor="-2"]').count(),4);
  await page.locator('.ext-btn[data-floor="-2"][data-point="G4"]').click();
  await page.getByText('Descrição: Manómetro sem pressão',{exact:true}).waitFor();
  await page.locator('#dc4-back').click();await page.locator('.ext-btn[data-point="G4"]').waitFor();
- await page.locator('#dc4-back').click();await page.locator('#screen-home.active').waitFor();
+ await page.locator('#dc4-back').click();if(page.url().includes('occurrences.html'))await page.locator('#dc4-back').click();await page.locator('#screen-home.active').waitFor();
  // QR sem sessão: preparar e autenticar apenas ao enviar.
  await page.goto(base+'qrcode-report.html?floor=-2&point=G4');
  await page.evaluate(()=>sessionStorage.removeItem('dc4_session_resident'));

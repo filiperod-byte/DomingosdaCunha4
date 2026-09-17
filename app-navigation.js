@@ -4,6 +4,11 @@
   const root = new URL('.', document.currentScript.src);
   const page = location.pathname.slice(root.pathname.length) || 'index.html';
   function parentFor(page, screen, previous) {
+    if (page === 'occurrences-admin.html' || page === 'floor-qrcodes.html') return {url:'V2/admin.html'};
+    if (page === 'general-report.html') { const p=new URLSearchParams(location.search); return {url:'occurrences.html?'+(p.get('scope')==='general'?'scope=general':'floor='+encodeURIComponent(p.get('floor')||''))}; }
+    if (page === 'occurrences.html' && location.search) return {url:'occurrences.html'};
+    if (page === 'index.html' && new URLSearchParams(location.search).get('from') === 'occurrences') return {url:'occurrences.html'};
+    if (page === 'qrcode-report.html' && new URLSearchParams(location.search).get('from') === 'occurrences') return {url:'occurrences.html?floor='+encodeURIComponent(new URLSearchParams(location.search).get('floor')||'')};
     if (page === 'V2/index.html') {
       const parents = {
         'screen-login':'screen-start', 'screen-first-use':'screen-start',

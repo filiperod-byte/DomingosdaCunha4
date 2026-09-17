@@ -1,10 +1,10 @@
 <!doctype html>
 <html lang="pt-PT">
 <head>
-  <script src="../qr-entry.js?v=3.6.0"></script>
-  <script src="../app-navigation.js?v=3.6.0" defer></script>
-  <script src="../app-version.js?v=3.6.0" defer></script>
-  <script src="../session-client.js?v=3.6.0"></script>
+  <script src="../qr-entry.js?v=3.7.0"></script>
+  <script src="../app-navigation.js?v=3.7.0" defer></script>
+  <script src="../app-version.js?v=3.7.0" defer></script>
+  <script src="../session-client.js?v=3.7.0"></script>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
   <meta name="theme-color" content="#1A2F5A">
@@ -18,7 +18,7 @@
   <link rel="apple-touch-icon" href="../assets/icons/app-icon.svg">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="app.css?v=3.6.0">
+  <link rel="stylesheet" href="app.css?v=3.7.0">
 </head>
 <body>
 <div class="app">
@@ -35,7 +35,7 @@
 
   <section class="screen" id="screen-recover"><div class="header"><div><div class="h-title">Recuperar PIN</div><div class="h-sub">Enviamos o PIN para o email registado e aprovado.</div></div></div><div class="form"><div class="field"><label>Email registado</label><input class="input" id="rec-email" type="email" placeholder="email@exemplo.pt" autocomplete="email"></div><div id="rec-msg"></div><button class="btn btn-primary" onclick="submeterRecuperacao()">Enviar PIN</button></div></section>
 
-  <section class="screen" id="screen-home"><div class="home-head"><div class="home-row"><div><div class="home-title">Olá 👋</div><div class="home-sub">Escolha o que pretende fazer no condomínio.</div></div><button class="logout" onclick="terminarSessao()">Sair</button></div></div><div class="profile-card"><div class="avatar">🏠</div><div><div class="profile-main" id="profile-name">Utilizador autorizado</div><div class="profile-sub" id="profile-meta">—</div></div></div><div class="modules"><div class="section-title">Módulos disponíveis</div><button class="module-card" onclick="abrirExtintores()"><div class="module-icon" style="background:#FEE2E2">🧯</div><div><div class="module-title">Controlo de extintores</div><div class="module-desc">Consultar ocorrências e aceder ao reporte de inconformidades.</div></div><div class="chev">›</div></button><button class="module-card" onclick="irPara('screen-cadeado-motivo')"><div class="module-icon" style="background:#EFF6FF">🔐</div><div><div class="module-title">PIN quadro elétrico</div><div class="module-desc">Consultar o código do cadeado da caixa do automático.</div></div><div class="chev">›</div></button><button class="module-card disabled" onclick="emDesenvolvimento('PIN porta piso 0')"><div class="module-icon" style="background:#F3F4F6">🚪</div><div><div class="module-title">PIN porta piso 0</div><div class="module-desc">Consulta do código da porta do piso 0.</div><span class="badge">A desenvolver</span></div><div class="chev">›</div></button><button class="module-card disabled" onclick="emDesenvolvimento('Registar problema')"><div class="module-icon" style="background:#FFFBEB">🛠️</div><div><div class="module-title">Registar problema</div><div class="module-desc">Portão, porta pedonal, elevador, limpeza ou outro tema.</div><span class="badge">A desenvolver</span></div><div class="chev">›</div></button></div></section>
+  <section class="screen" id="screen-home"><div class="home-head"><div class="home-row"><div><div class="home-title">Olá 👋</div><div class="home-sub">Escolha o que pretende fazer no condomínio.</div></div><button class="logout" onclick="terminarSessao()">Sair</button></div></div><div class="profile-card"><div class="avatar">🏠</div><div><div class="profile-main" id="profile-name">Utilizador autorizado</div><div class="profile-sub" id="profile-meta">—</div></div></div><div class="modules"><div class="section-title">Módulos disponíveis</div><button class="module-card" onclick="location.href='../occurrences.html'"><div class="module-icon" style="background:#FEE2E2">🧯</div><div><div class="module-title">Ocorrências</div><div class="module-desc">Selecionar um piso, consultar problemas e reportar extintores ou outras situações.</div></div><div class="chev">›</div></button><button class="module-card" onclick="irPara('screen-cadeado-motivo')"><div class="module-icon" style="background:#EFF6FF">🔐</div><div><div class="module-title">PIN quadro elétrico</div><div class="module-desc">Consultar o código do cadeado da caixa do automático.</div></div><div class="chev">›</div></button><button class="module-card disabled" onclick="emDesenvolvimento('PIN porta piso 0')"><div class="module-icon" style="background:#F3F4F6">🚪</div><div><div class="module-title">PIN porta piso 0</div><div class="module-desc">Consulta do código da porta do piso 0.</div><span class="badge">A desenvolver</span></div><div class="chev">›</div></button></div></section>
 
   <section class="screen" id="screen-cadeado-motivo"><div class="module-head"><div class="module-head-row"><div><div class="module-head-title">PIN quadro elétrico</div><div class="module-head-sub">Código do aloquete/cadeado do quadro elétrico do piso -2, na entrada da garagem.</div></div></div></div><div class="module-intro-card"><div class="electric-hero-icon">🔐</div><div><div class="module-intro-title">Consultar código de acesso</div><div class="module-intro-text">Para efeitos de estatística, selecione o motivo antes de consultar o código.</div></div></div><div class="module-content"><div class="section-title">Motivo do acesso</div><div class="motivos module-list"><div class="motivo" data-motivo="Emergência" onclick="selecionarMotivo(this)"><div class="micon" style="background:#FEE2E2">🚨</div><span class="mlabel">Emergência</span><div class="radio"></div></div><div class="motivo" data-motivo="Luz ligada indevidamente" onclick="selecionarMotivo(this)"><div class="micon" style="background:#FFFBEB">💡</div><span class="mlabel">Luz ligada indevidamente</span><div class="radio"></div></div><div class="motivo" data-motivo="Reset elevadores" onclick="selecionarMotivo(this)"><div class="micon" style="background:#EFF6FF">🛗</div><span class="mlabel">Reset elevadores</span><div class="radio"></div></div><div class="motivo" data-motivo="Manutenção" onclick="selecionarMotivo(this)"><div class="micon" style="background:#F0FDF4">🔧</div><span class="mlabel">Manutenção</span><div class="radio"></div></div><div class="motivo" data-motivo="Outro" onclick="selecionarMotivo(this)"><div class="micon" style="background:#F3F4F6">💬</div><span class="mlabel">Outro</span><div class="radio"></div></div><div id="outro-wrapper" style="display:none"><textarea class="input" id="motivo-outro" rows="3" placeholder="Descreva o motivo..."></textarea></div><div id="motivo-msg"></div><button class="btn btn-navy" id="btn-code" onclick="pedirCodigo()">Consultar código</button></div></div></section>
 
@@ -47,8 +47,8 @@
   <section class="screen" id="screen-pendente"><div class="state"><div class="state-icon" style="background:var(--blue-lt)">⏳</div><div class="state-title">Pedido pendente</div><div class="state-text">O seu acesso ainda está a aguardar aprovação.</div></div></section>
   <section class="screen" id="screen-bloqueado"><div class="state"><div class="state-icon" style="background:#FEF3C7">🔒</div><div class="state-title">Acesso bloqueado</div><div class="state-text">Contacte a administração do condomínio.</div></div></section>
 </div>
-<script src="app.js?v=3.6.0" defer></script>
-<script src="extintores-direct.js?v=3.6.0" defer></script>
-<script src="../pwa-install.js?v=3.6.0" defer></script>
+<script src="app.js?v=3.7.0" defer></script>
+<script src="extintores-direct.js?v=3.7.0" defer></script>
+<script src="../pwa-install.js?v=3.7.0" defer></script>
 </body>
 </html>
