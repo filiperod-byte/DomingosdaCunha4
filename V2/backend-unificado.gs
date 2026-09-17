@@ -756,15 +756,23 @@ function createSecureApplication_(app, ports) {
       if (method === 'POST' && p._method === 'GET') method = 'GET';
       if (method === 'GET' && publicGet.has(action)) return app.dispatch(method, action, p);
       if (method === 'POST' && ['garage.loginAdmin', 'garage.loginPin'].includes(action)) {
+        const timings = {};
+        let checkpoint = now();
+        const mark = key => { const t = now(); timings[key] = Math.max(0, t - checkpoint); checkpoint = t; };
         const admin = action === 'garage.loginAdmin';
         if (!throttle(admin ? 'admin-login' : 'resident-login', admin ? 10 : 30, 15 * 60 * 1000)) return deny('Demasiadas tentativas. Aguarde 15 minutos.', 'RATE_LIMITED');
+        mark('rateLimitMs');
         const pin = String(p.pin || '');
         if (!/^\d{6,12}$/.test(pin) || (admin && ['123456', '000000'].includes(pin))) return deny('Credenciais inválidas.', 'INVALID_CREDENTIALS');
         const resident = admin ? null : ports.residents.list().find(r => String(r.pin) === pin);
         if (admin ? !ports.settings.get('ADMIN_PIN') || !ports.settings.get('ADMIN_EMAIL') : !active(resident)) return deny('Credenciais inválidas ou acesso indisponível.', 'INVALID_CREDENTIALS');
+        mark('validationMs');
         const result = app.dispatch(method, action, p);
+        mark('accessUpdateMs');
         if (!(result.ok || result.success)) return deny('Credenciais inválidas.', 'INVALID_CREDENTIALS');
-        return Object.assign({}, result, issue(admin ? 'admin' : 'resident', resident));
+        const session = issue(admin ? 'admin' : 'resident', resident);
+        mark('sessionMs');
+        return Object.assign({}, result, session, { loginTimingsMs: timings });
       }
       if (method === 'POST' && ['garage.register', 'garage.resendPin', 'garage.recoverCode'].includes(action)) {
         if (!throttle('public-mail', 10, 60 * 60 * 1000)) return deny('Limite de pedidos atingido. Tente mais tarde.', 'RATE_LIMITED');
@@ -817,6 +825,11 @@ function createAppsScriptPorts_(CONFIG, REQUIRED_HEADERS, domain) {
   const { safeText_, toInt_, normalizePoint_ } = domain;
   let spreadsheet;
   let settingsCache;
+  let residentsCache;
+  function residentRows() {
+    if (!residentsCache) residentsCache = getSheetObjects_('CONDOMINOS');
+    return residentsCache;
+  }
 function setupIfNeeded_() {
   const ss = getSpreadsheet_();
   ensureSheetStructure_(ss, CONFIG.SHEETS.REGISTOS, REQUIRED_HEADERS.REGISTOS);
@@ -978,14 +991,14 @@ function setupApp() { const c = getSheet('CONFIG'); getSheet('CONDOMINOS'); getS
     events: { append: record => appendObjectRow_(CONFIG.SHEETS.REGISTOS, record) },
     closures: { append: record => appendObjectRow_(CONFIG.SHEETS.FECHOS, record) },
     residents: {
-      list: () => getSheetObjects_('CONDOMINOS').map(row => decode(row, residentFields)),
+      list: () => residentRows().map(row => decode(row, residentFields)),
       get: row => {
-        const record = getSheetObjects_('CONDOMINOS').find(record => record._rowIndex === row);
+        const record = residentRows().find(record => record._rowIndex === row);
         if (!record) throw new Error('Morador não encontrado.');
         return decode(record, residentFields);
       },
-      add: record => appendObjectRow_('CONDOMINOS', encode(record, residentFields)),
-      update: (row, patch) => updateObjectRow_('CONDOMINOS', row, encode(patch, residentFields))
+      add: record => { try { return appendObjectRow_('CONDOMINOS', encode(record, residentFields)); } finally { residentsCache = undefined; } },
+      update: (row, patch) => { try { return updateObjectRow_('CONDOMINOS', row, encode(patch, residentFields)); } finally { residentsCache = undefined; } }
     },
     consultations: {
       list: () => getSheetObjects_('CONSULTAS').map(row => decode(row, consultationFields)),
@@ -1026,8 +1039,8 @@ function routeRequest_(method, event) {
     : String(rawAction || '').trim();
   const startedAt=Date.now();
   const result = createAppsScriptApplication_().dispatch(method, action, payload);
-  if(action === 'status' && payload.details === 'public'){
-    result.serviceVersion='3.6.0-rc1';
+  if((action === 'status' && payload.details === 'public') || result.token && ['garage.loginPin','garage.loginAdmin','garageLoginPin','garageLoginAdmin'].includes(action)){
+    result.serviceVersion='3.6.1-rc1';
     result.serverDurationMs=Math.max(0,Date.now()-startedAt);
   }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);

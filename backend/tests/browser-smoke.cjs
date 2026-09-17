@@ -5,7 +5,7 @@ const fs=require('fs'),path=require('path'),assert=require('assert/strict');
  const root=path.resolve(__dirname,'../..'),base='http://localhost:8899/DomingosdaCunha4/';
  const context=await browser.newContext({viewport:{width:390,height:844},serviceWorkers:'block'});
  const page=await context.newPage();const errors=[];page.on('pageerror',e=>errors.push(e.message));
- let offline=false,reports=0;
+ let offline=false,reports=0,expire=false,lastReport;
  await context.route('**/*',async route=>{
   const req=route.request(),u=new URL(req.url());
   if(u.hostname==='script.google.com'){
@@ -14,7 +14,7 @@ const fs=require('fs'),path=require('path'),assert=require('assert/strict');
    if(p.action==='status')result={success:true,reported:[{floor:-2,point:'G4',reason:'Outro',description:'Manómetro sem pressão',reportedAt:'2026-09-15T10:00:00Z'}]};
    else if(p.action==='garage.publicConfig')result={nomeCondominio:'Teste',structure:[]};
    else if(p.action==='garage.loginPin')result={success:true,token:'synthetic',role:'resident',expiresAt:Date.now()+3600000,nome:'Teste'};
-   else if(p.action==='report'){reports++;result={success:true}}
+   else if(p.action==='report'){lastReport=p;if(expire){expire=false;result={success:false,code:'AUTH_REQUIRED',message:'Sessão terminada'}}else{reports++;result={success:true}}}
    else result={success:true};
    return route.fulfill({contentType:'application/json',body:JSON.stringify(result)});
   }
@@ -40,6 +40,20 @@ const fs=require('fs'),path=require('path'),assert=require('assert/strict');
  assert.equal(reports,0);assert.equal(await page.locator('#notes').inputValue(),'Descrição sintética');
  await page.locator('#pin').fill('123456');await page.locator('#loginSubmit').click();
  await page.waitForFunction(()=>document.getElementById('notes').value==='');assert.equal(reports,1);
+ // Expiração no servidor após preparar texto e fotografia.
+ await page.goto(base+'qrcode-report.html?floor=-2&point=G4');
+ await page.locator('#reason').selectOption('Outro');await page.locator('#notes').fill('Preservar fotografia');
+ await page.locator('#fileInput').setInputFiles({name:'teste.png',mimeType:'image/png',buffer:Buffer.from('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+jRZkAAAAASUVORK5CYII=','base64')});
+ expire=true;await page.locator('#submitBtn').click();await page.locator('#authDialog[open]').waitFor();
+ assert.equal(await page.locator('#notes').inputValue(),'Preservar fotografia');assert.ok(lastReport.photoBase64);
+ await page.locator('#pin').fill('123456');await page.locator('#loginSubmit').click();
+ await page.waitForFunction(()=>document.getElementById('notes').value==='');assert.equal(reports,2);assert.ok(lastReport.photoBase64);
+ await page.goto(base+'qrcode-report.html?floor=-2&point=G4');
+ await page.locator('#reason').selectOption('Outro');await page.locator('#notes').fill('Rede indisponível');offline=true;
+ await page.locator('#submitBtn').click();await page.locator('.msg.err').waitFor();
+ assert.equal(await page.locator('#notes').inputValue(),'Rede indisponível');assert.equal(reports,2);
+ offline=false;await page.locator('#submitBtn').click();await page.waitForFunction(()=>document.getElementById('notes').value==='');assert.equal(reports,3);
+ await page.evaluate(()=>window.dc4Logout('resident'));assert.equal(await page.evaluate(()=>window.dc4HasSession('resident')),false);
  offline=true;await page.goto(base+'qrcode-report.html?floor=-2&point=G4');
  await page.getByText('Estado por confirmar',{exact:true}).waitFor();
  assert.deepEqual(errors,[]);
