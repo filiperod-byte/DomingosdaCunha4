@@ -25,8 +25,8 @@ function routeRequest_(method, event) {
     : String(rawAction || '').trim();
   const startedAt=Date.now();
   const result = createAppsScriptApplication_().dispatch(method, action, payload);
-  if((action === 'status' && payload.details === 'public') || result.token && ['garage.loginPin','garage.loginAdmin','garageLoginPin','garageLoginAdmin'].includes(action)){
-    result.serviceVersion='3.6.1-rc1';
+  if(action === 'general.status' || (action === 'status' && payload.details === 'public') || result.token && ['garage.loginPin','garage.loginAdmin','garageLoginPin','garageLoginAdmin'].includes(action)){
+    result.serviceVersion='3.7.0-rc1';
     result.serverDurationMs=Math.max(0,Date.now()-startedAt);
   }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
@@ -45,4 +45,11 @@ function setupApp() { return setupBackend_(); }
 function resetPinManualmente_() {
   createAppsScriptApplication_().clearLegacyPin();
   Logger.log('PIN removido.');
+}
+
+// Executar uma vez para acrescentar apenas a folha de ocorrências gerais.
+function setupGeneralOccurrences() {
+  const domain=createCondominiumDomain_(GARAGE_RESIDENTIAL_STRUCTURE,OPEN_STATUSES,PENDING_STATUSES);
+  createAppsScriptPorts_(CONFIG,REQUIRED_HEADERS,domain).initializeGeneral();
+  Logger.log('Folha OCORRENCIAS_GERAIS preparada. Dados existentes preservados.');
 }

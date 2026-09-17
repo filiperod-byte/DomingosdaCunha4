@@ -12,6 +12,7 @@ function createCondominiumApplication_(ports, config, domain) {
     return domain.isRealEmail_(active) ? active : '';
   }
   const occurrences = createOccurrenceService_(ports, config, domain, notifications, adminEmail);
+  const general = createGeneralOccurrenceService_(ports);
   const pins = createLegacyPinService_(ports, config, domain, notifications, adminEmail);
   const residents = createResidentService_(ports, domain, notifications);
   const accesses = createAccessService_(ports);
@@ -21,6 +22,11 @@ function createCondominiumApplication_(ports, config, domain) {
   function route(method, names, handler) {
     names.split(' ').forEach(name => routes[method][name] = handler);
   }
+  route('GET','general.status',general.list);
+  route('GET','general.admin',general.adminList);
+  route('POST','general.report',general.report);
+  route('POST','general.update',general.update);
+  route('POST','general.confirm',general.confirm);
   route('GET', 'status', occurrences.status);
   route('GET', 'pinStatus', pins.status);
   route('GET', 'openOccurrences', occurrences.open);

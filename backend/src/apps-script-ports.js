@@ -76,7 +76,7 @@ function saveIncomingPhoto_(opts) {
   if (!mimeType) mimeType = 'image/jpeg';
   if (!fileName) fileName = buildDefaultPhotoName_(opts.prefix || 'file', opts.occurrenceId || Utilities.getUuid(), mimeType);
   const file = getOrCreateSubfolder_(safeText_(opts.folderName)).createFile(Utilities.newBlob(Utilities.base64Decode(finalBase64), mimeType, fileName));
-  try { file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (err) { Logger.log(err); }
+  try { if (!opts.private) file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW); } catch (err) { Logger.log(err); }
   return { fileId:file.getId(), fileUrl:file.getUrl(), fileName:file.getName() };
 }
 
@@ -140,6 +140,8 @@ function setupApp() { const c = getSheet('CONFIG'); getSheet('CONDOMINOS'); getS
     return (prefix || 'ID') + '_' + Date.now() + '_' + Math.floor(Math.random() * 1000);
   }
   return {
+    general: {list: () => getSheetObjects_('OCORRENCIAS_GERAIS'), append: row => appendObjectRow_('OCORRENCIAS_GERAIS',row)},
+    initializeGeneral: () => withScriptLock_(() => ensureSheetStructure_(getSpreadsheet_(),'OCORRENCIAS_GERAIS',['EVENT_ID','REQUEST_ID','ACTOR_ID','ACTION','PAYLOAD_HASH','AT','DATA_JSON'])),
     initialize: function () {
       return withScriptLock_(function () {
         setupIfNeeded_();
