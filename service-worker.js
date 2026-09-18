@@ -1,6 +1,6 @@
-const DC4_CACHE = 'dc4-pwa-v3.7.1-20260917';
+const DC4_CACHE = 'dc4-pwa-v3.7.1-facade2-20260918';
 const APP_SHELL = [
-  '/DomingosdaCunha4/occurrences-facade.css?v=3.7.1',
+  '/DomingosdaCunha4/occurrences-facade.css?v=3.7.1-facade2',
   '/DomingosdaCunha4/occurrences.html',
   '/DomingosdaCunha4/general-report.html',
   '/DomingosdaCunha4/occurrences.css?v=3.7.1',
