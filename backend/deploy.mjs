@@ -25,7 +25,7 @@ if (!auth.ok) throw Error('Falha ao renovar a autorização Google: HTTP ' + aut
 const {access_token: token} = await auth.json();
 async function api(path, method='GET', body) {
   const url = new URL('https://script.googleapis.com/v1/projects/' + project + path);
-  if (method === 'GET') url.searchParams.set('_ts', String(Date.now()));
+  if (method === 'GET') url.searchParams.set('fields', '*');
   const response = await fetch(url, {
     cache:'no-store',
     method, headers:{Authorization:'Bearer ' + token, 'Content-Type':'application/json'},
@@ -57,7 +57,13 @@ if (!equal(canonical(live.files),desired)) {
   const {versionNumber} = await api('/versions','POST',{description:'GitHub ' + commit.slice(0,12)});
   const saved = await api('/content?versionNumber=' + versionNumber);
   assert.ok(equal(canonical(saved.files),desired),'A versão criada diverge da versão pretendida.');
-  assert.equal((await api(deploymentPath)).deploymentConfig.versionNumber,config.versionNumber,'A implementação foi alterada durante a publicação.');
+  const current = (await api(deploymentPath)).deploymentConfig.versionNumber;
+  if (current !== config.versionNumber) {
+    const active = await api('/content?versionNumber=' + current);
+    assert.ok(equal(canonical(active.files),desired),'A implementação mudou para código diferente durante a publicação.');
+    console.log('A versão pretendida já está ativa.');
+    process.exit(0);
+  }
   await api(deploymentPath,'PUT',{deploymentConfig:{versionNumber, manifestFileName:config.manifestFileName,description:config.description}});
   for (let attempt = 0; attempt < 12; attempt++) {
     if ((await api(deploymentPath)).deploymentConfig.versionNumber === versionNumber) break;
