@@ -7,9 +7,9 @@ function createAccessService_(ports) {
     if (!c || c.status !== 'APROVADO') return { ok: false, msg: 'Acesso inválido.' };
     const code = setting('CODIGO_CADEADO');
     ports.consultations.add({
-      id: ports.ids.entity('CONS'), at: ports.clock.now(), pin: pin,
+      id: ports.ids.entity('CONS'), at: ports.clock.now(),
       name: c.name, floor: c.floor, fraction: c.fraction, email: c.email,
-      reason: reason, reasonOther: reasonOther || '', code: code, result: 'SUCESSO', userAgent: userAgent || ''
+      reason: reason, reasonOther: reasonOther || '', result: 'SUCESSO', userAgent: userAgent || ''
     });
     return { ok: true, success: true, codigo: code, aviso: setting('TEXTO_AVISO'), tempo: parseInt(setting('TEMPO_VISIVEL_SEGUNDOS')) || 15 };
   }
@@ -31,9 +31,9 @@ function createAccessService_(ports) {
   function history(limit) {
     return ports.consultations.list().slice().reverse().slice(0, limit || 50).map(record => ({
       dataHora: record.at ? ports.clock.format(record.at, 'dd/MM/yyyy HH:mm') : '',
-      pin: record.pin, nome: record.name, piso: record.floor, fracao: record.fraction,
+      nome: record.name, piso: record.floor, fracao: record.fraction,
       email: record.email, motivo: record.reason, motivoOutro: record.reasonOther,
-      codigo: record.code, resultado: record.result
+      resultado: record.result
     }));
   }
 

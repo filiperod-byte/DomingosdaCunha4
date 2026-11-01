@@ -52,7 +52,7 @@ const REQUIRED_HEADERS = {
     'TIMESTAMP','EVENTO','OCCURRENCE_ID','FLOOR','FLOOR_LABEL','POINT','LOCATION','REPORTED_BY','REASON','NOTES','PHOTO_FILE_ID','PHOTO_FILE_URL','PHOTO_FILE_NAME','STATUS_BEFORE','STATUS_AFTER','SOURCE','CLIENT_TS','EXTRA_JSON'
   ],
   ESTADO: [
-    'LAST_UPDATED','STATUS','OCCURRENCE_ID','FLOOR','FLOOR_LABEL','POINT','LOCATION','REPORTED_AT','REPORTED_BY','REASON','NOTES','PHOTO_FILE_ID','PHOTO_FILE_URL','PHOTO_FILE_NAME','CLOSED_AT','CLOSE_NOTES','CLOSE_PHOTO_FILE_ID','CLOSE_PHOTO_FILE_URL','CLOSE_PHOTO_FILE_NAME','LAST_EVENT'
+    'LAST_UPDATED','STATUS','OCCURRENCE_ID','FLOOR','FLOOR_LABEL','POINT','LOCATION','REPORTED_AT','REPORTED_BY','REASON','NOTES','PHOTO_FILE_ID','PHOTO_FILE_URL','PHOTO_FILE_NAME','CLOSED_AT','CLOSE_NOTES','CLOSE_PHOTO_FILE_ID','CLOSE_PHOTO_FILE_URL','CLOSE_PHOTO_FILE_NAME','LAST_EVENT','PUBLIC_NOTES'
   ],
   FECHOS: [
     'TIMESTAMP','OCCURRENCE_ID','FLOOR','FLOOR_LABEL','POINT','LOCATION','REPORTED_AT','REPORTED_BY','REASON','OPEN_NOTES','CLOSE_NOTES','CLOSE_PHOTO_FILE_ID','CLOSE_PHOTO_FILE_URL','CLOSE_PHOTO_FILE_NAME','SOURCE','CLIENT_TS'
@@ -148,6 +148,10 @@ function createOccurrenceService_(ports, CONFIG, domain, notifications, getAdmin
   const generateOccurrenceId_ = () => ports.ids.occurrence();
   const saveIncomingPhoto_ = options => ports.files.save(options);
   const { sendReportEmail_, sendCloseEmail_ } = notifications;
+function approvedDescription_(row) {
+  // Before 3.7.2 only an immediately preceding admin validation proves provenance.
+  return safeText_(row.LAST_EVENT === 'VALIDACAO_ADMIN' ? row.NOTES : row.PUBLIC_NOTES);
+}
 function handleGetStatus_(payload) {
   const openRows = getOpenStateRows_();
   const withDetails = payload && payload.details === 'public';
@@ -161,7 +165,7 @@ function handleGetStatus_(payload) {
       if (withDetails) {
         const reason = String(row.REASON || '').trim();
         item.reason = categories.includes(reason) ? reason : 'Outra anomalia';
-        item.description = String(row.NOTES || '').trim();
+        item.description = approvedDescription_(row);
         const date = new Date(row.REPORTED_AT);
         item.reportedAt = row.REPORTED_AT && !isNaN(date.getTime()) ? date.toISOString() : '';
       }
@@ -276,6 +280,7 @@ function handlePostReport_(payload) {
       CLOSE_PHOTO_FILE_ID: '',
       CLOSE_PHOTO_FILE_URL: '',
       CLOSE_PHOTO_FILE_NAME: '',
+      PUBLIC_NOTES: alreadyOpen ? approvedDescription_(existingState) : '',
       LAST_EVENT: eventName
     });
 
@@ -289,8 +294,11 @@ function handlePostApproveOccurrence_(payload) {
   return withScriptLock_(function () {
     const row = findPendingStateRow_(safeText_(payload.occurrenceId), toInt_(payload.floor), normalizePoint_(payload.point));
     if (!row) throw new Error('Reporte pendente não encontrado.');
+    if (payload.publicNotes !== undefined && safeText_(payload.publicNotes) !== safeText_(row.NOTES)) {
+      throw new Error('As notas mudaram. Atualize os pedidos e reveja o texto antes de validar.');
+    }
     const nowIso = isoNow_();
-    ports.occurrences.update( row._rowIndex, { LAST_UPDATED: nowIso, STATUS: 'ABERTA', LAST_EVENT: 'VALIDACAO_ADMIN' });
+    ports.occurrences.update( row._rowIndex, { LAST_UPDATED: nowIso, STATUS: 'ABERTA', LAST_EVENT: 'VALIDACAO_ADMIN_372', PUBLIC_NOTES: safeText_(payload.publicNotes) });
     ports.events.append( {
       TIMESTAMP: nowIso,
       EVENTO: 'VALIDACAO_ADMIN',
@@ -397,6 +405,7 @@ function getPendingStateRows_() { return ports.occurrences.list().filter(r => is
     reject: handlePostRejectOccurrence_, close: handlePostCloseOccurrence_
   };
 }
+
 
 
 // --- legacy-pin.js ---
@@ -543,7 +552,7 @@ function createResidentService_(ports, domain, notifications) {
   function approved() {
     return repo.list().filter(c => c.status === 'APROVADO').map(c => ({
       row: c.legacyRow, id: c.id, nome: c.name, piso: c.floor, fracao: c.fraction,
-      email: c.email, pin: c.pin, ultimoAcesso: c.lastAccess ? dateText(c.lastAccess) : 'Nunca'
+      email: c.email, ultimoAcesso: c.lastAccess ? dateText(c.lastAccess) : 'Nunca'
     }));
   }
 
@@ -597,9 +606,9 @@ function createAccessService_(ports) {
     if (!c || c.status !== 'APROVADO') return { ok: false, msg: 'Acesso inválido.' };
     const code = setting('CODIGO_CADEADO');
     ports.consultations.add({
-      id: ports.ids.entity('CONS'), at: ports.clock.now(), pin: pin,
+      id: ports.ids.entity('CONS'), at: ports.clock.now(),
       name: c.name, floor: c.floor, fraction: c.fraction, email: c.email,
-      reason: reason, reasonOther: reasonOther || '', code: code, result: 'SUCESSO', userAgent: userAgent || ''
+      reason: reason, reasonOther: reasonOther || '', result: 'SUCESSO', userAgent: userAgent || ''
     });
     return { ok: true, success: true, codigo: code, aviso: setting('TEXTO_AVISO'), tempo: parseInt(setting('TEMPO_VISIVEL_SEGUNDOS')) || 15 };
   }
@@ -621,9 +630,9 @@ function createAccessService_(ports) {
   function history(limit) {
     return ports.consultations.list().slice().reverse().slice(0, limit || 50).map(record => ({
       dataHora: record.at ? ports.clock.format(record.at, 'dd/MM/yyyy HH:mm') : '',
-      pin: record.pin, nome: record.name, piso: record.floor, fracao: record.fraction,
+      nome: record.name, piso: record.floor, fracao: record.fraction,
       email: record.email, motivo: record.reason, motivoOutro: record.reasonOther,
-      codigo: record.code, resultado: record.result
+      resultado: record.result
     }));
   }
 
@@ -972,9 +981,14 @@ function getSheetObjects_(sheetName) {
   });
 }
 
-function appendObjectRow_(sheetName, obj) { const sh = getSheet_(sheetName); const headers = getHeaders_(sh); sh.appendRow(headers.map(h => Object.prototype.hasOwnProperty.call(obj, h) ? obj[h] : '')); }
+// Sheets interprets strings starting with "=" as formulas even in appendRow.
+function literalCell_(value) {
+  return typeof value === 'string' && /^\s*=/.test(value) ? "'" + value : value;
+}
 
-function updateObjectRow_(sheetName, rowIndex, patch) { const sh = getSheet_(sheetName); const headers = getHeaders_(sh); const row = sh.getRange(rowIndex,1,1,headers.length).getValues()[0]; const merged = {}; headers.forEach((h,i) => merged[h] = row[i]); Object.keys(patch).forEach(k => merged[k] = patch[k]); sh.getRange(rowIndex,1,1,headers.length).setValues([headers.map(h => Object.prototype.hasOwnProperty.call(merged,h) ? merged[h] : '')]); }
+function appendObjectRow_(sheetName, obj) { const sh = getSheet_(sheetName); const headers = getHeaders_(sh); sh.appendRow(headers.map(h => Object.prototype.hasOwnProperty.call(obj, h) ? literalCell_(obj[h]) : '')); }
+
+function updateObjectRow_(sheetName, rowIndex, patch) { const sh = getSheet_(sheetName); const headers = getHeaders_(sh); const row = sh.getRange(rowIndex,1,1,headers.length).getValues()[0]; const merged = {}; headers.forEach((h,i) => merged[h] = row[i]); Object.keys(patch).forEach(k => merged[k] = patch[k]); sh.getRange(rowIndex,1,1,headers.length).setValues([headers.map(h => Object.prototype.hasOwnProperty.call(merged,h) ? literalCell_(merged[h]) : '')]); }
 
 function upsertStateRow_(floor, point, data) { const existing = findStateRowByPoint_(floor, point); if (existing) updateObjectRow_(CONFIG.SHEETS.ESTADO, existing._rowIndex, data); else appendObjectRow_(CONFIG.SHEETS.ESTADO, data); }
 
@@ -1065,6 +1079,15 @@ function setupApp() { const c = getSheet('CONFIG'); getSheet('CONDOMINOS'); getS
   }
   return {
     general: {list: () => getSheetObjects_('OCORRENCIAS_GERAIS'), append: row => appendObjectRow_('OCORRENCIAS_GERAIS',row)},
+    migrateSecurity372: () => withScriptLock_(() => {
+      const history = getSheet_('CONSULTAS');
+      const headers = getHeaders_(history);
+      const columns = ['PINUsado', 'CodigoMostrado'].map(name => headers.indexOf(name) + 1);
+      if (columns.includes(0)) throw new Error('Verifique os cabeçalhos de CONSULTAS antes da migração.');
+      ensureSheetStructure_(getSpreadsheet_(), CONFIG.SHEETS.ESTADO, REQUIRED_HEADERS.ESTADO);
+      const rows = history.getLastRow() - 1;
+      if (rows > 0) columns.forEach(column => history.getRange(2, column, rows, 1).clearContent());
+    }),
     initializeGeneral: () => withScriptLock_(() => ensureSheetStructure_(getSpreadsheet_(),'OCORRENCIAS_GERAIS',['EVENT_ID','REQUEST_ID','ACTOR_ID','ACTION','PAYLOAD_HASH','AT','DATA_JSON'])),
     initialize: function () {
       return withScriptLock_(function () {
@@ -1144,7 +1167,7 @@ function routeRequest_(method, event) {
   const startedAt=Date.now();
   const result = createAppsScriptApplication_().dispatch(method, action, payload);
   if(action === 'general.status' || (action === 'status' && payload.details === 'public') || result.token && ['garage.loginPin','garage.loginAdmin','garageLoginPin','garageLoginAdmin'].includes(action)){
-    result.serviceVersion='3.7.0-rc1';
+    result.serviceVersion='3.7.2';
     result.serverDurationMs=Math.max(0,Date.now()-startedAt);
   }
   return ContentService.createTextOutput(JSON.stringify(result)).setMimeType(ContentService.MimeType.JSON);
@@ -1163,6 +1186,12 @@ function setupApp() { return setupBackend_(); }
 function resetPinManualmente_() {
   createAppsScriptApplication_().clearLegacyPin();
   Logger.log('PIN removido.');
+}
+
+// Executar no editor após publicar o serviço 3.7.2. Pode ser repetido.
+function migrateSecurity372() {
+  const domain = createCondominiumDomain_(GARAGE_RESIDENTIAL_STRUCTURE, OPEN_STATUSES, PENDING_STATUSES);
+  createAppsScriptPorts_(CONFIG, REQUIRED_HEADERS, domain).migrateSecurity372();
 }
 
 // Executar uma vez para acrescentar apenas a folha de ocorrências gerais.

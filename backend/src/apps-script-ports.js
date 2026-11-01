@@ -48,9 +48,14 @@ function getSheetObjects_(sheetName) {
   });
 }
 
-function appendObjectRow_(sheetName, obj) { const sh = getSheet_(sheetName); const headers = getHeaders_(sh); sh.appendRow(headers.map(h => Object.prototype.hasOwnProperty.call(obj, h) ? obj[h] : '')); }
+// Sheets interprets strings starting with "=" as formulas even in appendRow.
+function literalCell_(value) {
+  return typeof value === 'string' && /^\s*=/.test(value) ? "'" + value : value;
+}
 
-function updateObjectRow_(sheetName, rowIndex, patch) { const sh = getSheet_(sheetName); const headers = getHeaders_(sh); const row = sh.getRange(rowIndex,1,1,headers.length).getValues()[0]; const merged = {}; headers.forEach((h,i) => merged[h] = row[i]); Object.keys(patch).forEach(k => merged[k] = patch[k]); sh.getRange(rowIndex,1,1,headers.length).setValues([headers.map(h => Object.prototype.hasOwnProperty.call(merged,h) ? merged[h] : '')]); }
+function appendObjectRow_(sheetName, obj) { const sh = getSheet_(sheetName); const headers = getHeaders_(sh); sh.appendRow(headers.map(h => Object.prototype.hasOwnProperty.call(obj, h) ? literalCell_(obj[h]) : '')); }
+
+function updateObjectRow_(sheetName, rowIndex, patch) { const sh = getSheet_(sheetName); const headers = getHeaders_(sh); const row = sh.getRange(rowIndex,1,1,headers.length).getValues()[0]; const merged = {}; headers.forEach((h,i) => merged[h] = row[i]); Object.keys(patch).forEach(k => merged[k] = patch[k]); sh.getRange(rowIndex,1,1,headers.length).setValues([headers.map(h => Object.prototype.hasOwnProperty.call(merged,h) ? literalCell_(merged[h]) : '')]); }
 
 function upsertStateRow_(floor, point, data) { const existing = findStateRowByPoint_(floor, point); if (existing) updateObjectRow_(CONFIG.SHEETS.ESTADO, existing._rowIndex, data); else appendObjectRow_(CONFIG.SHEETS.ESTADO, data); }
 
@@ -141,6 +146,15 @@ function setupApp() { const c = getSheet('CONFIG'); getSheet('CONDOMINOS'); getS
   }
   return {
     general: {list: () => getSheetObjects_('OCORRENCIAS_GERAIS'), append: row => appendObjectRow_('OCORRENCIAS_GERAIS',row)},
+    migrateSecurity372: () => withScriptLock_(() => {
+      const history = getSheet_('CONSULTAS');
+      const headers = getHeaders_(history);
+      const columns = ['PINUsado', 'CodigoMostrado'].map(name => headers.indexOf(name) + 1);
+      if (columns.includes(0)) throw new Error('Verifique os cabeçalhos de CONSULTAS antes da migração.');
+      ensureSheetStructure_(getSpreadsheet_(), CONFIG.SHEETS.ESTADO, REQUIRED_HEADERS.ESTADO);
+      const rows = history.getLastRow() - 1;
+      if (rows > 0) columns.forEach(column => history.getRange(2, column, rows, 1).clearContent());
+    }),
     initializeGeneral: () => withScriptLock_(() => ensureSheetStructure_(getSpreadsheet_(),'OCORRENCIAS_GERAIS',['EVENT_ID','REQUEST_ID','ACTOR_ID','ACTION','PAYLOAD_HASH','AT','DATA_JSON'])),
     initialize: function () {
       return withScriptLock_(function () {

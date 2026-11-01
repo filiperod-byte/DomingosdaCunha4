@@ -6,6 +6,10 @@ function createOccurrenceService_(ports, CONFIG, domain, notifications, getAdmin
   const generateOccurrenceId_ = () => ports.ids.occurrence();
   const saveIncomingPhoto_ = options => ports.files.save(options);
   const { sendReportEmail_, sendCloseEmail_ } = notifications;
+function approvedDescription_(row) {
+  // Before 3.7.2 only an immediately preceding admin validation proves provenance.
+  return safeText_(row.LAST_EVENT === 'VALIDACAO_ADMIN' ? row.NOTES : row.PUBLIC_NOTES);
+}
 function handleGetStatus_(payload) {
   const openRows = getOpenStateRows_();
   const withDetails = payload && payload.details === 'public';
@@ -19,7 +23,7 @@ function handleGetStatus_(payload) {
       if (withDetails) {
         const reason = String(row.REASON || '').trim();
         item.reason = categories.includes(reason) ? reason : 'Outra anomalia';
-        item.description = String(row.NOTES || '').trim();
+        item.description = approvedDescription_(row);
         const date = new Date(row.REPORTED_AT);
         item.reportedAt = row.REPORTED_AT && !isNaN(date.getTime()) ? date.toISOString() : '';
       }
@@ -134,6 +138,7 @@ function handlePostReport_(payload) {
       CLOSE_PHOTO_FILE_ID: '',
       CLOSE_PHOTO_FILE_URL: '',
       CLOSE_PHOTO_FILE_NAME: '',
+      PUBLIC_NOTES: alreadyOpen ? approvedDescription_(existingState) : '',
       LAST_EVENT: eventName
     });
 
@@ -147,8 +152,11 @@ function handlePostApproveOccurrence_(payload) {
   return withScriptLock_(function () {
     const row = findPendingStateRow_(safeText_(payload.occurrenceId), toInt_(payload.floor), normalizePoint_(payload.point));
     if (!row) throw new Error('Reporte pendente não encontrado.');
+    if (payload.publicNotes !== undefined && safeText_(payload.publicNotes) !== safeText_(row.NOTES)) {
+      throw new Error('As notas mudaram. Atualize os pedidos e reveja o texto antes de validar.');
+    }
     const nowIso = isoNow_();
-    ports.occurrences.update( row._rowIndex, { LAST_UPDATED: nowIso, STATUS: 'ABERTA', LAST_EVENT: 'VALIDACAO_ADMIN' });
+    ports.occurrences.update( row._rowIndex, { LAST_UPDATED: nowIso, STATUS: 'ABERTA', LAST_EVENT: 'VALIDACAO_ADMIN_372', PUBLIC_NOTES: safeText_(payload.publicNotes) });
     ports.events.append( {
       TIMESTAMP: nowIso,
       EVENTO: 'VALIDACAO_ADMIN',

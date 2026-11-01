@@ -54,3 +54,47 @@ test('limites de login, configuração restrita e recuperação sem enumeração
  assert.equal(b.post('garage.loginAdmin',{email:'admin@example.invalid',pin:'111111'}).code,'RATE_LIMITED');
  assert.equal(b.post('garage.resendPin',{email:'unknown@example.invalid'}).success,true);
 });
+
+test('registo grava fórmulas como texto e a atualização mantém a proteção',()=>{
+ const b=setup(),token=admin(b);
+ b.post('garage.register',{nome:'=1+1',email:'teste@example.invalid',piso:'9',fracao:'B'});
+ const rows=b.sheets.get('CONDOMINOS').rows;
+ const col=rows[0].indexOf('Nome');
+ assert.equal(rows[1][col],"'=1+1");
+ // getValues numa folha real devolve o texto sem o prefixo literal.
+ rows[1][col]='=1+1';
+ b.post('garage.approve',{row:2,token});
+ assert.equal(rows[1][col],"'=1+1");
+});
+
+test('histórico omite credenciais novas e antigas, e a limpeza pode repetir-se',()=>{
+ const b=setup(),at=admin(b),token=resident(b,at);
+ const code=b.post('garage.getCode',{token,motivo:'Disjuntor'}).codigo;
+ const rows=b.sheets.get('CONSULTAS').rows;
+ const pinCol=rows[0].indexOf('PINUsado'),codeCol=rows[0].indexOf('CodigoMostrado');
+ assert.equal(rows[1][pinCol],'');assert.equal(rows[1][codeCol],'');
+ const clean=rows[1].slice();
+ rows[1][pinCol]='478000';rows[1][codeCol]=code;
+ const history=b.post('garage.history',{token:at,_method:'GET'});
+ assert.equal(history[0].motivo,'Disjuntor');
+ assert.equal('codigo' in history[0] || 'pin' in history[0],false);
+ assert.equal('pin' in b.post('garage.approved',{token:at,_method:'GET'})[0],false);
+ b.context.migrateSecurity372();b.context.migrateSecurity372();
+ assert.deepEqual(rows[1],clean);
+ assert.equal(b.post('garage.getCode',{token,motivo:'Teste'}).codigo,code);
+});
+
+test('uma nota nova não substitui o texto revisto pela administração',()=>{
+ const b=setup(),at=admin(b),token=resident(b,at);
+ const report=notes=>b.post('report',{token,floor:9,point:'E1',reason:'Outro',notes});
+ const id=report('Texto inicial').occurrenceId;
+ const approve=publicNotes=>b.post('approveOccurrence',{token:at,occurrenceId:id,publicNotes});
+ const details=()=>b.context.doGet({parameter:{action:'status',details:'public'}}).reported;
+ report('Texto revisto');
+ assert.equal(approve('Texto inicial').success,false);
+ assert.equal(details().length,0);
+ assert.equal(approve('Texto revisto').success,true);
+ report('Contacto privado');
+ assert.equal(details()[0].description,'Texto revisto');
+ assert.equal(b.post('openOccurrences',{token:at,_method:'GET'}).occurrences[0].notes,'Contacto privado');
+});
