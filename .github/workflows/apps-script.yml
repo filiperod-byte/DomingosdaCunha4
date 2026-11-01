@@ -1,0 +1,29 @@
+name: Publicar Apps Script
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'V2/backend-unificado.gs'
+      - 'backend/deploy.mjs'
+      - '.github/workflows/apps-script.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: apps-script-production
+  cancel-in-progress: false
+jobs:
+  publicar:
+    if: github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - run: node backend/build.cjs --check && node --test backend/tests/*.test.cjs
+      - name: Atualizar a implementação existente
+        run: node backend/deploy.mjs
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
