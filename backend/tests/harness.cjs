@@ -34,6 +34,9 @@ function harness(source, options = {}) {
           }));
           return this;
         },
+        clearContent() {
+          return this.setValues(Array.from({ length: height }, () => Array(width).fill('')));
+        },
         setValue(value) { return this.setValues([[value]]); },
         setFontWeight() { return this; }
       };

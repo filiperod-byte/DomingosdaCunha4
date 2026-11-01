@@ -4,7 +4,7 @@ const {harness,bundled}=require('./harness.cjs');
 function setup(){
  const b=harness(bundled());b.initialize();
  const sheet=[...b.sheets.values()].find(s=>s.rows[0].includes('LAST_EVENT'));
- function add(patch){const record={STATUS:'ABERTA',FLOOR:9,POINT:'E1',REASON:'Extintor em falta',REPORTED_AT:'2026-09-14T10:00:00.000Z',REPORTED_BY:'Pessoa privada',NOTES:'Manómetro sem pressão',PHOTO_FILE_URL:'https://example.invalid/private',...patch};sheet.appendRow(sheet.rows[0].map(k=>record[k]??''));}
+ function add(patch){const record={STATUS:'ABERTA',LAST_EVENT:'VALIDACAO_ADMIN',FLOOR:9,POINT:'E1',REASON:'Extintor em falta',REPORTED_AT:'2026-09-14T10:00:00.000Z',REPORTED_BY:'Pessoa privada',NOTES:'Manómetro sem pressão',PHOTO_FILE_URL:'https://example.invalid/private',...patch};sheet.appendRow(sheet.rows[0].map(k=>record[k]??''));}
  return {b,add,details:()=>b.context.doGet({parameter:{action:'status',details:'public'}})};
 }
 test('consulta pública fornece motivo e data, descrição, sem autor ou fotografias',()=>{
@@ -20,6 +20,10 @@ test('texto livre não é publicado como motivo e pendentes não aparecem',()=>{
 });
 test('diagnóstico público identifica serviço e tempo sem credenciais',()=>{
  const {details}=setup();const r=details();
- assert.equal(r.serviceVersion,'3.7.0-rc1');assert.ok(r.serverDurationMs>=0);
+ assert.equal(r.serviceVersion,'3.7.2');assert.ok(r.serverDurationMs>=0);
  assert.doesNotMatch(JSON.stringify(r),/ADMIN_PIN|SPREADSHEET_ID|token/);
+});
+test('linhas antigas sem prova de aprovação não expõem notas',()=>{
+ const {add,details}=setup();add({LAST_EVENT:'REPORT_ADICIONAL'});add({LAST_EVENT:''});
+ assert.deepEqual(details().reported.map(row=>row.description),['','']);
 });

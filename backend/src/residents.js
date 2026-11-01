@@ -92,7 +92,7 @@ function createResidentService_(ports, domain, notifications) {
   function approved() {
     return repo.list().filter(c => c.status === 'APROVADO').map(c => ({
       row: c.legacyRow, id: c.id, nome: c.name, piso: c.floor, fracao: c.fraction,
-      email: c.email, pin: c.pin, ultimoAcesso: c.lastAccess ? dateText(c.lastAccess) : 'Nunca'
+      email: c.email, ultimoAcesso: c.lastAccess ? dateText(c.lastAccess) : 'Nunca'
     }));
   }
 

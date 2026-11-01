@@ -402,7 +402,8 @@
             "CLOSE_PHOTO_FILE_ID",
             "CLOSE_PHOTO_FILE_URL",
             "CLOSE_PHOTO_FILE_NAME",
-            "LAST_EVENT"
+            "LAST_EVENT",
+            "PUBLIC_NOTES"
           ]
         ],
         "HISTORICO_FECHOS": [
@@ -505,7 +506,6 @@
           "piso": "9",
           "fracao": "B",
           "email": "morador@example.invalid",
-          "pin": "478000",
           "ultimoAcesso": "2026-09-11T10:00:00.000Z"
         }
       ],
@@ -526,14 +526,12 @@
       [
         {
           "dataHora": "2026-09-11T10:00:00.000Z",
-          "pin": "478000",
           "nome": "Morador de teste",
           "piso": "9",
           "fracao": "B",
           "email": "morador@example.invalid",
           "motivo": "Disjuntor",
           "motivoOutro": "Teste",
-          "codigo": "0000",
           "resultado": "SUCESSO"
         }
       ],
@@ -683,14 +681,14 @@
           [
             "CONS_1789120800000_420",
             "2026-09-11T10:00:00.000Z",
-            "478000",
+            "",
             "Morador de teste",
             "9",
             "B",
             "morador@example.invalid",
             "Disjuntor",
             "Teste",
-            "0000",
+            "",
             "SUCESSO",
             "Test"
           ]
@@ -716,7 +714,8 @@
             "CLOSE_PHOTO_FILE_ID",
             "CLOSE_PHOTO_FILE_URL",
             "CLOSE_PHOTO_FILE_NAME",
-            "LAST_EVENT"
+            "LAST_EVENT",
+            "PUBLIC_NOTES"
           ]
         ],
         "HISTORICO_FECHOS": [
@@ -1009,7 +1008,8 @@
             "CLOSE_PHOTO_FILE_ID",
             "CLOSE_PHOTO_FILE_URL",
             "CLOSE_PHOTO_FILE_NAME",
-            "LAST_EVENT"
+            "LAST_EVENT",
+            "PUBLIC_NOTES"
           ]
         ],
         "HISTORICO_FECHOS": [
@@ -1343,7 +1343,8 @@
             "CLOSE_PHOTO_FILE_ID",
             "CLOSE_PHOTO_FILE_URL",
             "CLOSE_PHOTO_FILE_NAME",
-            "LAST_EVENT"
+            "LAST_EVENT",
+            "PUBLIC_NOTES"
           ]
         ],
         "HISTORICO_FECHOS": [
@@ -1565,7 +1566,8 @@
             "CLOSE_PHOTO_FILE_ID",
             "CLOSE_PHOTO_FILE_URL",
             "CLOSE_PHOTO_FILE_NAME",
-            "LAST_EVENT"
+            "LAST_EVENT",
+            "PUBLIC_NOTES"
           ]
         ],
         "HISTORICO_FECHOS": [
@@ -1850,7 +1852,8 @@
             "CLOSE_PHOTO_FILE_ID",
             "CLOSE_PHOTO_FILE_URL",
             "CLOSE_PHOTO_FILE_NAME",
-            "LAST_EVENT"
+            "LAST_EVENT",
+            "PUBLIC_NOTES"
           ],
           [
             "2026-09-11T10:00:00.000Z",
@@ -1872,7 +1875,8 @@
             "TEST-FILE-2",
             "https://example.invalid/file/TEST-FILE-2",
             "fecho.png",
-            "FECHO"
+            "FECHO",
+            ""
           ]
         ],
         "HISTORICO_FECHOS": [
@@ -2252,7 +2256,8 @@
             "CLOSE_PHOTO_FILE_ID",
             "CLOSE_PHOTO_FILE_URL",
             "CLOSE_PHOTO_FILE_NAME",
-            "LAST_EVENT"
+            "LAST_EVENT",
+            "PUBLIC_NOTES"
           ],
           [
             "2026-09-11T10:00:00.000Z",
@@ -2274,7 +2279,8 @@
             "",
             "",
             "",
-            "REJEICAO_ADMIN"
+            "REJEICAO_ADMIN",
+            ""
           ]
         ],
         "HISTORICO_FECHOS": [
@@ -2796,14 +2802,14 @@
           [
             "CONS_1789120800000_420",
             "2026-09-11T10:00:00.000Z",
-            "478000",
+            "",
             "Morador de teste",
             "9",
             "B",
             "morador@example.invalid",
             "Outro",
             "Teste",
-            "0000",
+            "",
             "SUCESSO",
             "Test"
           ]
@@ -2829,7 +2835,8 @@
             "CLOSE_PHOTO_FILE_ID",
             "CLOSE_PHOTO_FILE_URL",
             "CLOSE_PHOTO_FILE_NAME",
-            "LAST_EVENT"
+            "LAST_EVENT",
+            "PUBLIC_NOTES"
           ]
         ],
         "HISTORICO_FECHOS": [
