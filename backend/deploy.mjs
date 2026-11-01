@@ -24,7 +24,10 @@ const auth = await fetch('https://oauth2.googleapis.com/token', {method:'POST',
 if (!auth.ok) throw Error('Falha ao renovar a autorização Google: HTTP ' + auth.status);
 const {access_token: token} = await auth.json();
 async function api(path, method='GET', body) {
-  const response = await fetch('https://script.googleapis.com/v1/projects/' + project + path, {
+  const url = new URL('https://script.googleapis.com/v1/projects/' + project + path);
+  if (method === 'GET') url.searchParams.set('_ts', String(Date.now()));
+  const response = await fetch(url, {
+    cache:'no-store',
     method, headers:{Authorization:'Bearer ' + token, 'Content-Type':'application/json'},
     body:body && JSON.stringify(body)});
   if (!response.ok) throw Error(method + ' ' + path.split('?')[0] + ' HTTP ' + response.status);
