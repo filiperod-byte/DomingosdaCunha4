@@ -56,6 +56,10 @@ if (!equal(canonical(live.files),desired)) {
   assert.ok(equal(canonical(saved.files),desired),'A versão criada diverge da versão pretendida.');
   assert.equal((await api(deploymentPath)).deploymentConfig.versionNumber,config.versionNumber,'A implementação foi alterada durante a publicação.');
   await api(deploymentPath,'PUT',{deploymentConfig:{versionNumber, manifestFileName:config.manifestFileName,description:config.description}});
-  assert.equal((await api(deploymentPath)).deploymentConfig.versionNumber,versionNumber,'Versão publicada por confirmar.');
+  for (let attempt = 0; attempt < 12; attempt++) {
+    if ((await api(deploymentPath)).deploymentConfig.versionNumber === versionNumber) break;
+    if (attempt === 11) throw Error('Versão publicada por confirmar.');
+    await new Promise(resolve => setTimeout(resolve, 5000));
+  }
 }
 console.log('Implementação verificada no URL existente.');
