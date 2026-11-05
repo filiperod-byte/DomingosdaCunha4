@@ -153,15 +153,14 @@ function fncUpsertFraction_(req,actor){
     const initial=fncNumber_(req.initialReading);
     if(initial<0)throw new Error('Leitura inicial inválida');
     const start=fncRequired_(req.initialDate,'Data da leitura inicial');
-    const fraction=fncData_(FNC.sheet.fractions).find(r=>String(r['ID fração']).toUpperCase()===id);
+    const fraction=fncData_(FNC.sheet.fractions).filter(r=>String(r['ID fração']).toUpperCase()===id).slice(-1)[0];
     const data={'ID fração':id,'Fração':label,'Estado':'Ativa',
       'Email autorizado':email,'Data adesão':start,'Leitura inicial (kWh)':initial,
       'Data leitura inicial':start,'Foto inicial Drive ID':fncStorePhoto_(req.initialPhotoBase64,actor,'inicio-'+id),
       'Atualizado em':fncNow_(),'Observações':String(req.note||'')};
-    if(fraction){
-      if(String(fraction['Estado'])==='Ativa')throw new Error('Fração já ativa — desative primeiro');
-      fncUpdate_(FNC.sheet.fractions,fraction.row,data);
-    } else fncAppend_(FNC.sheet.fractions,data);
+    if(fraction && String(fraction['Estado'])==='Ativa')throw new Error('Fração já ativa — desative primeiro');
+    // Cada nova adesão cria uma linha própria: conserva a base/histórico da adesão anterior.
+    fncAppend_(FNC.sheet.fractions,data);
     fncAudit_(id,'Ativar wallbox',fraction?.Estado||'',data,actor);
     return {ok:true};
   });
@@ -169,13 +168,17 @@ function fncUpsertFraction_(req,actor){
 function fncDeactivateFraction_(req,actor){
   return fncLock_(()=>{
     const id=fncRequired_(req.fractionId,'Fração');
-    const fraction=fncData_(FNC.sheet.fractions).find(r=>String(r['ID fração'])===id);
-    if(!fraction || String(fraction['Estado'])!=='Ativa')throw new Error('Fração não está ativa');
+    const fraction=fncData_(FNC.sheet.fractions).find(r=>String(r['ID fração'])===id && r['Estado']==='Ativa');
+    if(!fraction)throw new Error('Fração não está ativa');
     const date=fncRequired_(req.endDate,'Data fim de utilização');
     const final=fncNumber_(req.finalReading);
-    if(final<Number(fraction['Leitura inicial (kWh)']))throw new Error('Leitura final inferior à inicial');
+    const last=fncData_(FNC.sheet.readings).filter(r=>r['Fração']===id&&r['Estado']==='Validada')
+      .filter(r=>String(r['Data leitura'])>=String(fraction['Data adesão'])).slice(-1)[0];
+    const minReading=last?Number(last['Leitura acumulada kWh']):Number(fraction['Leitura inicial (kWh)']);
+    if(final<minReading)throw new Error('Leitura final inferior à última leitura válida');
+    const finalPhotoId=fncStorePhoto_(req.finalPhotoBase64,actor,'fim-'+id);
     fncUpdate_(FNC.sheet.fractions,fraction.row,{'Estado':'Inativa','Data desativação':date,
-      'Leitura final (kWh)':final,'Foto final Drive ID':req.finalPhotoId||'', 'Atualizado em':fncNow_()});
+      'Leitura final (kWh)':final,'Foto final Drive ID':finalPhotoId, 'Atualizado em':fncNow_()});
     fncAudit_(id,'Desativar wallbox','Ativa','Inativa',actor,'Histórico preservado; regularizar valores pendentes.');
     return {ok:true};
   });
@@ -212,7 +215,7 @@ function fncMarkInvoicePaid_(req,actor){
 function fncResidentFraction_(actor){
   const id=String(actor.fractionId||'').toUpperCase().replace(/[^0-9A-Z]/g,'');
   if(!id)throw new Error('Fração não associada à sessão');
-  const row=fncData_(FNC.sheet.fractions).find(r=>String(r['ID fração'])===id);
+  const row=fncData_(FNC.sheet.fractions).find(r=>String(r['ID fração'])===id&&r['Estado']==='Ativa');
   if(!row||row['Estado']!=='Ativa')throw new Error('Serviço de wallbox não ativo para a fração');
   if(String(row['Email autorizado']).toLowerCase()!==String(actor.email).toLowerCase())
     throw new Error('Morador não autorizado nesta fração');
@@ -271,9 +274,10 @@ function fncValidateReading_(req,actor){
     if(!cycle||!tariffs)throw new Error('Ciclo e tarifas ainda não configurados');
     const settings=fncSettings_(), pct=settings.DESCONTO_FIXOS;
     if(pct===''||pct===null||pct===undefined)throw new Error('Definir desconto antes de validar a leitura');
-    const fraction=fncData_(FNC.sheet.fractions).find(x=>x['ID fração']===r['Fração']);
+    const fraction=fncData_(FNC.sheet.fractions).find(x=>x['ID fração']===r['Fração']&&x['Estado']==='Ativa');
     if(!fraction)throw new Error('Fração não encontrada');
     const prev=fncData_(FNC.sheet.readings).filter(x=>x['Fração']===r['Fração']&&x['Estado']==='Validada')
+      .filter(x=>String(x['Data leitura'])>=String(fraction['Data adesão']))
       .sort((a,b)=>String(a['Data leitura']).localeCompare(String(b['Data leitura']))).slice(-1)[0];
     const fromDate=prev?prev['Data leitura']:fraction['Data leitura inicial'];
     const fromKwh=prev?prev['Leitura acumulada kWh']:fraction['Leitura inicial (kWh)'];
