@@ -1,0 +1,182 @@
+<!doctype html>
+<html lang="pt-PT">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1A2F5A">
+<title>Gestão financeira — DC4</title>
+<script src="../session-client.js?v=3.7.2"></script>
+<script src="../app-navigation.js?v=3.7.2" defer></script>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#F5F7FA;color:#111827;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.app{max-width:590px;margin:0 auto;padding:0 15px 28px}.hero{margin:0 -15px 18px;background:#1A2F5A;color:white;padding:22px 20px 30px;border-radius:0 0 22px 22px}
+.hero h1{margin:0 0 6px;font-size:23px}.hero p{color:#ced8e8;margin:0;font-size:13px;line-height:1.5}
+.card{background:#fff;border:1px solid #e2e8f0;padding:15px;border-radius:17px;margin:10px 0;box-shadow:0 3px 14px #1725540c}
+.tabs{display:flex;gap:6px;overflow-x:auto;margin:0 0 13px}.tab{flex:1;min-width:90px;border:1px solid #cbd5e1;background:white;color:#1A2F5A;border-radius:12px;padding:11px 8px;font-weight:800}
+.tab.active{background:#1A2F5A;color:#fff;border-color:#1A2F5A}
+.section{display:none}.section.active{display:block}h2{font-size:17px;color:#1A2F5A;margin:8px 0}
+label{display:block;color:#1A2F5A;font-size:13px;font-weight:700;margin:10px 0 5px}
+input,select{width:100%;min-height:43px;font-size:15px;padding:10px 11px;border-radius:11px;border:1px solid #b8c5d8;background:white}
+input:focus,select:focus{outline:2px solid #2563EB;outline-offset:1px}.grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.btn{border:0;background:#2563EB;color:white;padding:12px 14px;border-radius:12px;font-size:13px;font-weight:800;cursor:pointer}
+.btn.secondary{background:#e8eef8;color:#1A2F5A}.btn.danger{background:#fce8e8;color:#991b1b}
+.btn:disabled{opacity:.55;cursor:not-allowed}.btn-row{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+.badge{display:inline-block;background:#e8eef8;color:#203558;font-size:11px;font-weight:800;padding:5px 8px;border-radius:99px}
+.title-row{display:flex;gap:10px;justify-content:space-between;align-items:flex-start}.title-row strong{line-height:1.4}
+.note,.muted{color:#64748b;font-size:13px;line-height:1.5}.kv{display:grid;gap:3px;margin-top:7px;font-size:13px}
+.kv strong{color:#1A2F5A}a{color:#2563EB}#notice{margin:10px 0;padding:11px;border-radius:12px;display:none;font-size:13px}
+#notice.ok{display:block;background:#dcfce7;color:#166534}#notice.err{display:block;background:#fef2f2;color:#991b1b}
+#loading{padding:16px;color:#475569}#onboarding{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px;color:#92400e;margin-bottom:12px;font-size:13px;line-height:1.5}
+code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 0}
+@media(max-width:360px){.grid{grid-template-columns:1fr}.tab{min-width:76px;font-size:12px}}
+</style>
+</head>
+<body>
+<main class="app">
+<header class="hero"><h1>💶 Gestão financeira</h1><p>Faturas a pagamento e administração do serviço de wallboxes.</p></header>
+<div id="onboarding">Esta é uma versão de desenvolvimento. As operações só ficam disponíveis após a ligação segura ao Google Apps Script do condomínio.</div>
+<div id="notice" role="status" aria-live="polite"></div>
+<div id="loading">A verificar sessão e a carregar dados…</div>
+<nav class="tabs" aria-label="Módulos" id="tabs" hidden>
+<button class="tab active" data-tab="invoices">Faturas</button>
+<button class="tab" data-tab="fractions">Frações</button>
+<button class="tab" data-tab="settings">Regras</button>
+<button class="tab" data-tab="readings">Leituras</button>
+</nav>
+<section class="section active" id="invoices"><h2>Faturas do condomínio</h2><p class="note">Os pagamentos são efetuados fora da App. Aqui apenas se valida o documento e se regista a confirmação do pagamento.</p><div id="invoiceList"></div></section>
+<section class="section" id="fractions">
+<h2>Frações com wallbox</h2><p class="note">A desativação preserva o histórico e não elimina pagamentos pendentes.</p><div id="fractionList"></div>
+<div class="card"><h2>Ativar / reativar fração</h2>
+<form id="fractionForm">
+<label for="fractionId">Fração</label><select id="fractionId" required><option value="">Selecionar fração</option></select>
+<label for="fractionEmail">Email do morador autorizado</label><input id="fractionEmail" type="email" required autocomplete="off">
+<div class="grid"><div><label for="initialKwh">Leitura inicial (kWh)</label><input id="initialKwh" type="number" min="0" step="0.01" required></div>
+<div><label for="initialDate">Data da leitura</label><input id="initialDate" type="date" required></div></div>
+<label for="initialPhoto">Fotografia inicial do contador</label><input id="initialPhoto" type="file" accept="image/*" capture="environment" required>
+<div class="btn-row"><button class="btn" type="submit">Ativar serviço</button></div></form>
+</div></section>
+<section class="section" id="settings">
+<h2>Configuração global</h2>
+<div class="card">
+<form id="discountForm">
+<label for="discount">Desconto nos custos fixos (%)</label><input type="number" id="discount" min="0" max="100" step="0.01" required placeholder="Ainda não definido">
+<div class="grid"><div><label for="effective">Entrada em vigor</label><input type="date" id="effective" required></div>
+<div><label for="discountReason">Motivo</label><input type="text" id="discountReason" placeholder="Ex.: decisão administração"></div></div>
+<p class="note">O desconto aplicado fica guardado em cada apuramento. Pagamentos fechados não são recalculados.</p>
+<button class="btn" type="submit">Guardar desconto</button>
+</form></div>
+<div class="card"><h2>Notificações</h2><p class="note">Os emails são enviados após uma fatura EDP validada, apenas às frações ativas. O envio ficará desligado até à configuração do backend.</p><div id="notifyState" class="badge">Não configurado</div></div>
+</section>
+<section class="section" id="readings"><h2>Leituras submetidas</h2><p class="note">As leituras dos moradores são confirmadas pela administração. A aprovação não executa transferências.</p><div id="readingList"></div><h2>Recebimentos wallbox</h2><div id="paymentList"></div></section>
+</main>
+<script>
+(function(){
+'use strict';
+let BASE='',DATA=null,ready=false;
+const $=id=>document.getElementById(id);
+const formatEur=v=>Number.isFinite(Number(v))?Number(v).toLocaleString('pt-PT',{style:'currency',currency:'EUR'}):'—';
+const today=()=>new Date().toLocaleDateString('sv-SE');
+function show(text,error=false){const n=$('notice');n.textContent=text;n.className=error?'err':'ok';}
+function node(tag,text,cls){const el=document.createElement(tag);if(text!=null)el.textContent=String(text);if(cls)el.className=cls;return el;}
+function field(parent,key,value){const d=node('div',null,'kv'),name=node('strong',key),val=node('span',value==null||value===''?'—':value);d.append(name,val);parent.appendChild(d);}
+function b(label,handler,secondary=false){const el=node('button',label,secondary?'btn secondary':'btn');el.type='button';el.disabled=!ready;el.addEventListener('click',handler);return el;}
+async function api(action,payload={}){
+  const r=await dc4Fetch(BASE+'?action='+encodeURIComponent(action),{method:'POST',body:JSON.stringify({action,...payload})});
+  const res=await r.json(), data=res.data&&typeof res.data==='object'?res.data:res;
+  if(data.ok===false || data.error || data.code==='FORBIDDEN')throw Error(data.message||data.error||'Operação não autorizada');
+  return data;
+}
+async function refresh(){DATA=await api('finance.admin.bootstrap');render();}
+async function act(action,payload,success){try{const r=await api(action,payload);show(success||r.message||'Operação registada');await refresh();}catch(e){show(e.message,true);}}
+function render(){
+  $('invoiceList').replaceChildren();$('fractionList').replaceChildren();$('readingList').replaceChildren();$('paymentList').replaceChildren();
+  const invoices=DATA.invoices||[],fractions=DATA.fractions||[],readings=DATA.readings||[],payments=DATA.payments||[];
+  if(!invoices.length)$('invoiceList').append(node('p','Sem documentos registados.','note'));
+  invoices.forEach(f=>{
+    const card=node('article',null,'card'),head=node('div',null,'title-row');
+    head.append(node('strong',f.supplier||'Fornecedor não identificado'),node('span',f.validation||'Por validar','badge'));card.append(head);
+    field(card,'Descrição',f.description);field(card,'Valor',formatEur(f.value));field(card,'Vencimento',f.due);
+    field(card,'Pagamento',f.payment);
+    if(f.iban)field(card,'IBAN',f.iban);
+    if(f.entity&&f.reference)field(card,'Multibanco',f.entity+' / '+f.reference);
+    if(f.url && /^https:\/\/drive\.google\.com\//.test(f.url)){const link=node('a','Ver documento original');link.href=f.url;link.target='_blank';link.rel='noopener noreferrer';card.append(link);}
+    const buttons=node('div',null,'btn-row');
+    if(f.validation!=='Validada' && !String(f.documentType||'').toLowerCase().includes('orçamento'))
+      buttons.append(b('Validar fatura',()=>{if(confirm('Confirmas os dados desta fatura?'))act('finance.admin.validateInvoice',{id:f.id},'Fatura validada.');}));
+    if(f.validation==='Validada' && f.payment!=='Pago' && !String(f.documentType||'').toLowerCase().includes('orçamento'))
+      buttons.append(b('Registar como paga',()=>{if(confirm('Confirmaste o pagamento no banco?'))act('finance.admin.markInvoicePaid',{id:f.id,paidAt:today()},'Pagamento registado.');},true));
+    card.append(buttons);$('invoiceList').append(card);
+  });
+  if(!fractions.length)$('fractionList').append(node('p','Ainda não existem frações associadas.','note'));
+  fractions.forEach(f=>{
+    const card=node('article',null,'card'),head=node('div',null,'title-row');
+    head.append(node('strong',f.name||f.id),node('span',f.status||'—','badge'));card.append(head);
+    field(card,'Email autorizado',f.email);field(card,'Leitura inicial',f.initialReading===''?'—':f.initialReading+' kWh');
+    field(card,'Data de início',f.initialDate);
+    if(f.status==='Ativa')card.append(b('Desativar serviço',async ()=>{
+      const endDate=prompt('Data final (AAAA-MM-DD)',today());if(!endDate)return;
+      const finalReading=prompt('Leitura acumulada final (kWh):');if(finalReading===null)return;
+      if(confirm('Desativar '+(f.name||f.id)+' e manter o histórico?'))
+        await act('finance.admin.deactivateFraction',{fractionId:f.id,endDate,finalReading},'Serviço desativado.');
+    },true));
+    $('fractionList').append(card);
+  });
+  $('discount').value=DATA.settings?.discount==null?'':DATA.settings.discount;
+  $('notifyState').textContent=DATA.settings?.notifications?'Ativas':'Desligadas';
+  if(!readings.length)$('readingList').append(node('p','Nenhuma leitura submetida.','note'));
+  readings.forEach(r=>{
+    const card=node('article',null,'card');card.append(node('strong',(r.fractionId||'—')+' · '+(r.cycle||'Ciclo não identificado')));
+    field(card,'Leitura',r.kwh+' kWh');field(card,'Data',r.date);field(card,'Estado',r.state);
+    if(r.state==='Submetida')card.append(b('Validar leitura',()=>{if(confirm('Confirmar a fotografia e o valor?'))act('finance.admin.validateReading',{id:r.id},'Leitura validada.');}));
+    $('readingList').append(card);
+  });
+  if(!payments.length)$('paymentList').append(node('p','Nenhum apuramento fechado.','note'));
+  payments.forEach(p=>{
+    const card=node('article',null,'card');card.append(node('strong',p.fractionId+' · '+p.cycle));
+    field(card,'Montante',formatEur(p.total));field(card,'Estado',p.state);
+    if(p.state==='A pagar')card.append(b('Confirmar recebimento',()=>{if(confirm('Confirmaste a transferência na conta do condomínio?'))act('finance.admin.markWallboxPaid',{id:p.id,paidAt:today()},'Recebimento confirmado.');}));
+    $('paymentList').append(card);
+  });
+}
+function populateFractions(config) {
+  const select=$('fractionId'),floors=(config.building?.floors||[]).filter(f=>f.type==='residential' && f.floor>0);
+  floors.sort((a,b)=>b.floor-a.floor).forEach(f=>{for(let i=0;i<(f.fractions||0);i++){
+    const suffix=String.fromCharCode(65+i),opt=node('option',f.floor+'.º '+suffix);
+    opt.value=String(f.floor)+suffix;select.append(opt);
+  }});
+}
+function imageData(file){
+  if(!file||!file.type.startsWith('image/'))throw Error('Fotografia obrigatória');
+  if(file.size>4*1024*1024)throw Error('Fotografia demasiado grande; usar imagem até 4 MB');
+  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(Error('Não foi possível ler a imagem'));reader.onload=()=>resolve(String(reader.result));reader.readAsDataURL(file);});
+}
+async function init(){
+  if(!dc4HasSession('admin')){location.replace('admin.html');return;}
+  $('effective').value=today();$('initialDate').value=today();
+  try{
+    const [config,root]=await Promise.all([dc4Fetch('config.json').then(r=>r.json()),dc4Fetch('../config.json').then(r=>r.json())]);
+    BASE=config.backendUrl;populateFractions(root);ready=true;await refresh();
+    $('tabs').hidden=false;$('loading').hidden=true;$('onboarding').textContent='Ambiente de desenvolvimento: só publicar quando o backend, permissões e testes estiverem concluídos.';
+  }catch(e){$('loading').textContent='Não foi possível ligar ao módulo financeiro: '+e.message;show('O módulo financeiro ainda não está instalado no backend.',true);}
+}
+$('tabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(!t)return;
+  document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
+  document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===t.dataset.tab));
+});
+$('discountForm').addEventListener('submit',async e=>{e.preventDefault();
+  const percent=$('discount').value,effectiveFrom=$('effective').value,reason=$('discountReason').value;
+  if(confirm('Aplicar '+percent+'% aos próximos apuramentos elegíveis?'))
+    await act('finance.admin.saveDiscount',{percent,effectiveFrom,reason},'Desconto guardado com histórico.');
+});
+$('fractionForm').addEventListener('submit',async e=>{e.preventDefault();
+  try{
+    const initialPhotoBase64=await imageData($('initialPhoto').files[0]);
+    if(!confirm('Ativar esta fração com a leitura inicial indicada?'))return;
+    await act('finance.admin.upsertFraction',{fractionId:$('fractionId').value,
+      label:$('fractionId').selectedOptions[0].textContent,email:$('fractionEmail').value,
+      initialReading:$('initialKwh').value,initialDate:$('initialDate').value,initialPhotoBase64},'Fração ativada.');
+    $('fractionForm').reset();
+  }catch(err){show(err.message,true);}
+});
+init();
+})();
+</script></body></html>
