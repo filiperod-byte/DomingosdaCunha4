@@ -11,7 +11,7 @@ const FNC = {
     invoices: 'FATURAS', settings:'WALLBOX_CONFIG', fractions:'WALLBOX_FRACOES',
     readings:'LEITURAS_WALLBOX', payments:'WALLBOX_PAGAMENTOS',
     discounts:'WALLBOX_DESCONTOS', tariff:'TARIFAS_EDP', history:'HISTORICO',
-    cycles:'WALLBOX_CICLOS', rates:'WALLBOX_TARIFAS_CICLO'
+    cycles:'WALLBOX_CICLOS', rates:'WALLBOX_TARIFAS_CICLO', notifications:'WALLBOX_NOTIFICACOES'
   }
 };
 
@@ -401,22 +401,29 @@ function fncNotifyCycle_(req,actor){
   return fncLock_(()=>{
     const c=fncData_(FNC.sheet.cycles).find(r=>r['ID ciclo']===id);
     if(!c||c['Estado']!=='Aberto')throw Error('Ciclo não está aberto');
-    if(c['Notificado em'])return {ok:true,alreadyNotified:true};
-    const active=fncData_(FNC.sheet.fractions).filter(f=>f['Estado']==='Ativa');
+    const active=fncData_(FNC.sheet.fractions).filter(f=>f['Estado']==='Ativa'&&f['Email autorizado']);
+    const sent=fncData_(FNC.sheet.notifications).filter(n=>n['Ciclo']===id&&n['Estado']==='Enviado');
+    const sentFractions=new Set(sent.map(n=>String(n['Fração'])));
     const link='https://filiperod-byte.github.io/DomingosdaCunha4/V2/wallbox.html';
     let count=0;
     for(const f of active){
-      const email=String(f['Email autorizado']||'').trim();
-      if(!email)continue;
+      const email=String(f['Email autorizado']).trim(),fractionId=String(f['ID fração']);
+      if(sentFractions.has(fractionId))continue;
       MailApp.sendEmail({to:email,subject:'Domingos da Cunha 4 — Nova leitura da wallbox',
         body:'A fatura de eletricidade do condomínio já foi validada.\n'+
           'Pode agora submeter a leitura acumulada da sua wallbox, com fotografia, na App:\n'+link+
           '\n\nO valor a transferir será calculado após validação da leitura pela administração.'});
+      fncAppend_(FNC.sheet.notifications,{'ID':'WN-'+Utilities.getUuid(),'Ciclo':id,
+        'Fração':fractionId,'Email':email,'Estado':'Enviado','Enviado em':fncNow_()});
       count++;
     }
-    fncUpdate_(FNC.sheet.cycles,c.row,{'Notificado em':fncNow_()});
-    fncAudit_(id,'Enviar pedidos de leitura','',count+' email(s)',actor);
-    return {ok:true,notified:count};
+    // Sem destinatários não se considera o ciclo notificado.
+    if(active.length && fncData_(FNC.sheet.notifications)
+      .filter(n=>n['Ciclo']===id&&n['Estado']==='Enviado').length>=active.length){
+      fncUpdate_(FNC.sheet.cycles,c.row,{'Notificado em':fncNow_()});
+    }
+    if(count)fncAudit_(id,'Enviar pedidos de leitura','',count+' email(s)',actor);
+    return {ok:true,notified:count,eligible:active.length};
   });
 }
 
