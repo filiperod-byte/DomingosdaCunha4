@@ -53,7 +53,15 @@ code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 
 <div><label for="initialDate">Data da leitura</label><input id="initialDate" type="date" required></div></div>
 <label for="initialPhoto">Fotografia inicial do contador</label><input id="initialPhoto" type="file" accept="image/*" capture="environment" required>
 <div class="btn-row"><button class="btn" type="submit">Ativar serviço</button></div></form>
-</div></section>
+</div>
+<div class="card" id="deactivateCard" hidden><h2>Desativar fração</h2>
+<form id="deactivateForm">
+<label for="deactivateFraction">Fração</label><select id="deactivateFraction" required></select>
+<label for="deactivateDate">Data de desativação</label><input id="deactivateDate" type="date" required>
+<label for="deactivateKwh">Leitura acumulada final (kWh)</label><input id="deactivateKwh" type="number" min="0" step="0.01" required>
+<label for="deactivatePhoto">Fotografia da leitura final</label><input id="deactivatePhoto" type="file" accept="image/jpeg,image/png" capture="environment" required>
+<div class="btn-row"><button class="btn danger" type="submit">Confirmar desativação</button><button type="button" class="btn secondary" id="cancelDeactivate">Cancelar</button></div>
+</form></div></section>
 <section class="section" id="settings">
 <h2>Configuração global</h2>
 <div class="card">
@@ -112,11 +120,11 @@ function render(){
     head.append(node('strong',f.name||f.id),node('span',f.status||'—','badge'));card.append(head);
     field(card,'Email autorizado',f.email);field(card,'Leitura inicial',f.initialReading===''?'—':f.initialReading+' kWh');
     field(card,'Data de início',f.initialDate);
-    if(f.status==='Ativa')card.append(b('Desativar serviço',async ()=>{
-      const endDate=prompt('Data final (AAAA-MM-DD)',today());if(!endDate)return;
-      const finalReading=prompt('Leitura acumulada final (kWh):');if(finalReading===null)return;
-      if(confirm('Desativar '+(f.name||f.id)+' e manter o histórico?'))
-        await act('finance.admin.deactivateFraction',{fractionId:f.id,endDate,finalReading},'Serviço desativado.');
+    if(f.status==='Ativa')card.append(b('Desativar serviço',()=>{
+      $('deactivateCard').hidden=false;$('deactivateFraction').replaceChildren();
+      const option=node('option',f.name||f.id);option.value=f.id;
+      $('deactivateFraction').append(option);
+      $('deactivateDate').value=today();$('deactivateCard').scrollIntoView({behavior:'smooth',block:'center'});
     },true));
     $('fractionList').append(card);
   });
@@ -155,9 +163,19 @@ function populateFractions(config) {
   }});
 }
 function imageData(file){
-  if(!file||!file.type.startsWith('image/'))throw Error('Fotografia obrigatória');
-  if(file.size>3*1024*1024)throw Error('Fotografia demasiado grande; usar imagem até 4 MB');
-  return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(Error('Não foi possível ler a imagem'));reader.onload=()=>resolve(String(reader.result));reader.readAsDataURL(file);});
+ if(!file || !['image/jpeg','image/png'].includes(file.type))throw Error('É necessária fotografia JPG ou PNG');
+ return new Promise((resolve,reject)=>{
+   const url=URL.createObjectURL(file),img=new Image();
+   img.onload=()=>{
+     try{const scale=Math.min(1,1400/Math.max(img.width,img.height)),c=document.createElement('canvas');
+       c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
+       c.getContext('2d').drawImage(img,0,0,c.width,c.height);
+       const data=c.toDataURL('image/jpeg',.76);URL.revokeObjectURL(url);
+       if(data.length>4200000)throw Error('Fotografia demasiado grande para enviar.');
+       resolve(data);
+     }catch(e){URL.revokeObjectURL(url);reject(e);}
+   };img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('Não foi possível abrir a fotografia'));};img.src=url;
+ });
 }
 async function init(){
   if(!dc4HasSession('admin')){location.replace('admin.html');return;}
@@ -176,6 +194,18 @@ $('toggleNotifications').addEventListener('click',async()=>{
  const enabled=!DATA.settings?.notifications;
  if(confirm((enabled?'Ativar':'Desativar')+' notificações automáticas para frações com wallbox?'))
    await act('finance.admin.setNotifications',{enabled},'Notificações atualizadas.');
+});
+$('cancelDeactivate').addEventListener('click',()=>{$('deactivateCard').hidden=true;});
+$('deactivateForm').addEventListener('submit',async e=>{e.preventDefault();
+  try{
+    const finalPhotoBase64=await imageData($('deactivatePhoto').files[0]);
+    if(!confirm('Desativar esta fração, mantendo o histórico e os pagamentos pendentes?'))return;
+    await act('finance.admin.deactivateFraction',{
+      fractionId:$('deactivateFraction').value,endDate:$('deactivateDate').value,
+      finalReading:$('deactivateKwh').value,finalPhotoBase64
+    },'Serviço desativado com histórico preservado.');
+    $('deactivateCard').hidden=true;$('deactivateForm').reset();
+  }catch(err){show(err.message,true);}
 });
 $('discountForm').addEventListener('submit',async e=>{e.preventDefault();
   const percent=$('discount').value,effectiveFrom=$('effective').value,reason=$('discountReason').value;
