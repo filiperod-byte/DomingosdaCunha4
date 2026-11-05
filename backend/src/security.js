@@ -81,6 +81,19 @@ function createSecureApplication_(app, ports) {
       if (!session) return deny('Sessão terminada ou inválida. Volte a entrar.');
       p._actor = session.role + ':' + session.id;
       p._actorName = session.role === 'resident' ? session.resident.name : 'Administração';
+      // Financeiro: apenas POST autenticado; identidade e fração derivadas da sessão verificada.
+      // Não encaminhar dados financeiros pelo router legado, e nunca aceitar roles fornecidas no body.
+      if (method === 'POST' && /^finance\.(admin|resident)\./.test(action)) {
+        const resident = session.resident;
+        const actor = session.role === 'admin'
+          ? { role:'admin', email:String(ports.settings.get('ADMIN_EMAIL') || '').trim().toLowerCase() }
+          : { role:'resident',
+              email:String(resident.email || '').trim().toLowerCase(),
+              fractionId:String(resident.floor || '')+String(resident.fraction || '') };
+        if (!actor.email) return deny('Utilizador sem email autorizado.', 'FORBIDDEN');
+        try { return financeDispatch_(p, actor); }
+        catch (err) { return deny('Não foi possível executar o pedido financeiro.', 'FINANCE_ERROR'); }
+      }
       if (method === 'POST' && ['general.report','general.confirm'].includes(action)) return app.dispatch(method,action,p);
       if (method === 'POST' && action === 'auth.logout') {
         ports.properties.deleteProperty(session.key); return { ok: true, success: true };
