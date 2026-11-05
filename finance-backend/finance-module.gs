@@ -217,8 +217,9 @@ function fncResidentStatus_(actor){
   const readings=fncData_(FNC.sheet.readings).filter(r=>r['Fração']===fraction['ID fração']);
   const payments=fncData_(FNC.sheet.payments).filter(r=>r['Fração']===fraction['ID fração']);
   return {ok:true,fraction:fraction['Fração'],
+    initialReading:fraction['Leitura inicial (kWh)'],initialDate:fraction['Data leitura inicial'],
     openCycle:(fncData_(FNC.sheet.cycles).filter(c=>c['Estado']==='Aberto').slice(-1)[0]||{})['ID ciclo']||null,
-    readings:readings.map(r=>({id:r['ID leitura'],date:r['Data leitura'],kwh:r['Leitura acumulada kWh'],state:r['Estado']})),
+    readings:readings.map(r=>({id:r['ID leitura'],cycle:r['Ciclo EDP'],date:r['Data leitura'],kwh:r['Leitura acumulada kWh'],state:r['Estado']})),
     payments:payments.map(r=>({cycle:r['Ciclo EDP'],total:r['Total a pagar €'],state:r['Estado']}))};
 }
 function fncSubmitReading_(req,actor){
