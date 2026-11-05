@@ -223,8 +223,12 @@ function fncResidentFraction_(actor){
 }
 function fncResidentStatus_(actor){
   const fraction=fncResidentFraction_(actor);
-  const readings=fncData_(FNC.sheet.readings).filter(r=>r['Fração']===fraction['ID fração']);
-  const payments=fncData_(FNC.sheet.payments).filter(r=>r['Fração']===fraction['ID fração']);
+  // Um novo morador não recebe o histórico financeiro de ocupantes anteriores.
+  const since=fncIsoDate_(fraction['Data adesão']);
+  const readings=fncData_(FNC.sheet.readings)
+    .filter(r=>r['Fração']===fraction['ID fração']&&fncIsoDate_(r['Data leitura'])>=since);
+  const payments=fncData_(FNC.sheet.payments)
+    .filter(r=>r['Fração']===fraction['ID fração']&&fncIsoDate_(r['Data inicial'])>=since);
   return {ok:true,fraction:fraction['Fração'],
     initialReading:fraction['Leitura inicial (kWh)'],initialDate:fraction['Data leitura inicial'],
     openCycle:(fncData_(FNC.sheet.cycles).filter(c=>c['Estado']==='Aberto').slice(-1)[0]||{})['ID ciclo']||null,
