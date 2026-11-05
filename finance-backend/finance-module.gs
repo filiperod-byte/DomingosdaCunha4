@@ -11,7 +11,7 @@ const FNC = {
     invoices: 'FATURAS', settings:'WALLBOX_CONFIG', fractions:'WALLBOX_FRACOES',
     readings:'LEITURAS_WALLBOX', payments:'WALLBOX_PAGAMENTOS',
     discounts:'WALLBOX_DESCONTOS', tariff:'TARIFAS_EDP', history:'HISTORICO',
-    cycles:'WALLBOX_CICLOS'
+    cycles:'WALLBOX_CICLOS', rates:'WALLBOX_TARIFAS_CICLO'
   }
 };
 
@@ -24,6 +24,7 @@ function financeDispatch_(req, actor) {
   const map = {
     'finance.admin.bootstrap': () => fncBootstrap_(),
     'finance.admin.saveDiscount': () => fncSaveDiscount_(req, actor),
+    'finance.admin.notifyCycle': () => fncNotifyCycle_(req,actor),
     'finance.admin.upsertFraction': () => fncUpsertFraction_(req, actor),
     'finance.admin.deactivateFraction': () => fncDeactivateFraction_(req, actor),
     'finance.admin.validateInvoice': () => fncValidateInvoice_(req, actor),
@@ -99,11 +100,15 @@ function fncBootstrap_(){
     invoices:fncData_(FNC.sheet.invoices).map(r=>({
       id:r.ID, supplier:r['Fornecedor'],description:r['Descrição'],due:r['Vencimento'],
       value:r['Total (€)'],validation:r['Validação'],payment:r['Pagamento'],
-      documentType:r['Tipo'],url:r['PDF original']
+      documentType:r['Tipo'],iban:r['IBAN fornecedor'],entity:r['Entidade MB'],
+      reference:r['Referência MB'],url:r['PDF original']
     })),
     readings:fncData_(FNC.sheet.readings).map(r=>({
       id:r['ID leitura'],fractionId:r['Fração'],cycle:r['Ciclo EDP'],date:r['Data leitura'],
       kwh:r['Leitura acumulada kWh'],state:r['Estado'],row:r.row
+    })),
+    cycles:fncData_(FNC.sheet.cycles).map(r=>({
+      id:r['ID ciclo'],invoiceId:r['Fatura ID'],state:r['Estado'],notifiedAt:r['Notificado em']
     })),
     payments:fncData_(FNC.sheet.payments).map(r=>({
       id:r['ID apuramento'],fractionId:r['Fração'],cycle:r['Ciclo EDP'],
@@ -145,7 +150,7 @@ function fncUpsertFraction_(req,actor){
     const fraction=fncData_(FNC.sheet.fractions).find(r=>String(r['ID fração']).toUpperCase()===id);
     const data={'ID fração':id,'Fração':label,'Estado':'Ativa',
       'Email autorizado':email,'Data adesão':start,'Leitura inicial (kWh)':initial,
-      'Data leitura inicial':start,'Foto inicial Drive ID':req.initialPhotoId||'',
+      'Data leitura inicial':start,'Foto inicial Drive ID':fncStorePhoto_(req.initialPhotoBase64,actor,'inicio-'+id),
       'Atualizado em':fncNow_(),'Observações':String(req.note||'')};
     if(fraction){
       if(String(fraction['Estado'])==='Ativa')throw new Error('Fração já ativa — desative primeiro');
@@ -176,13 +181,12 @@ function fncValidateInvoice_(req,actor){
     if(!invoice)throw new Error('Fatura não encontrada');
     if(String(invoice['Tipo']).toLowerCase().includes('orçamento'))throw new Error('Orçamento não é fatura');
     if(String(invoice['Validação'])==='Validada')return {ok:true,alreadyValidated:true};
+    const isEdp=String(invoice['Fornecedor']).toLowerCase().includes('edp');
+    const cycle=isEdp?fncOpenCycle_(invoice,actor):null;
     fncUpdate_(FNC.sheet.invoices,invoice.row,{'Validação':'Validada','Validado por':actor.email});
     fncAudit_(id,'Validar fatura',invoice['Validação'],'Validada',actor);
-    if(String(invoice['Fornecedor']).toLowerCase().includes('edp')){
-      // Ponto de entrada do ciclo. O email é intencionalmente separado:
-      // só pode ser enviado após tarifário e período terem sido conferidos.
-      return {ok:true,edpCycleReady:true,message:'Fatura validada; verificar tarifas e ativar notificações após publicação do backend.'};
-    }
+    if(isEdp)return {ok:true,edpCycleReady:true,cycleId:cycle,
+      message:'Ciclo aberto. Notificação dos moradores depende de configuração e confirmação administrativa.'};
     return {ok:true};
   });
 }
@@ -213,6 +217,7 @@ function fncResidentStatus_(actor){
   const readings=fncData_(FNC.sheet.readings).filter(r=>r['Fração']===fraction['ID fração']);
   const payments=fncData_(FNC.sheet.payments).filter(r=>r['Fração']===fraction['ID fração']);
   return {ok:true,fraction:fraction['Fração'],
+    openCycle:(fncData_(FNC.sheet.cycles).filter(c=>c['Estado']==='Aberto').slice(-1)[0]||{})['ID ciclo']||null,
     readings:readings.map(r=>({id:r['ID leitura'],date:r['Data leitura'],kwh:r['Leitura acumulada kWh'],state:r['Estado']})),
     payments:payments.map(r=>({cycle:r['Ciclo EDP'],total:r['Total a pagar €'],state:r['Estado']}))};
 }
@@ -222,6 +227,8 @@ function fncSubmitReading_(req,actor){
     const kwh=fncNumber_(req.kwh), date=fncRequired_(req.readingDate,'Data leitura');
     if(kwh<0)throw new Error('Leitura inválida');
     const cycle=fncRequired_(req.cycleId,'Ciclo');
+    const activeCycle=fncData_(FNC.sheet.cycles).find(c=>c['ID ciclo']===cycle && c['Estado']==='Aberto');
+    if(!activeCycle)throw new Error('Ciclo não autorizado ou já encerrado');
     const all=fncData_(FNC.sheet.readings).filter(r=>r['Fração']===fraction['ID fração']);
     if(all.some(r=>r['Ciclo EDP']===cycle && r['Estado']!=='Rejeitada'))throw new Error('Já existe leitura neste ciclo');
     const last=all.filter(r=>r['Estado']==='Validada').slice(-1)[0];
@@ -240,21 +247,56 @@ function fncStorePhoto_(b64,actor,cycle){
   const folderId=PropertiesService.getScriptProperties().getProperty('FINANCE_PHOTOS_FOLDER_ID');
   if(!folderId)throw new Error('Pasta privada das fotografias por configurar');
   const data=fncRequired_(b64,'Fotografia').replace(/^data:image\/(?:jpeg|png);base64,/,'');
-  if(data.length>4200000 || !/^[A-Za-z0-9+/=]+$/.test(data))throw new Error('Imagem inválida ou demasiado grande');
-  const bytes=Utilities.base64Decode(data);
+  if(data.length>4300000 || !/^[A-Za-z0-9+/=]+$/.test(data))throw new Error('Imagem inválida ou demasiado grande');
+  const isPng=/^data:image\/png;base64,/.test(String(b64));
+  const bytes=Utilities.base64Decode(data), mime=isPng?'image/png':'image/jpeg';
+  const ext=isPng?'.png':'.jpg';
   return DriveApp.getFolderById(folderId)
-    .createFile(Utilities.newBlob(bytes,'image/jpeg','wallbox-'+cycle+'-'+Utilities.getUuid()+'.jpg')).getId();
+    .createFile(Utilities.newBlob(bytes,mime,'wallbox-'+cycle+'-'+Utilities.getUuid()+ext)).getId();
 }
 function fncValidateReading_(req,actor){
   return fncLock_(()=>{
     const rid=fncRequired_(req.id,'Leitura');
     const r=fncData_(FNC.sheet.readings).find(x=>x['ID leitura']===rid);
     if(!r||r['Estado']!=='Submetida')throw new Error('Leitura não está pendente');
-    // Nesta fase o cálculo monetário está bloqueado até integração e teste
-    // da fórmula do simulador por ciclo e validação dos descontos em vigor.
+    const cycle=fncData_(FNC.sheet.cycles).find(x=>x['ID ciclo']===r['Ciclo EDP']);
+    const tariffs=fncData_(FNC.sheet.rates).find(x=>x['ID ciclo']===r['Ciclo EDP']);
+    if(!cycle||!tariffs)throw new Error('Ciclo e tarifas ainda não configurados');
+    const settings=fncSettings_(), pct=settings.DESCONTO_FIXOS;
+    if(pct===''||pct===null||pct===undefined)throw new Error('Definir desconto antes de validar a leitura');
+    const fraction=fncData_(FNC.sheet.fractions).find(x=>x['ID fração']===r['Fração']);
+    if(!fraction)throw new Error('Fração não encontrada');
+    const prev=fncData_(FNC.sheet.readings).filter(x=>x['Fração']===r['Fração']&&x['Estado']==='Validada')
+      .sort((a,b)=>String(a['Data leitura']).localeCompare(String(b['Data leitura']))).slice(-1)[0];
+    const fromDate=prev?prev['Data leitura']:fraction['Data leitura inicial'];
+    const fromKwh=prev?prev['Leitura acumulada kWh']:fraction['Leitura inicial (kWh)'];
+    if(fromDate===''||fromKwh==='')throw new Error('Leitura inicial não configurada');
+    const inputs={
+      invoiceStart:fncIsoDate_(tariffs['Início faturação']),
+      invoiceEnd:fncIsoDate_(tariffs['Fim faturação']),
+      buildingKwh:tariffs['Consumo prédio kWh'],
+      energyExVat:tariffs['Energia sem IVA'],energyVat:tariffs['IVA energia'],
+      iecExVat:tariffs['IEC sem IVA'],iecVat:tariffs['IVA IEC'],
+      powerExVat:tariffs['Potência sem IVA'],powerVat:tariffs['IVA potência'],
+      dgegExVat:tariffs['DGEG sem IVA'],dgegVat:tariffs['IVA DGEG'],
+      avExVat:tariffs['Audiovisual sem IVA'],avVat:tariffs['IVA audiovisual'],
+      readingStart:fncIsoDate_(fromDate),readingEnd:fncIsoDate_(r['Data leitura']),
+      readingKwhStart:fromKwh,readingKwhEnd:r['Leitura acumulada kWh'],discountPct:pct
+    };
+    const calc=financeCalculateWallbox_(inputs);
+    const paid=fncData_(FNC.sheet.payments).find(x=>x['Fração']===r['Fração']&&x['Ciclo EDP']===r['Ciclo EDP']);
+    if(paid)throw new Error('Já existe apuramento para este ciclo e fração');
+    const pid='WP-'+Utilities.getUuid();
+    fncAppend_(FNC.sheet.payments,{'ID apuramento':pid,'Fração':r['Fração'],
+      'Ciclo EDP':r['Ciclo EDP'],'Data inicial':inputs.readingStart,'Data final':inputs.readingEnd,
+      'Leitura inicial kWh':fromKwh,'Leitura final kWh':r['Leitura acumulada kWh'],
+      'Consumo kWh':calc.kwh,'Energia + IEC €':calc.energy,'Custos fixos antes desc. €':calc.fixedBeforeDiscount,
+      'Desconto %':pct,'Parcela custos fixos €':calc.fixedAfterDiscount,'Total a pagar €':calc.total,
+      'Estado':'A pagar','Emissão':fncNow_(),'Validado por':actor.email,
+      'Foto leitura Drive ID':r['Foto Drive ID']});
     fncUpdate_(FNC.sheet.readings,r.row,{'Estado':'Validada','Validado por':actor.email,'Validado em':fncNow_()});
-    fncAudit_(rid,'Validar leitura','Submetida','Validada',actor);
-    return {ok:true,calculationPending:true};
+    fncAudit_(rid,'Validar leitura e apurar valor','Submetida','Validada',actor,'Apuramento '+pid);
+    return {ok:true,paymentId:pid,amount:calc.total};
   });
 }
 function fncMarkWallboxPaid_(req,actor){
@@ -299,4 +341,70 @@ function financeCalculateWallbox_(i){
   return {invoiceDays,readingDays:days,kwh,share,
     energy:Math.round(energy*100)/100,fixedBeforeDiscount:Math.round(rawFixed*100)/100,
     discountPct:discount,fixedAfterDiscount:Math.round(fixed*100)/100,total};
+}
+
+/** Fatura EDP aprovada abre um ciclo; tarifas são copiadas e imutáveis nesse ciclo. */
+function fncIsoDate_(value){
+  if(value instanceof Date)return Utilities.formatDate(value,'Europe/Lisbon','yyyy-MM-dd');
+  const s=String(value||'').trim();if(!/^\d{4}-\d{2}-\d{2}/.test(s))throw Error('Data inválida: '+s);
+  return s.slice(0,10);
+}
+function fncTariffMap_(){
+  return Object.fromEntries(fncData_(FNC.sheet.tariff).map(x=>[String(x['Parâmetro']),x['Valor']]));
+}
+function fncOpenCycle_(invoice,actor){
+  const id='CYCLE-'+invoice.ID, existing=fncData_(FNC.sheet.cycles).find(x=>x['ID ciclo']===id);
+  if(existing)return id;
+  const t=fncTariffMap_();
+  const invoiceStart=fncIsoDate_(invoice['Período início']),invoiceEnd=fncIsoDate_(invoice['Período fim']);
+  if(fncIsoDate_(t['Período início'])!==invoiceStart||fncIsoDate_(t['Período fim'])!==invoiceEnd)
+    throw Error('Período da tabela EDP não corresponde ao documento. Rever tarifas primeiro.');
+  const keys=['Consumo prédio','Energia (sem IVA)','IVA energia','IEC (sem IVA)','IVA IEC',
+    'Potência (sem IVA)','IVA potência','DGEG (sem IVA)','IVA DGEG',
+    'Contribuição audiovisual (sem IVA)','IVA audiovisual'];
+  for(const k of keys)fncNumber_(t[k]);
+  const fields={'ID ciclo':id,'Fatura ID':invoice.ID,'Início faturação':invoiceStart,
+    'Fim faturação':invoiceEnd,'Consumo prédio kWh':t['Consumo prédio'],
+    'Energia sem IVA':t['Energia (sem IVA)'],'IVA energia':t['IVA energia'],
+    'IEC sem IVA':t['IEC (sem IVA)'],'IVA IEC':t['IVA IEC'],
+    'Potência sem IVA':t['Potência (sem IVA)'],'IVA potência':t['IVA potência'],
+    'DGEG sem IVA':t['DGEG (sem IVA)'],'IVA DGEG':t['IVA DGEG'],
+    'Audiovisual sem IVA':t['Contribuição audiovisual (sem IVA)'],
+    'IVA audiovisual':t['IVA audiovisual'],
+    'Desconto %':fncSettings_().DESCONTO_FIXOS,'Criado em':fncNow_,
+    'Validado por':actor.email,'Origem EDP':invoice['PDF original']};
+  fields['Criado em']=fncNow_();
+  fncAppend_(FNC.sheet.rates,fields);
+  fncAppend_(FNC.sheet.cycles,{'ID ciclo':id,'Fatura ID':invoice.ID,
+    'Início faturação':invoiceStart,'Fim faturação':invoiceEnd,'Estado':'Aberto',
+    'Validado por':actor.email,'Criado em':fncNow_(),
+    'Desconto aplicado %':fncSettings_().DESCONTO_FIXOS,
+    'Observações':'Aguardam-se leituras das frações ativas.'});
+  return id;
+}
+function fncNotifyCycle_(req,actor){
+  const settings=fncSettings_();
+  if(String(settings.NOTIFICACOES_ATIVAS).toUpperCase()!=='SIM')
+    throw Error('Notificações ainda desativadas na configuração.');
+  const id=fncRequired_(req.cycleId,'Ciclo');
+  return fncLock_(()=>{
+    const c=fncData_(FNC.sheet.cycles).find(r=>r['ID ciclo']===id);
+    if(!c||c['Estado']!=='Aberto')throw Error('Ciclo não está aberto');
+    if(c['Notificado em'])return {ok:true,alreadyNotified:true};
+    const active=fncData_(FNC.sheet.fractions).filter(f=>f['Estado']==='Ativa');
+    const link='https://filiperod-byte.github.io/DomingosdaCunha4/V2/wallbox.html';
+    let count=0;
+    for(const f of active){
+      const email=String(f['Email autorizado']||'').trim();
+      if(!email)continue;
+      MailApp.sendEmail({to:email,subject:'Domingos da Cunha 4 — Nova leitura da wallbox',
+        body:'A fatura de eletricidade do condomínio já foi validada.\n'+
+          'Pode agora submeter a leitura acumulada da sua wallbox, com fotografia, na App:\n'+link+
+          '\n\nO valor a transferir será calculado após validação da leitura pela administração.'});
+      count++;
+    }
+    fncUpdate_(FNC.sheet.cycles,c.row,{'Notificado em':fncNow_()});
+    fncAudit_(id,'Enviar pedidos de leitura','',count+' email(s)',actor);
+    return {ok:true,notified:count};
+  });
 }
