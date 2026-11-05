@@ -428,3 +428,53 @@ function fncSetNotifications_(req,actor){
     return {ok:true,enabled};
   });
 }
+
+/**
+ * Descoberta automática de novos documentos na Drive /FATURAS/AAAA/MM.
+ * Não tenta classificar imagens/PDF digitalizados como faturas fiáveis.
+ * Apenas regista novos documentos para validação humana/extração posterior.
+ * Propriedade FINANCE_FATURAS_ROOT_ID = ID da pasta FATURAS privada.
+ */
+function financeScanFolder_(){
+  return fncLock_(()=>{
+    const root=PropertiesService.getScriptProperties().getProperty('FINANCE_FATURAS_ROOT_ID');
+    if(!root)throw Error('FINANCE_FATURAS_ROOT_ID por configurar');
+    const seen=new Set(fncData_(FNC.sheet.invoices).map(r=>String(r['ID Drive']||'')));
+    let count=0;
+    const years=DriveApp.getFolderById(root).getFolders();
+    while(years.hasNext()){
+      const year=years.next();
+      if(!/^\d{4}$/.test(year.getName()))continue;
+      const months=year.getFolders();
+      while(months.hasNext()){
+        const month=months.next();
+        if(!/^(0[1-9]|1[0-2])$/.test(month.getName()))continue;
+        const files=month.getFiles();
+        while(files.hasNext()){
+          const file=files.next(),id=file.getId();
+          if(seen.has(id))continue;
+          const mimetype=file.getMimeType();
+          if(!['application/pdf','image/jpeg','image/png'].includes(mimetype))continue;
+          const docid='DC4-DOC-'+Utilities.getUuid();
+          fncAppend_(FNC.sheet.invoices,{
+            'ID':docid,'Tipo':'Documento por classificar',
+            'Fornecedor':'Por identificar','Descrição':file.getName(),
+            'Documento':file.getName(),'Validação':'Por validar','Pagamento':'Por confirmar',
+            'PDF original':'https://drive.google.com/file/d/'+id+'/view',
+            'Observações':'Importado automaticamente; verificar antes de registar pagamento.',
+            'ID Drive':id
+          });
+          seen.add(id);count++;
+        }
+      }
+    }
+    return {ok:true,newDocuments:count};
+  });
+}
+/** Criar o trigger uma única vez, após autorizar o projeto Apps Script. */
+function financeInstallScannerTrigger_(){
+  const matches=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
+  if(matches.length)return {ok:true,alreadyInstalled:true};
+  ScriptApp.newTrigger('financeScanFolder_').timeBased().everyMinutes(15).create();
+  return {ok:true,installed:true};
+}
