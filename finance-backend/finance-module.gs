@@ -25,9 +25,15 @@ function financeDispatch_(req, actor) {
     'finance.admin.bootstrap': () => fncBootstrap_(),
     'finance.admin.saveDiscount': () => fncSaveDiscount_(req, actor),
     'finance.admin.notifyCycle': () => fncNotifyCycle_(req,actor),
+    'finance.admin.setNotifications': () => fncSetNotifications_(req,actor),
     'finance.admin.upsertFraction': () => fncUpsertFraction_(req, actor),
     'finance.admin.deactivateFraction': () => fncDeactivateFraction_(req, actor),
-    'finance.admin.validateInvoice': () => fncValidateInvoice_(req, actor),
+    'finance.admin.validateInvoice': () => {
+      const result=fncValidateInvoice_(req,actor);
+      if(result.cycleId && String(fncSettings_().NOTIFICACOES_ATIVAS).toUpperCase()==='SIM')
+        return {...result,notifications:fncNotifyCycle_({cycleId:result.cycleId},actor)};
+      return result;
+    },
     'finance.admin.markInvoicePaid': () => fncMarkInvoicePaid_(req, actor),
     'finance.admin.validateReading': () => fncValidateReading_(req, actor),
     'finance.admin.markWallboxPaid': () => fncMarkWallboxPaid_(req, actor),
@@ -407,5 +413,18 @@ function fncNotifyCycle_(req,actor){
     fncUpdate_(FNC.sheet.cycles,c.row,{'Notificado em':fncNow_()});
     fncAudit_(id,'Enviar pedidos de leitura','',count+' email(s)',actor);
     return {ok:true,notified:count};
+  });
+}
+
+/** Ativação/desativação das notificações no backend, auditada. */
+function fncSetNotifications_(req,actor){
+  return fncLock_(()=>{
+    const enabled=req.enabled===true || req.enabled==='true';
+    const record=fncData_(FNC.sheet.settings).find(r=>r['Chave']==='NOTIFICACOES_ATIVAS');
+    if(!record)throw Error('Configuração de notificações não encontrada');
+    const old=record['Valor'],v=enabled?'SIM':'NAO';
+    fncUpdate_(FNC.sheet.settings,record.row,{'Valor':v,'Atualizado em':fncNow_(),'Atualizado por':actor.email});
+    fncAudit_('CONFIG_WALLBOX','Notificações',old,v,actor);
+    return {ok:true,enabled};
   });
 }
