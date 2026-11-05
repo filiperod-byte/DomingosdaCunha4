@@ -64,7 +64,7 @@ code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 
 <p class="note">O desconto aplicado fica guardado em cada apuramento. Pagamentos fechados não são recalculados.</p>
 <button class="btn" type="submit">Guardar desconto</button>
 </form></div>
-<div class="card"><h2>Notificações</h2><p class="note">Os emails são enviados após uma fatura EDP validada, apenas às frações ativas. O envio ficará desligado até à configuração do backend.</p><div id="notifyState" class="badge">Não configurado</div></div>
+<div class="card"><h2>Notificações</h2><p class="note">Os emails são enviados após uma fatura EDP validada, apenas às frações ativas. O envio ficará desligado até à configuração do backend.</p><div id="notifyState" class="badge">Não configurado</div><div class="btn-row"><button type="button" id="toggleNotifications" class="btn secondary" disabled>Alterar notificações</button></div><div id="cycleList"></div></div>
 </section>
 <section class="section" id="readings"><h2>Leituras submetidas</h2><p class="note">As leituras dos moradores são confirmadas pela administração. A aprovação não executa transferências.</p><div id="readingList"></div><h2>Recebimentos wallbox</h2><div id="paymentList"></div></section>
 </main>
@@ -89,7 +89,7 @@ async function refresh(){DATA=await api('finance.admin.bootstrap');render();}
 async function act(action,payload,success){try{const r=await api(action,payload);show(success||r.message||'Operação registada');await refresh();}catch(e){show(e.message,true);}}
 function render(){
   $('invoiceList').replaceChildren();$('fractionList').replaceChildren();$('readingList').replaceChildren();$('paymentList').replaceChildren();
-  const invoices=DATA.invoices||[],fractions=DATA.fractions||[],readings=DATA.readings||[],payments=DATA.payments||[];
+  const invoices=DATA.invoices||[],fractions=DATA.fractions||[],readings=DATA.readings||[],payments=DATA.payments||[],cycles=DATA.cycles||[];
   if(!invoices.length)$('invoiceList').append(node('p','Sem documentos registados.','note'));
   invoices.forEach(f=>{
     const card=node('article',null,'card'),head=node('div',null,'title-row');
@@ -122,6 +122,16 @@ function render(){
   });
   $('discount').value=DATA.settings?.discount==null?'':DATA.settings.discount;
   $('notifyState').textContent=DATA.settings?.notifications?'Ativas':'Desligadas';
+  $('toggleNotifications').disabled=!ready;
+  $('toggleNotifications').textContent=DATA.settings?.notifications?'Desativar notificações':'Ativar notificações';
+  $('cycleList').replaceChildren();
+  cycles.forEach(c=>{
+    const card=node('div',null,'card');card.append(node('strong',c.id));
+    field(card,'Estado',c.state);field(card,'Email de aviso',c.notifiedAt?'Enviado':'Ainda não enviado');
+    if(!c.notifiedAt&&c.state==='Aberto'&&DATA.settings?.notifications)
+      card.append(b('Enviar pedidos de leitura',()=>{if(confirm('Enviar um email às frações ativas deste ciclo?'))act('finance.admin.notifyCycle',{cycleId:c.id},'Pedidos de leitura enviados.');}));
+    $('cycleList').append(card);
+  });
   if(!readings.length)$('readingList').append(node('p','Nenhuma leitura submetida.','note'));
   readings.forEach(r=>{
     const card=node('article',null,'card');card.append(node('strong',(r.fractionId||'—')+' · '+(r.cycle||'Ciclo não identificado')));
@@ -146,7 +156,7 @@ function populateFractions(config) {
 }
 function imageData(file){
   if(!file||!file.type.startsWith('image/'))throw Error('Fotografia obrigatória');
-  if(file.size>4*1024*1024)throw Error('Fotografia demasiado grande; usar imagem até 4 MB');
+  if(file.size>3*1024*1024)throw Error('Fotografia demasiado grande; usar imagem até 4 MB');
   return new Promise((resolve,reject)=>{const reader=new FileReader();reader.onerror=()=>reject(Error('Não foi possível ler a imagem'));reader.onload=()=>resolve(String(reader.result));reader.readAsDataURL(file);});
 }
 async function init(){
@@ -161,6 +171,11 @@ async function init(){
 $('tabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(!t)return;
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
   document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===t.dataset.tab));
+});
+$('toggleNotifications').addEventListener('click',async()=>{
+ const enabled=!DATA.settings?.notifications;
+ if(confirm((enabled?'Ativar':'Desativar')+' notificações automáticas para frações com wallbox?'))
+   await act('finance.admin.setNotifications',{enabled},'Notificações atualizadas.');
 });
 $('discountForm').addEventListener('submit',async e=>{e.preventDefault();
   const percent=$('discount').value,effectiveFrom=$('effective').value,reason=$('discountReason').value;
