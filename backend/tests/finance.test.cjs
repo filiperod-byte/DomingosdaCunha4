@@ -297,3 +297,19 @@ test('configuração no editor informa o erro quando o proprietário ainda não 
  b.context.ScriptApp.getProjectTriggers=()=>{throw new Error('Authorization required for script.scriptapp')};
  assert.throws(()=>b.context.ativarSincronizacaoFaturas(),/autoriza/i);
 });
+
+test('ativação aceita função interna antiga sem underscore no Apps Script',()=>{
+ const b=setup();
+ const original=b.context.financeInstallScannerTrigger_;
+ assert.equal(typeof original,'function');
+ b.context.financeInstallScannerTrigger=original;
+ b.context.financeInstallScannerTrigger_=undefined;
+ assert.equal(b.context.ativarSincronizacaoFaturas().ok,true);
+ assert.equal(b.context.ativarSincronizacaoFaturas().alreadyInstalled,true);
+});
+test('ativação descreve a falta de ambas as funções sem ReferenceError',()=>{
+ const b=setup();
+ b.context.financeInstallScannerTrigger_=undefined;
+ b.context.financeInstallScannerTrigger=undefined;
+ assert.throws(()=>b.context.ativarSincronizacaoFaturas(),/Instalador de faturas não encontrado/);
+});

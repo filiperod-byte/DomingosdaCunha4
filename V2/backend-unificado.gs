@@ -2121,7 +2121,15 @@ function setupGeneralOccurrences() {
  * Repetir a execução não cria triggers duplicados.
  */
 function ativarSincronizacaoFaturas() {
-  const result=financeInstallScannerTrigger_();
+  // Compatibilidade: alguns projetos Apps Script tinham o helper sem "_".
+  // É feita a deteção sem invocar funções inexistentes (evita ReferenceError).
+  const installer=typeof financeInstallScannerTrigger_==='function'
+    ? financeInstallScannerTrigger_
+    : (typeof financeInstallScannerTrigger==='function'
+        ? financeInstallScannerTrigger : null);
+  if(!installer)throw new Error(
+    'Instalador de faturas não encontrado. Atualiza o backend Apps Script.');
+  const result=installer();
   if(!result || !result.ok) {
     const message=result && result.message || 'Não foi possível ativar a sincronização.';
     Logger.log(message);
