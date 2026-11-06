@@ -202,10 +202,12 @@ test('corrigir leitura inicial permite valores de fração inativa sem alterar o
  const b=setup(),admin=tokenAdmin(b);
  b.sheets.get('WALLBOX_FRACOES').rows.push(['3C','3.º C','Inativa','outro@example.invalid','2026-11-01',1777,'2026-11-01']);
  const res=b.post('finance.admin.correctInitial',{token:admin,fractionId:'3C',
-   initialReading:1765,initialDate:'2026-11-02',reason:'Erro na leitura inicial'});
+   initialReading:1765,initialDate:'2026-11-02',
+   email:'emailcorrigido@example.invalid',reason:'Erro na leitura inicial'});
  assert.equal(res.ok,true);
  const row=b.sheets.get('WALLBOX_FRACOES').rows[2];
  assert.equal(row[5],1765);assert.equal(row[6],'2026-11-02');
+ assert.equal(row[3],'emailcorrigido@example.invalid');
  assert.equal(b.sheets.get('HISTORICO').rows.length,2);
  assert.equal(b.sheets.get('WALLBOX_PAGAMENTOS').rows.length,1);
 });
@@ -237,4 +239,13 @@ test('morador sem wallbox não consegue acesso financeiro pela simples consulta 
  assert.equal(b.post('finance.admin.wallboxes',{token:resident}).code,'FORBIDDEN');
  const row=b.sheets.get('WALLBOX_FRACOES').rows[1];row[2]='Inativa';
  assert.equal(b.post('finance.resident.eligibility',{token:resident}).eligible,false);
+});
+
+test('alterar email de wallbox ativa para morador não aprovado é recusado',()=>{
+ const b=setup(),admin=tokenAdmin(b);
+ const result=b.post('finance.admin.correctInitial',{token:admin,fractionId:'9B',
+   initialReading:5,initialDate:'2026-09-15',email:'outra@example.invalid',
+   reason:'Correção do destinatário'});
+ assert.equal(result.code,'FINANCE_ERROR');
+ assert.equal(b.sheets.get('WALLBOX_FRACOES').rows[1][3],'teste@example.invalid');
 });
