@@ -12,7 +12,9 @@ function setup(){
   const make=(name,columns,rows=[])=>b.sheets.set(name,new Sheet([columns,...rows]));
   make('WALLBOX_CONFIG',['Chave','Valor','Tipo','Unidade','Início vigência','Atualizado em','Atualizado por','Observações'],[['DESCONTO_FIXOS',25],['NOTIFICACOES_ATIVAS','NAO']]);
   make('WALLBOX_FRACOES',
-    ['ID fração','Fração','Estado','Email autorizado','Data adesão','Leitura inicial (kWh)','Data leitura inicial'],
+    ['ID fração','Fração','Estado','Email autorizado','Data adesão','Leitura inicial (kWh)',
+     'Data leitura inicial','Foto inicial Drive ID','Data desativação','Leitura final (kWh)',
+     'Foto final Drive ID','Criado por','Atualizado em','Observações'],
     [['9B','9.º B','Ativa','teste@example.invalid','2026-09-15',0,'2026-09-15']]);
   make('WALLBOX_CICLOS',
     ['ID ciclo','Fatura ID','Início faturação','Fim faturação','Estado','Validado por','Criado em','Notificado em','Desconto aplicado %'],
