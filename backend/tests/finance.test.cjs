@@ -172,3 +172,11 @@ test('a procura manual não inventa faturas quando não há ficheiros no Drive',
   assert.equal(r.newDocuments,0);
   assert.equal(b.sheets.get('FATURAS').rows.length,2);
 });
+
+test('desconto futuro só entra em vigor na data indicada',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  const saved=b.post('finance.admin.saveDiscount',{token:admin,percent:12.5,effectiveFrom:'2026-11-01'});
+  assert.equal(saved.ok,true);
+  assert.equal(b.context.fncDiscountAt_('2026-09-20'),25);
+  assert.equal(b.context.fncDiscountAt_('2026-11-02'),12.5);
+});
