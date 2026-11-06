@@ -4,9 +4,13 @@ const fs=require('node:fs');
 const path=require('node:path');
 const base=path.resolve(__dirname,'../..');
 const html=fs.readFileSync(path.join(base,'V2/financas-admin.html'),'utf8');
-test('faturas: botão explícito procura PDF no Drive; atualizar lista não repete a procura',()=>{
+test('faturas: consulta automática ao abrir e sincronização manual sem triggers',()=>{
   assert.match(html,/id="scan">Procurar novas faturas no Drive/);
-  assert.match(html,/id="refresh">[^<]*Atualizar lista/);
+  assert.match(html,/id="refresh">[^<]*Atualizar dados/);
+  assert.match(html,/else UI\.busy\('A carregar faturas…',reload\)\.then\(\(\)=>\{/);
+  assert.match(html,/discoverInvoices\(\);/);
+  assert.match(html,/id="lastDriveScan"/);
+  assert.match(html,/id="backgroundSync"/);
   assert.match(html,/UI\.api\('finance\.admin\.scanNow'\)/);
   assert.match(html,/UI\.api\('finance\.admin\.invoices'\)/);
   assert.match(html,/UI\.api\('finance\.admin\.scannerStatus'\)/);
