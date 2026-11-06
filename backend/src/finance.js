@@ -247,8 +247,10 @@ function fncEditPendingReading_(req,actor,ownedFraction){
   if(kwh<0)throw new Error('kWh inválidos');
   const membership=fncData_(FNC.sheet.fractions).filter(r=>r['ID fração']===reading['Fração']).slice(-1)[0];
   if(!membership)throw new Error('Fração não encontrada');
+  const joined=fncDateDisplay_(membership['Data adesão']);
+  if(joined && date<joined)throw new Error('Data anterior à adesão à wallbox');
   const earlier=fncData_(FNC.sheet.readings).filter(r=>r['Fração']===reading['Fração']&&
-    r['Estado']==='Validada');
+    r['Estado']==='Validada'&&fncDateDisplay_(r['Data leitura'])>=joined);
   const reference=earlier.sort((a,b)=>fncDateDisplay_(a['Data leitura']).localeCompare(fncDateDisplay_(b['Data leitura']))).slice(-1)[0];
   const baseKwh=reference?Number(reference['Leitura acumulada kWh']):Number(membership['Leitura inicial (kWh)']);
   const baseDate=fncDateDisplay_(reference?reference['Data leitura']:membership['Data leitura inicial']);
