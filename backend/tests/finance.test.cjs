@@ -269,7 +269,7 @@ test('tentativa de instalar trigger sem autorização devolve instrução segura
   const res=b.post('finance.admin.enableScanner',{token:admin});
   assert.equal(res.ok,false);
   assert.equal(res.requiresAuthorization,true);
-  assert.match(res.message,/financeInstallScannerTrigger_/);
+  assert.match(res.message,/ativarSincronizacaoFaturas/);
   assert.equal(b.props.FINANCE_SCANNER_ENABLED,undefined);
 });
 test('ativar e desativar regista estado apenas depois da operação real',()=>{
