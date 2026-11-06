@@ -10,7 +10,7 @@ function setup(){
   b.props.FINANCE_SPREADSHEET_ID='TEST-FINANCE';
   const Sheet=config.constructor;
   const make=(name,columns,rows=[])=>b.sheets.set(name,new Sheet([columns,...rows]));
-  make('WALLBOX_CONFIG',['Chave','Valor'],[['DESCONTO_FIXOS',25],['NOTIFICACOES_ATIVAS','NAO']]);
+  make('WALLBOX_CONFIG',['Chave','Valor','Tipo','Unidade','Início vigência','Atualizado em','Atualizado por','Observações'],[['DESCONTO_FIXOS',25],['NOTIFICACOES_ATIVAS','NAO']]);
   make('WALLBOX_FRACOES',
     ['ID fração','Fração','Estado','Email autorizado','Data adesão','Leitura inicial (kWh)','Data leitura inicial'],
     [['9B','9.º B','Ativa','teste@example.invalid','2026-09-15',0,'2026-09-15']]);
