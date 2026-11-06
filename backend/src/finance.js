@@ -215,7 +215,9 @@ function fncCorrectInitial_(req,actor){
     const updatedEmail=String(req.email??membership['Email autorizado']).trim().toLowerCase();
     if(updatedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updatedEmail))
       throw new Error('Email inválido');
-    if(membership['Estado']==='Ativa' && !fncApprovedResident_(id,updatedEmail))
+    if(membership['Estado']==='Ativa' &&
+       updatedEmail!==String(membership['Email autorizado']||'').trim().toLowerCase() &&
+       !fncApprovedResident_(id,updatedEmail))
       throw new Error('O novo email não pertence a um morador aprovado nesta fração');
     const membershipStart=fncDateDisplay_(membership['Data adesão']);
     const paid=fncData_(FNC.sheet.payments).some(p=>p['Fração']===id &&
