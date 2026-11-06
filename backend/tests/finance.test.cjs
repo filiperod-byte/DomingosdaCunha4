@@ -141,3 +141,15 @@ test('um dashboard financeiro reutiliza a referência à spreadsheet e não escr
   assert.equal(b.counts.writes,before.writes);
   assert.ok(b.counts.opens-before.opens<=3,'Muitos acessos repetidos à spreadsheet');
 });
+
+test('admin mostra uma entrada por fração mesmo após reativação, conservando histórico',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  b.sheets.get('WALLBOX_FRACOES').rows.push(
+    ['9B','9.º B','Inativa','antigo@example.invalid','2026-01-05',0,'2026-01-05'],
+    ['9B','9.º B','Ativa','teste@example.invalid','2026-09-15',0,'2026-09-15']);
+  const r=b.post('finance.admin.bootstrap',{token:admin});
+  assert.equal(r.ok,true);
+  assert.equal(r.fractions.filter(f=>f.id==='9B').length,1);
+  assert.equal(r.fractions.find(f=>f.id==='9B').status,'Ativa');
+  assert.equal(b.sheets.get('WALLBOX_FRACOES').rows.length,4);
+});
