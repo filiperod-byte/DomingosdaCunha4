@@ -63,7 +63,15 @@ function fncFinanceFileId_(){
   if(files.hasNext())throw new Error('Existem várias bases financeiras com o mesmo nome');
   return file.getId();
 }
-function fncDb_(){return SpreadsheetApp.openById(fncFinanceFileId_());}
+// Um único acesso à Spreadsheet financeira por execução (sem cache de leituras de células).
+// A Apps Script reinicializa o contexto em novas execuções; dentro da mesma execução
+// reutilizamos apenas a referência ao ficheiro, nunca os valores das tabelas.
+let fncFinanceSpreadsheetRef_;
+function fncDb_(){
+  if(!fncFinanceSpreadsheetRef_)
+    fncFinanceSpreadsheetRef_=SpreadsheetApp.openById(fncFinanceFileId_());
+  return fncFinanceSpreadsheetRef_;
+}
 function fncTab_(name) {
   const sh=fncDb_().getSheetByName(name);
   if (!sh) throw new Error('Separador não encontrado: '+name);
