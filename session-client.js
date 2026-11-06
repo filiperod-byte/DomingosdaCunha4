@@ -33,8 +33,8 @@
     else if (options.body) Object.assign(payload, JSON.parse(options.body));
     const action = String(payload.action || 'status').replace(/^garage([A-Z])/, (_, c) => 'garage.' + c.toLowerCase());
     payload.action = action;
-    const adminPage = /\/(?:V2\/(?:admin|acessos-admin|config-admin|garagem-admin)|backoffice|relatorio-extintores|occurrences-admin|floor-qrcodes)\.html$/.test(new URL(location.href).pathname);
-    const role = ['general.report','general.confirm','report', 'garage.getCode', 'garage.loginPin'].includes(action) ? 'resident' : 'admin';
+    const adminPage = /\/(?:V2\/(?:admin|acessos-admin|config-admin|garagem-admin|financas-admin)|backoffice|relatorio-extintores|occurrences-admin|floor-qrcodes)\.html$/.test(new URL(location.href).pathname);
+    const role = ['general.report','general.confirm','report', 'garage.getCode', 'garage.loginPin','finance.resident.status','finance.resident.submitReading'].includes(action) ? 'resident' : 'admin';
     const session = read(role) || (action === 'report' ? read('admin') : null);
     if (session && session.expiresAt > Date.now()) payload.token = session.token;
     const startedAt=Date.now();

@@ -19,6 +19,7 @@
       };
       return parents[screen] ? {screen:parents[screen]} : null;
     }
+    if (page === 'V2/wallbox.html') return {url:'V2/index.html'};
     if (page === 'V2/garagem.html') {
       const parents = {
         'screen-registo':'screen-inicio', 'screen-login':'screen-inicio',
@@ -30,7 +31,7 @@
       };
       return parents[screen] ? {screen:parents[screen]} : {menu:true};
     }
-    if (['V2/acessos-admin.html','V2/config-admin.html','V2/garagem-admin.html','backoffice.html','relatorio-extintores.html'].includes(page)) return {url:'V2/admin.html'};
+    if (['V2/acessos-admin.html','V2/config-admin.html','V2/garagem-admin.html','V2/financas-admin.html','backoffice.html','relatorio-extintores.html'].includes(page)) return {url:'V2/admin.html'};
     return {menu:true};
   }
   window.DC4Navigation = {parentFor};

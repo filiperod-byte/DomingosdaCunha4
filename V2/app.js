@@ -7,7 +7,7 @@ async function loadConfig(){const r=await dc4Fetch('config.json',{cache:'no-stor
 async function apiGet(action,params={}){await ensureConfig();const url=new URL(BACKEND_URL);url.searchParams.set('action',action);Object.keys(params).forEach(k=>{if(params[k])url.searchParams.set(k,params[k])});const r=await dc4Fetch(url.toString(),{cache:'no-store'});const t=await r.text();try{return JSON.parse(t)}catch(e){throw new Error('Resposta inválida do backend.')}}
 async function apiPost(action,data={}){await ensureConfig();const r=await dc4Fetch(BACKEND_URL,{method:'POST',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify(Object.assign({action},data))});const t=await r.text();try{return JSON.parse(t)}catch(e){throw new Error('Resposta inválida do backend.')}}
 function htmlMsg(type,text){return '<div class="alert alert-'+type+'">'+escapeHtml(text||'')+'</div>'}function escapeHtml(s){return String(s||'').replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]))}
-function irPara(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const t=document.getElementById(id);if(t){t.classList.add('active');scrollTo(0,0)}if(id==='screen-login'){App.pin='';renderPIN();const msg=document.getElementById('login-msg');if(msg)msg.innerHTML=PENDING_EXT_QR?htmlMsg('info','Valide o PIN para reportar este extintor.'):''}if(id==='screen-first-use')document.getElementById('btn-rec-reg').style.display='none'}
+function irPara(id){document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));const t=document.getElementById(id);if(t){t.classList.add('active');scrollTo(0,0)}if(id==='screen-login'){App.pin='';renderPIN();const msg=document.getElementById('login-msg');if(msg)msg.innerHTML=PENDING_EXT_QR?htmlMsg('info','Valide o PIN para reportar este extintor.'):''}if(id==='screen-first-use')document.getElementById('btn-rec-reg').style.display='none';if(id==='screen-home')loadWallboxTile()}
 addEventListener('DOMContentLoaded',async()=>{restoreUser();if(window.dc4HasSession?.('resident'))irPara('screen-home');try{await ensureConfig();const cfg=await apiGet('garage.publicConfig');if(cfg.nomeCondominio)document.getElementById('app-title').textContent=cfg.nomeCondominio;GARAGE_STRUCTURE=cfg.structure||[];CODE_VISIBLE_SECONDS=Number(cfg.tempoVisivel)||15;renderStructure();restoreUser();handleQrEntry()}catch(e){console.error(e);renderStructure();handleQrEntry()}updateEye(false)});
 function saveUser(){try{const u={nome:App.nome,name:App.nome,piso:App.piso,fracao:App.fracao};localStorage.setItem('dc4_user',JSON.stringify(u));sessionStorage.setItem('dc4_user',JSON.stringify(u));}catch(e){}}
 function restoreUser(){if(!window.dc4HasSession?.('resident'))return;try{const raw=sessionStorage.getItem('dc4_user')||localStorage.getItem('dc4_user')||'';if(!raw)return;const u=JSON.parse(raw);if(u?.nome){App.nome=u.nome;App.piso=u.piso||'';App.fracao=u.fracao||'';document.getElementById('profile-name').textContent=App.nome;document.getElementById('profile-meta').textContent=[App.piso?('Piso '+App.piso):'',App.fracao?('Fração '+App.fracao):''].filter(Boolean).join(' · ')||'Acesso autorizado';}}catch(e){}}
@@ -33,3 +33,18 @@ function occDate(v){if(!v)return'';const d=new Date(v);if(Number.isNaN(d.getTime
 function occCard(o){const pending=o.type==='pending';return '<article class="ext-card"><div class="ext-card-head"><div><div class="ext-card-title">'+escapeHtml(o.floorLabel)+' · '+escapeHtml(o.point||'Extintor')+'</div><div class="ext-card-sub">'+escapeHtml(o.location||'Sem localização indicada')+'</div></div><span class="ext-state '+(pending?'pending':'open')+'">'+(pending?'A aguardar validação':'Ocorrência aberta')+'</span></div><div class="ext-kv">'+(o.reason?'<div><strong>Motivo:</strong> '+escapeHtml(o.reason)+'</div>':'')+(o.notes?'<div><strong>Observação:</strong> '+escapeHtml(o.notes)+'</div>':'')+(o.reportedBy?'<div><strong>Reportado por:</strong> '+escapeHtml(o.reportedBy)+'</div>':'')+(o.createdAt?'<div><strong>Data:</strong> '+escapeHtml(occDate(o.createdAt))+'</div>':'')+(o.photoUrl?'<div><strong>Foto:</strong> <a href="'+escapeHtml(o.photoUrl)+'" target="_blank" rel="noopener noreferrer">Abrir fotografia</a></div>':'')+'</div></article>'}
 function emDesenvolvimento(nome){alert(nome+' ainda está em desenvolvimento. Um passinho de cada vez, sem acordar o monstro do código. 😄')}
 function terminarSessao(){dc4Logout('resident');clearInterval(_timerInterval);try{sessionStorage.removeItem('dc4_user');localStorage.removeItem('dc4_user')}catch(e){}App={pin:'',nome:'',piso:'',fracao:'',motivo:''};CODE_VALUE='';CODE_IS_VISIBLE=false;PENDING_EXT_QR=null;document.querySelectorAll('.motivo').forEach(m=>m.classList.remove('selected'));irPara('screen-start')}
+
+/** A elegibilidade é verificada no backend; o botão fica oculto por defeito. */
+async function loadWallboxTile(){
+ const el=document.getElementById('wallbox-module');if(!el)return;
+ el.style.display='none';if(!window.dc4HasSession?.('resident'))return;
+ try{
+   const c=await (await dc4Fetch('config.json')).json();
+   const action='finance.resident.status';
+   const r=await dc4Fetch(c.backendUrl+'?action='+encodeURIComponent(action),{
+     method:'POST',body:JSON.stringify({action})
+   });
+   const raw=await r.json(),data=raw.data&&typeof raw.data==='object'?raw.data:raw;
+   if(data.ok===true&&data.fraction)el.style.display='flex';
+ }catch(_){/* Sem acesso não se expõe o módulo */ }
+}

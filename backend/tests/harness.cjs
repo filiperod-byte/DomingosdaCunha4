@@ -46,8 +46,10 @@ function harness(source, options = {}) {
   let fileId = 0;
   const props = {};
   const folders = new Map();
+  const triggers = [];
   const root = {
     getFoldersByName(name) { return { hasNext: () => folders.has(name), next: () => folders.get(name) }; },
+    getFolders() { const list=[...folders.values()];let i=0;return {hasNext:()=>i<list.length,next:()=>list[i++]}; },
     createFolder(name) {
       const folder = { createFile(blob) {
         counts.files++;
@@ -82,6 +84,15 @@ function harness(source, options = {}) {
       if (options.mailFails) throw new Error('Synthetic mail failure');
       counts.mails++; emails.push(JSON.parse(JSON.stringify(email)));
     } },
+    ScriptApp: {
+      getProjectTriggers:()=>[...triggers],
+      deleteTrigger:t=>{const i=triggers.indexOf(t);if(i>=0)triggers.splice(i,1);},
+      newTrigger:handler=>{
+        const entry={handler,mins:0,getHandlerFunction(){return this.handler;}};
+        return {timeBased(){return this;},everyMinutes(n){entry.mins=n;return this;},
+          create(){triggers.push(entry);return entry;}};
+      }
+    },
     Session: { getEffectiveUser: () => ({ getEmail: () => 'owner@example.invalid' }), getActiveUser: () => ({ getEmail: () => '' }) },
     ContentService: { MimeType: { JSON: 'json' }, createTextOutput: value => ({ setMimeType: () => JSON.parse(value) }) },
     DriveApp: { getFolderById: () => root, Access: { ANYONE_WITH_LINK: 'link' }, Permission: { VIEW: 'view' } },
