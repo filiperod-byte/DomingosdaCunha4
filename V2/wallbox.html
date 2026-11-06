@@ -1,105 +1,89 @@
 <!doctype html><html lang="pt-PT"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1A2F5A">
-<title>Wallbox — Domingos da Cunha 4</title>
-<script src="../session-client.js?v=3.8.0"></script><script src="../app-navigation.js?v=3.8.0" defer></script>
-<style>
-*{box-sizing:border-box}body{margin:0;background:#F5F7FA;color:#111827;font-family:system-ui,-apple-system,Segoe UI,Roboto,sans-serif}
-.app{max-width:440px;margin:auto;padding:0 16px 28px}.hero{margin:0 -16px 17px;padding:23px 22px 29px;color:#fff;background:#1A2F5A;border-radius:0 0 22px 22px}
-h1{margin:0 0 6px;font-size:25px}p{font-size:13px;line-height:1.5;margin:8px 0}.hero p{color:#cbd5e1}
-.card{background:#fff;border:1px solid #e2e8f0;padding:17px;border-radius:18px;margin:12px 0;box-shadow:0 3px 12px #1a2f5a0c}
-h2{color:#1A2F5A;font-size:16px;margin:0 0 10px}.muted{color:#64748b}
-.pill{display:inline-flex;padding:6px 10px;background:#EFF6FF;border-radius:99px;color:#1D4ED8;font-weight:800;font-size:12px}
-label{display:block;margin:12px 0 5px;font-size:13px;font-weight:800;color:#1A2F5A}
-input{width:100%;min-height:47px;border-radius:12px;border:1.5px solid #cbd5e1;background:#fff;padding:12px;font:inherit}
-button{display:block;width:100%;background:#2563EB;color:#fff;border:0;border-radius:13px;padding:15px;font:800 15px system-ui;cursor:pointer;margin-top:15px}
-button:disabled{opacity:.4;cursor:not-allowed}.metric{font-size:26px;font-weight:900;color:#1A2F5A}
-.row{display:flex;align-items:center;justify-content:space-between;gap:12px;margin:10px 0;font-size:13px}
-#alert{display:none;border-radius:12px;padding:12px;background:#eff6ff;color:#1d4ed8;margin:12px 0;font-size:13px}
-#alert.err{display:block;background:#fef2f2;color:#991b1b}#alert.ok{display:block;background:#dcfce7;color:#166534}
-#photoPreview{width:100%;max-height:240px;object-fit:contain;border-radius:10px;margin-top:10px;display:none}
-.small{font-size:11px;color:#64748b}
-</style></head><body><main class="app">
-<header class="hero"><h1>⚡ A minha wallbox</h1><p>Fotografe a leitura acumulada do contador quando receber o aviso do condomínio.</p></header>
-<div id="alert" role="status" aria-live="polite"></div>
-<div id="loading" class="card">A verificar a conta e o serviço de wallbox…</div>
-<div id="body" hidden>
-<section class="card"><h2>Serviço</h2><div class="row"><span>Fração</span><strong id="fraction">—</strong></div>
-<div class="row"><span>Estado do ciclo</span><span id="cycle" class="pill">A aguardar</span></div>
-<div class="row"><span>Última leitura validada</span><strong id="last">—</strong></div>
-<p class="muted">O início de cada período é automático. Não precisa de introduzir novamente a leitura anterior.</p></section>
-<section class="card"><h2>Submeter nova leitura</h2>
-<form id="form">
-<label for="readingDate">Data da leitura</label><input type="date" id="readingDate" required>
-<label for="kwh">Valor acumulado (kWh)</label><input type="number" id="kwh" min="0" step="0.01" required placeholder="Número mostrado no contador">
-<label for="photo">Fotografia do contador</label><input type="file" id="photo" accept="image/jpeg,image/png" capture="environment" required>
-<img id="photoPreview" alt="Pré-visualização da fotografia do contador">
-<p class="small">A imagem será guardada apenas no Drive privado do condomínio e servirá de comprovativo.</p>
-<button type="submit" id="send">Submeter leitura</button>
-</form></section>
-<section class="card"><h2>Histórico</h2><div id="history"></div></section>
-<section class="card"><h2>Pagamentos</h2><p class="muted">O valor aparece após validação da fatura EDP, da leitura e do desconto em vigor.</p><div id="payments"></div></section>
-</div></main>
-<script>
+<title>A minha wallbox — DC4</title>
+<script src="../session-client.js?v=3.8.1"></script><script src="../app-navigation.js?v=3.8.1" defer></script>
+<link rel="stylesheet" href="finance-ui.css?v=3.8.1"><script src="finance-ui.js?v=3.8.1"></script>
+</head><body><main>
+<header><h1>⚡ A minha wallbox</h1><p>Leituras e pagamentos da tua fração.</p></header>
+<div id="progress" role="status" aria-live="polite"><span class="spinner"></span><span data-progress-text>A carregar…</span></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="loading">A consultar o estado do serviço…</div>
+<div id="app" hidden>
+<div class="card"><div class="row"><h2>Estado do serviço</h2><span id="cycle" class="status">—</span></div>
+<dl class="data"><div><dt>Fração</dt><dd id="fraction">—</dd></div>
+<div><dt>Última leitura validada</dt><dd id="last">—</dd></div></dl>
+<p class="hint">A leitura inicial de cada período vem automaticamente do último registo validado.</p></div>
+<div class="card"><h2 id="readingTitle">Enviar leitura</h2><p id="readingHint" class="hint">Regista o valor acumulado indicado no contador.</p>
+<form id="readingForm">
+<div class="two"><div><label for="readingDate">Data</label><input id="readingDate" type="date" required></div>
+<div><label for="kwh">Leitura (kWh)</label><input id="kwh" type="number" min="0" step="0.01" required placeholder="Ex.: 1777"></div></div>
+<label for="photo">Fotografia do contador <span id="photoOptional"></span></label>
+<input id="photo" type="file" accept="image/jpeg,image/png" capture="environment" required>
+<img id="photoPreview" alt="Pré-visualização" style="display:none;width:100%;max-height:200px;object-fit:contain;border-radius:11px;margin-top:9px">
+<button id="send" class="btn-block" type="submit">Submeter leitura</button></form>
+<p id="noSubmission" class="muted" hidden>Uma nova leitura ficará disponível quando a fatura de eletricidade for validada.</p>
+</div>
+<div class="card"><h2>Histórico de leituras</h2><div id="history"></div></div>
+<div class="card"><h2>Pagamentos</h2><p class="hint">Os valores são disponibilizados após validação da leitura e da fatura pela administração.</p><div id="payments"></div></div>
+</div>
+</main><script>
 (function(){
-'use strict';const $=id=>document.getElementById(id);let BASE='',cycle='';
-function info(msg,err=false){const x=$('alert');x.className=err?'err':'ok';x.textContent=msg;}
-function money(v){return Number(v).toLocaleString('pt-PT',{style:'currency',currency:'EUR'});}
-function line(parent,a,b){const div=document.createElement('div');div.className='row';const x=document.createElement('span'),y=document.createElement('strong');x.textContent=a;y.textContent=b;div.append(x,y);parent.append(div);}
-async function call(action,data={}){
- const resp=await dc4Fetch(BASE+'?action='+encodeURIComponent(action),{method:'POST',body:JSON.stringify({action,...data})});
- const obj=await resp.json(),val=obj.data&&typeof obj.data==='object'?obj.data:obj;
- if(val.ok===false||val.error)throw Error(val.message||val.error||'Pedido não autorizado');
- return val;
-}
-function isoToday(){return new Date().toLocaleDateString('sv-SE');}
+'use strict';
+const UI=window.FinUI,$=UI.$;let cycle='',editing=null,readings=[];
+function line(parent,a,b){const div=UI.node('div',undefined,'row');div.append(UI.node('span',a),UI.node('strong',b));parent.append(div)}
 async function load(){
- const x=await call('finance.resident.status');cycle=x.openCycle||'';
- $('fraction').textContent=x.fraction||'—';$('cycle').textContent=cycle?'Leitura disponível':'A aguardar fatura EDP';
- const approved=(x.readings||[]).filter(r=>r.state==='Validada').slice(-1)[0];
- $('last').textContent=approved?approved.kwh+' kWh ('+approved.date+')':
-   (x.initialReading!=null?x.initialReading+' kWh':'Ainda não definida');
+ const data=await UI.api('finance.resident.status');
+ cycle=data.openCycle||'';
+ $('fraction').textContent=data.fraction||'—';
+ $('cycle').textContent=cycle?'Leitura disponível':'A aguardar fatura';
+ readings=data.readings||[];
+ const approved=readings.filter(r=>r.state==='Validada').slice(-1)[0];
+ $('last').textContent=approved?(approved.kwh+' kWh · '+UI.date(approved.date)):
+  (data.initialReading!=null?data.initialReading+' kWh · '+UI.date(data.initialDate):'—');
  $('history').replaceChildren();$('payments').replaceChildren();
- if(!(x.readings||[]).length) $('history').textContent='Ainda não existem leituras submetidas.';
- (x.readings||[]).forEach(r=>line($('history'),r.date||'—',r.kwh+' kWh · '+r.state));
- if(!(x.payments||[]).length)$('payments').textContent='Sem pagamentos apurados.';
- (x.payments||[]).forEach(p=>line($('payments'),p.cycle+' · '+p.state,money(p.total)));
- const already=(x.readings||[]).some(r=>r.cycle===cycle&&r.state!=='Rejeitada');
- $('send').disabled=!cycle||already;
- if(already)info('Já foi submetida uma leitura para este ciclo.');
- $('body').hidden=false;$('loading').hidden=true;
+ for(const r of readings)line($('history'),UI.date(r.date),r.kwh+' kWh · '+r.state);
+ if(!readings.length)$('history').textContent='Ainda não existem leituras.';
+ for(const p of data.payments||[])line($('payments'),p.cycle+' · '+p.state,UI.money(p.total));
+ if(!(data.payments||[]).length)$('payments').textContent='Sem pagamentos apurados.';
+ const pending=readings.find(r=>r.cycle===cycle&&r.state==='Submetida');
+ const done=readings.some(r=>r.cycle===cycle&&r.state==='Validada');
+ editing=pending||null;
+ $('readingTitle').textContent=editing?'Corrigir leitura pendente':'Enviar nova leitura';
+ $('readingHint').textContent=editing?
+  'Podes corrigir um valor introduzido por engano enquanto a administração ainda não validou a leitura.':
+  'Regista o total acumulado que aparece no contador.';
+ $('photoOptional').textContent=editing?'(opcional ao corrigir)':'';
+ $('photo').required=!editing;
+ $('send').textContent=editing?'Guardar correção':'Submeter leitura';
+ if(editing){$('readingDate').value=String(editing.date||'').slice(0,10);$('kwh').value=editing.kwh;}
+ else{$('readingDate').value=UI.iso();$('kwh').value='';$('photo').value='';$('photoPreview').style.display='none';}
+ $('readingForm').hidden=!cycle||done;
+ $('noSubmission').hidden=!!cycle&&!done;
+ $('noSubmission').textContent=done?'Leitura deste ciclo já validada. Não é possível alterá-la sem regularização da administração.':
+  'Uma nova leitura ficará disponível quando a fatura de eletricidade for validada.';
+ $('loading').hidden=true;$('app').hidden=false;
 }
-function photoData(file){
- if(!file || !['image/jpeg','image/png'].includes(file.type))return Promise.reject(Error('É necessária uma fotografia JPG ou PNG'));
- return new Promise((resolve,reject)=>{
-  const img=new Image(),url=URL.createObjectURL(file);
-  img.onload=()=>{
-   try{const max=1400,scale=Math.min(1,max/Math.max(img.width,img.height));
-    const c=document.createElement('canvas');c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale);
-    c.getContext('2d').drawImage(img,0,0,c.width,c.height);
-    const data=c.toDataURL('image/jpeg',.76);URL.revokeObjectURL(url);
-    if(data.length>4200000)throw Error('Fotografia demasiado grande; tente novamente.');
-    resolve(data);
-   }catch(e){URL.revokeObjectURL(url);reject(e);}
-  };
-  img.onerror=()=>{URL.revokeObjectURL(url);reject(Error('Não foi possível abrir a fotografia'))};img.src=url;
- });
-}
-$('readingDate').value=isoToday();
-$('photo').addEventListener('change',e=>{const f=e.target.files?.[0];if(!f)return;const img=$('photoPreview');img.src=URL.createObjectURL(f);img.style.display='block';});
-$('form').addEventListener('submit',async e=>{
- e.preventDefault();if(!cycle)return info('Aguardamos a validação da fatura de eletricidade.',true);
- $('send').disabled=true;
- try{const img=await photoData($('photo').files[0]);
-  await call('finance.resident.submitReading',{cycleId:cycle,readingDate:$('readingDate').value,
-    kwh:$('kwh').value,photoBase64:img});
-  info('Leitura submetida. A administração irá confirmar a fotografia e o valor.');
-  $('form').reset();await load();
- }catch(err){info(err.message,true);$('send').disabled=false;}
+$('photo').addEventListener('change',e=>{
+ const file=e.target.files?.[0];if(!file)return;
+ $('photoPreview').src=URL.createObjectURL(file);$('photoPreview').style.display='block';
 });
-(async()=>{if(!dc4HasSession('resident')){location.replace('index.html');return;}
- try{BASE=(await (await dc4Fetch('config.json')).json()).backendUrl;await load();}
- catch(e){$('loading').textContent='Serviço indisponível: '+e.message;info('O módulo Wallbox ainda não está disponível.',true);}
-})();
+$('readingForm').addEventListener('submit',e=>{
+ e.preventDefault();
+ UI.busy(editing?'A corrigir a leitura…':'A enviar a leitura…',async()=>{
+  const photoBase64=await UI.imageData($('photo').files?.[0]);
+  if(!editing&&!photoBase64)throw Error('A fotografia do contador é obrigatória');
+  const action=editing?'finance.resident.amendReading':'finance.resident.submitReading';
+  const payload={readingDate:$('readingDate').value,kwh:$('kwh').value};
+  if(editing)payload.id=editing.id;
+  else payload.cycleId=cycle;
+  if(photoBase64)payload.photoBase64=photoBase64;
+  await UI.api(action,payload);
+  UI.toast(editing?'Leitura corrigida e ainda pendente de validação.':'Leitura submetida para validação.');
+  $('photo').value='';await load();
+ });
+});
+if(!dc4HasSession('resident'))location.replace('index.html');
+else UI.busy('A consultar a tua wallbox…',load);
 })();
 </script></body></html>
