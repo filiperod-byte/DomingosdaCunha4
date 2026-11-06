@@ -137,7 +137,7 @@ function fncExtractOneInvoice_(invoiceId){
     if(current===''||current==null||(placeholder&&String(current)===placeholder))patch[field]=value;
   };
   if(parsed.recognized>=2){
-    set('Tipo','Fatura','Documento por classificar');
+    if(parsed.number)set('Tipo','Fatura','Documento por classificar');
     set('Fornecedor',parsed.supplier,'Por identificar');
     set('NIF',parsed.nif);
     set('Documento',parsed.number,item['Documento']);
