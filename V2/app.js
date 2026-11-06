@@ -34,17 +34,25 @@ function occCard(o){const pending=o.type==='pending';return '<article class="ext
 function emDesenvolvimento(nome){alert(nome+' ainda está em desenvolvimento. Um passinho de cada vez, sem acordar o monstro do código. 😄')}
 function terminarSessao(){dc4Logout('resident');clearInterval(_timerInterval);try{sessionStorage.removeItem('dc4_user');localStorage.removeItem('dc4_user')}catch(e){}App={pin:'',nome:'',piso:'',fracao:'',motivo:''};CODE_VALUE='';CODE_IS_VISIBLE=false;PENDING_EXT_QR=null;document.querySelectorAll('.motivo').forEach(m=>m.classList.remove('selected'));irPara('screen-start')}
 
-/** A elegibilidade é verificada no backend; o botão fica oculto por defeito. */
+/** A elegibilidade não lê faturas, fotografias, pagamentos nem histórico.
+ * Evita a consulta pesada a cada regresso ao menu do morador.
+ */
+let wallboxStatusCache=null;
 async function loadWallboxTile(){
  const el=document.getElementById('wallbox-module');if(!el)return;
- el.style.display='none';if(!window.dc4HasSession?.('resident'))return;
+ el.style.display='none';
+ if(!window.dc4HasSession?.('resident')){wallboxStatusCache=null;return;}
+ if(wallboxStatusCache&&Date.now()-wallboxStatusCache.checkedAt<120000){
+   el.style.display=wallboxStatusCache.eligible?'flex':'none';return;
+ }
  try{
-   const c=await (await dc4Fetch('config.json')).json();
-   const action='finance.resident.status';
+   const c=await (await dc4Fetch('config.json',{cache:'no-store'})).json();
+   const action='finance.resident.eligibility';
    const r=await dc4Fetch(c.backendUrl+'?action='+encodeURIComponent(action),{
      method:'POST',body:JSON.stringify({action})
    });
    const raw=await r.json(),data=raw.data&&typeof raw.data==='object'?raw.data:raw;
-   if(data.ok===true&&data.fraction)el.style.display='flex';
- }catch(_){/* Sem acesso não se expõe o módulo */ }
+   if(data.ok===true){wallboxStatusCache={checkedAt:Date.now(),eligible:!!data.eligible};
+     el.style.display=data.eligible?'flex':'none';}
+ }catch(_){/* Não tornar visível quando não é possível confirmar a elegibilidade */ }
 }
