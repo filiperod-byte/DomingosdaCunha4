@@ -26,3 +26,9 @@ test('faturas: scripts inline válidos',()=>{
     if(script[1].trim())assert.doesNotThrow(()=>new Function(script[1]));
   }
 });
+test('faturas: instruções OAuth visíveis quando o backend não pode consultar triggers',()=>{
+ assert.match(html,/id="scannerHelp"/);
+ assert.match(html,/authorizationRequired/);
+ assert.match(html,/financeInstallScannerTrigger_/);
+ assert.match(html,/A pesquisa manual de documentos continua disponível/);
+});
