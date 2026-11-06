@@ -53,6 +53,7 @@
 <label for="correctLabel">Fração</label><input id="correctLabel" disabled>
 <div class="two"><div><label for="correctKwh">Leitura inicial (kWh)</label><input type="number" id="correctKwh" min="0" step="0.01" required></div>
 <div><label for="correctDate">Data da leitura</label><input type="date" id="correctDate" required></div></div>
+<label for="correctEmail">Email autorizado</label><input id="correctEmail" type="email" autocomplete="off">
 <label for="correctPhoto">Nova fotografia (opcional)</label><input id="correctPhoto" type="file" accept="image/jpeg,image/png" capture="environment">
 <label for="correctReason">Motivo da correção</label><textarea id="correctReason" rows="2" maxlength="250" required placeholder="Ex.: valor do contador introduzido incorretamente"></textarea>
 <div class="actions"><button type="submit">Guardar correção</button><button type="button" class="secondary" data-close="correctInitialDialog">Cancelar</button></div></form></dialog>
@@ -162,6 +163,7 @@ function editInitial(f){
  $('correctId').value=f.id;$('correctLabel').value=f.name||f.id;
  $('correctKwh').value=f.initialReading??'';
  $('correctDate').value=String(f.initialDate||'').slice(0,10);
+ $('correctEmail').value=f.email||'';
  $('correctReason').value='';$('correctPhoto').value='';
  $('correctInitialDialog').showModal();
 }
@@ -217,7 +219,8 @@ $('correctInitialForm').addEventListener('submit',event=>{
  if(!confirm('Corrigir o registo inicial? A alteração fica auditada.')){event.preventDefault();return;}
  saveForm(event,'correctInitialDialog','finance.admin.correctInitial',{
   fractionId:$('correctId').value,initialReading:$('correctKwh').value,
-  initialDate:$('correctDate').value,reason:$('correctReason').value},
+  initialDate:$('correctDate').value,email:$('correctEmail').value,
+  reason:$('correctReason').value},
   'Leitura inicial corrigida.', $('correctPhoto'));
 });
 $('deactivateForm').addEventListener('submit',event=>{
