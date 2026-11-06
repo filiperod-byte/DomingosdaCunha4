@@ -28,7 +28,7 @@ input:focus,select:focus{outline:2px solid #2563EB;outline-offset:1px}.grid{disp
 #loading{padding:16px;color:#475569}#onboarding{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px;color:#92400e;margin-bottom:12px;font-size:13px;line-height:1.5}
 code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 0}
 @media(max-width:360px){.grid{grid-template-columns:1fr}.tab{min-width:76px;font-size:12px}}
-.preview{width:min(96vw,550px);border:1px solid #cbd5e1;border-radius:18px;padding:16px}
+.preview{width:min(96vw,550px);max-height:86vh;overflow-y:auto;border:1px solid #cbd5e1;border-radius:18px;padding:16px}
 .preview::backdrop{background:#0f172ad9}.preview img{display:block;max-width:100%;max-height:70vh;margin:auto;object-fit:contain}
 .preview p{color:#64748b;font-size:12px}
 </style>
@@ -78,6 +78,27 @@ code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 
 <div class="card"><h2>Notificações</h2><p class="note">Os emails são enviados após uma fatura EDP validada, apenas às frações ativas. O envio ficará desligado até à configuração do backend.</p><div id="notifyState" class="badge">Não configurado</div><div class="btn-row"><button type="button" id="toggleNotifications" class="btn secondary" disabled>Alterar notificações</button></div><div id="cycleList"></div></div>
 </section>
 <section class="section" id="readings"><h2>Leituras submetidas</h2><p class="note">As leituras dos moradores são confirmadas pela administração. A aprovação não executa transferências.</p><div id="readingList"></div><h2>Recebimentos wallbox</h2><div id="paymentList"></div></section>
+<dialog id="invoiceDialog" class="preview"><h2>Corrigir dados da fatura</h2>
+<p class="note">As alterações ficam por validar. O documento original mantém-se no Drive.</p>
+<form id="invoiceEditForm">
+<input type="hidden" id="invoiceId">
+<label for="invoiceType">Tipo de documento</label>
+<select id="invoiceType" required>
+<option>Fatura</option><option>Fatura + contribuição audiovisual</option>
+<option>Nota despesas/honorários</option><option>Orçamento / honorários</option>
+<option>Documento por classificar</option></select>
+<label for="invoiceSupplier">Fornecedor</label><input id="invoiceSupplier" maxlength="160" required>
+<label for="invoiceDescription">Serviço / descrição</label><input id="invoiceDescription" maxlength="300" required>
+<div class="grid"><div><label for="invoiceValue">Total (€)</label><input id="invoiceValue" type="number" min="0" max="1000000" step="0.01" required></div>
+<div><label for="invoiceDue">Data de vencimento</label><input id="invoiceDue" type="date"></div></div>
+<label for="invoiceMethod">Forma de pagamento</label><select id="invoiceMethod">
+<option>Transferência</option><option>Multibanco</option><option>Débito direto</option>
+<option>Por confirmar</option><option>Transferência apenas após fatura</option></select>
+<label for="invoiceIban">IBAN</label><input id="invoiceIban" maxlength="40" autocomplete="off">
+<div class="grid"><div><label for="invoiceEntity">Entidade MB</label><input id="invoiceEntity" inputmode="numeric" maxlength="5"></div>
+<div><label for="invoiceReference">Referência MB</label><input id="invoiceReference" inputmode="numeric" maxlength="9"></div></div>
+<div class="btn-row"><button class="btn" type="submit">Guardar para validação</button>
+<button type="button" class="btn secondary" id="invoiceEditCancel">Cancelar</button></div></form></dialog>
 <dialog id="readingPhotoDialog" class="preview"><h2>Fotografia do contador</h2><p>Imagem privada — apenas administração</p><img id="readingPhotoImage" alt="Fotografia enviada pelo morador"><button class="btn secondary" id="closePhotoDialog" type="button">Fechar</button></dialog>
 </main>
 <script>
@@ -108,6 +129,17 @@ async function showReadingPhoto(readingId){
     $('readingPhotoDialog').showModal();
   }catch(err){show(err.message,true);}
 }
+function editInvoice(item){
+  const values={
+    invoiceId:item.id,invoiceType:item.documentType||'Documento por classificar',
+    invoiceSupplier:item.supplier||'',invoiceDescription:item.description||'',
+    invoiceValue:item.value==null?'':item.value,invoiceDue:item.due||'',
+    invoiceMethod:item.method||'Por confirmar',invoiceIban:item.iban||'',
+    invoiceEntity:item.entity||'',invoiceReference:item.reference||''
+  };
+  Object.entries(values).forEach(([id,value])=>{if($(id))$(id).value=value;});
+  $('invoiceDialog').showModal();
+}
 function render(){
   $('invoiceList').replaceChildren();$('fractionList').replaceChildren();$('readingList').replaceChildren();$('paymentList').replaceChildren();
   const invoices=DATA.invoices||[],fractions=DATA.fractions||[],readings=DATA.readings||[],payments=DATA.payments||[],cycles=DATA.cycles||[];
@@ -121,7 +153,10 @@ function render(){
     if(f.entity&&f.reference)field(card,'Multibanco',f.entity+' / '+f.reference);
     if(f.url && /^https:\/\/drive\.google\.com\//.test(f.url)){const link=node('a','Ver documento original');link.href=f.url;link.target='_blank';link.rel='noopener noreferrer';card.append(link);}
     const buttons=node('div',null,'btn-row');
-    if(f.validation!=='Validada' && !String(f.documentType||'').toLowerCase().includes('orçamento'))
+    if(f.validation!=='Validada' && f.payment!=='Pago')
+      buttons.append(b('Corrigir dados',()=>editInvoice(f),true));
+    if(f.validation!=='Validada' && !String(f.documentType||'').toLowerCase().includes('orçamento') &&
+       !String(f.documentType||'').toLowerCase().includes('por classificar'))
       buttons.append(b('Validar fatura',()=>{if(confirm('Confirmas os dados desta fatura?'))act('finance.admin.validateInvoice',{id:f.id},'Fatura validada.');}));
     if(f.validation==='Validada' && f.payment!=='Pago' && !String(f.documentType||'').toLowerCase().includes('orçamento'))
       buttons.append(b('Registar como paga',()=>{if(confirm('Confirmaste o pagamento no banco?'))act('finance.admin.markInvoicePaid',{id:f.id,paidAt:today()},'Pagamento registado.');},true));
@@ -213,6 +248,22 @@ async function init(){
 $('tabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(!t)return;
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
   document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===t.dataset.tab));
+});
+$('invoiceEditCancel').addEventListener('click',()=>{$('invoiceDialog').close();});
+$('invoiceEditForm').addEventListener('submit',async e=>{
+ e.preventDefault();
+ const fields={
+   id:$('invoiceId').value,documentType:$('invoiceType').value,
+   supplier:$('invoiceSupplier').value,description:$('invoiceDescription').value,
+   value:$('invoiceValue').value,due:$('invoiceDue').value,
+   method:$('invoiceMethod').value,iban:$('invoiceIban').value,
+   entity:$('invoiceEntity').value,reference:$('invoiceReference').value
+ };
+ try{
+   await api('finance.admin.updateInvoice',fields);
+   $('invoiceDialog').close();show('Dados atualizados. Confirma o documento antes de validar.');
+   await refresh();
+ }catch(err){show(err.message,true);}
 });
 $('closePhotoDialog').addEventListener('click',()=>{$('readingPhotoDialog').close();$('readingPhotoImage').removeAttribute('src');});
 $('readingPhotoDialog').addEventListener('close',()=>{$('readingPhotoImage').removeAttribute('src');});
