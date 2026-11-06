@@ -23,6 +23,7 @@ function financeDispatch_(req, actor) {
   if (action.indexOf('finance.resident.')===0 && actor.role!=='resident') throw new Error('FORBIDDEN');
   const map = {
     'finance.admin.bootstrap': () => fncBootstrap_(),
+    'finance.admin.preflight': () => fncPreflight_(),
     'finance.admin.saveDiscount': () => fncSaveDiscount_(req, actor),
     'finance.admin.notifyCycle': () => fncNotifyCycle_(req,actor),
     'finance.admin.setNotifications': () => fncSetNotifications_(req,actor),
@@ -140,6 +141,72 @@ function fncBootstrap_(){
       total:r['Total a pagar €'],state:r['Estado'],row:r.row
     }))};
 }
+
+/**
+ * Diagnóstico apenas de leitura: não configura nem ativa serviços.
+ * Acessível apenas a administradores autenticados pelo router principal.
+ */
+function fncPreflight_(){
+  const checks=[];
+  const check=(id,ok,message)=>checks.push({id,ok:Boolean(ok),message});
+  try{
+    const sh=fncDb_();
+    const names=[FNC.sheet.invoices,FNC.sheet.settings,FNC.sheet.fractions,
+      FNC.sheet.readings,FNC.sheet.payments,FNC.sheet.discounts,FNC.sheet.tariff,
+      FNC.sheet.history,FNC.sheet.cycles,FNC.sheet.rates,FNC.sheet.notifications];
+    const missing=names.filter(name=>!sh.getSheetByName(name));
+    check('finance_sheet',!missing.length,
+      missing.length?'Separadores em falta: '+missing.join(', '):'Estrutura financeira localizada');
+  }catch(err){
+    check('finance_sheet',false,'Sem acesso à base de dados financeira');
+    return {ok:true,ready:false,checks};
+  }
+  const settings=fncSettings_(),fractions=fncData_(FNC.sheet.fractions);
+  const discount=settings.DESCONTO_FIXOS;
+  check('discount',discount!==''&&discount!==null&&discount!==undefined&&
+    Number(discount)>=0&&Number(discount)<=100,'Desconto global definido pela administração');
+  const active=fractions.filter(r=>r['Estado']==='Ativa');
+  check('fractions',active.length>0,'Pelo menos uma fração ativa');
+  const validResidents=active.every(r=>
+    fncApprovedResident_(r['ID fração'],r['Email autorizado']));
+  check('residents',validResidents,'Moradores das frações ativas com conta aprovada');
+  const invoices=fncData_(FNC.sheet.invoices);
+  const validatedEdp=invoices.some(r=>r['Validação']==='Validada' &&
+    /(^|\s)edp(\s|$)/i.test(String(r['Fornecedor']||'')));
+  check('edp_invoice',validatedEdp,'Fatura de eletricidade validada');
+  const cycles=fncData_(FNC.sheet.cycles).filter(r=>r['Estado']==='Aberto');
+  check('cycle',cycles.length>0,'Existe ciclo de leitura aberto');
+  try{
+    const id=PropertiesService.getScriptProperties().getProperty('FINANCE_PHOTOS_FOLDER_ID');
+    const photos=id?DriveApp.getFolderById(id):fncPrivateFolder_('WALLBOX_LEITURAS_PRIVADAS');
+    check('private_photos',Boolean(photos.getId()),'Pasta privada das fotografias acessível');
+  }catch(err){check('private_photos',false,'Não foi possível aceder à pasta privada de fotografias');}
+  check('notifications',String(settings.NOTIFICACOES_ATIVAS).toUpperCase()==='SIM',
+    'Notificações estão ativadas pela administração');
+  // Não apresenta emails, IBAN, nomes nem fotografias.
+  return {ok:true,ready:checks.every(x=>x.ok),checks};
+}
+function fncApprovedResident_(fractionId,email){
+  const expected=String(email||'').trim().toLowerCase();
+  if(!expected)return false;
+  const match=/^(10|[2-9])([A-C])$/.exec(String(fractionId||''));
+  if(!match)return false;
+  const sheet=SpreadsheetApp.openById(CONFIG.SPREADSHEET_ID).getSheetByName('CONDOMINOS');
+  if(!sheet)return false;
+  const all=sheet.getDataRange().getValues();
+  if(all.length<2)return false;
+  const h=all[0].map(x=>String(x).trim());
+  const pos=n=>h.indexOf(n);
+  const needed=['Piso','Fracao','Email','Estado','PINAtivo'];
+  if(needed.some(x=>pos(x)<0))return false;
+  return all.slice(1).some(r=>
+    String(r[pos('Piso')]).replace(/\D/g,'')===match[1] &&
+    String(r[pos('Fracao')]).toUpperCase().trim()===match[2] &&
+    String(r[pos('Email')]).trim().toLowerCase()===expected &&
+    String(r[pos('Estado')]).trim().toUpperCase()==='APROVADO' &&
+    ['true','sim','1'].includes(String(r[pos('PINAtivo')]).trim().toLowerCase()));
+}
+
 function fncSaveDiscount_(req,actor){
   return fncLock_(()=>{
     const pct=fncNumber_(req.percent);
@@ -181,6 +248,8 @@ function fncUpsertFraction_(req,actor){
     if(!GARAGE_RESIDENTIAL_STRUCTURE[String(floor)] ||
        !GARAGE_RESIDENTIAL_STRUCTURE[String(floor)].includes(frac))
       throw new Error('Fração desconhecida na estrutura do condomínio');
+    if(!fncApprovedResident_(id,email))
+      throw new Error('O morador deve estar registado e aprovado nesta fração antes da ativação');
     const fraction=fncData_(FNC.sheet.fractions).filter(r=>String(r['ID fração']).toUpperCase()===id).slice(-1)[0];
     if(fraction && String(fraction['Estado'])==='Ativa')throw new Error('Fração já ativa — desative primeiro');
     if(!/^\d{4}-\d{2}-\d{2}$/.test(start))throw new Error('Data inicial inválida');
@@ -300,6 +369,8 @@ function fncResidentFraction_(actor){
   if(!row||row['Estado']!=='Ativa')throw new Error('Serviço de wallbox não ativo para a fração');
   if(String(row['Email autorizado']).toLowerCase()!==String(actor.email).toLowerCase())
     throw new Error('Morador não autorizado nesta fração');
+  if(!fncApprovedResident_(id,actor.email))
+    throw new Error('Conta de morador não aprovada ou desativada');
   return row;
 }
 function fncResidentStatus_(actor){
@@ -510,7 +581,7 @@ function fncNotifyCycle_(req,actor){
   return fncLock_(()=>{
     const c=fncData_(FNC.sheet.cycles).find(r=>r['ID ciclo']===id);
     if(!c||c['Estado']!=='Aberto')throw Error('Ciclo não está aberto');
-    const active=fncData_(FNC.sheet.fractions).filter(f=>f['Estado']==='Ativa'&&f['Email autorizado']);
+    const active=fncData_(FNC.sheet.fractions).filter(f=>f['Estado']==='Ativa'&&f['Email autorizado']&&fncApprovedResident_(f['ID fração'],f['Email autorizado']));
     const sent=fncData_(FNC.sheet.notifications).filter(n=>n['Ciclo']===id&&n['Estado']==='Enviado');
     const sentFractions=new Set(sent.map(n=>String(n['Fração'])));
     const link='https://filiperod-byte.github.io/DomingosdaCunha4/V2/wallbox.html';
