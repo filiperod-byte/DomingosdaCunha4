@@ -4,8 +4,8 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1A2F5A">
 <title>Gestão financeira — DC4</title>
-<script src="../session-client.js?v=3.7.2"></script>
-<script src="../app-navigation.js?v=3.7.2" defer></script>
+<script src="../session-client.js?v=3.8.0"></script>
+<script src="../app-navigation.js?v=3.8.0" defer></script>
 <style>
 *{box-sizing:border-box}body{margin:0;background:#F5F7FA;color:#111827;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 .app{max-width:590px;margin:0 auto;padding:0 15px 28px}.hero{margin:0 -15px 18px;background:#1A2F5A;color:white;padding:22px 20px 30px;border-radius:0 0 22px 22px}
@@ -38,7 +38,7 @@ code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 
 <body>
 <main class="app">
 <header class="hero"><h1>💶 Gestão financeira</h1><p>Faturas a pagamento e administração do serviço de wallboxes.</p></header>
-<div id="onboarding">Esta é uma versão de desenvolvimento. As operações só ficam disponíveis após a ligação segura ao Google Apps Script do condomínio.</div>
+<div id="onboarding">Os dados financeiros são acessíveis apenas à administração. Confirma todos os pagamentos no banco.</div>
 <div id="notice" role="status" aria-live="polite"></div>
 <div id="loading">A verificar sessão e a carregar dados…</div>
 <nav class="tabs" aria-label="Módulos" id="tabs" hidden>
@@ -278,7 +278,7 @@ async function init(){
     ready=true;await refresh();$('runPreflight').disabled=false;
     $('scanNow').disabled=false;$('scannerToggle').disabled=false;
     await refreshScanner();
-    $('tabs').hidden=false;$('loading').hidden=true;$('onboarding').textContent='Ambiente de desenvolvimento: só publicar quando o backend, permissões e testes estiverem concluídos.';
+    $('tabs').hidden=false;$('loading').hidden=true;$('onboarding').textContent='Ações financeiras apenas para administração autorizada.';
   }catch(e){$('loading').textContent='Não foi possível ligar ao módulo financeiro: '+e.message;show('O módulo financeiro ainda não está instalado no backend.',true);}
 }
 $('tabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if(!t)return;
