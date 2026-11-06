@@ -28,6 +28,7 @@ function financeDispatch_(req, actor) {
     'finance.admin.setNotifications': () => fncSetNotifications_(req,actor),
     'finance.admin.upsertFraction': () => fncUpsertFraction_(req, actor),
     'finance.admin.deactivateFraction': () => fncDeactivateFraction_(req, actor),
+    'finance.admin.updateInvoice': () => fncUpdateInvoice_(req,actor),
     'finance.admin.validateInvoice': () => {
       const result=fncValidateInvoice_(req,actor);
       if(result.cycleId && String(fncSettings_().NOTIFICACOES_ATIVAS).toUpperCase()==='SIM')
@@ -124,7 +125,7 @@ function fncBootstrap_(){
     invoices:fncData_(FNC.sheet.invoices).map(r=>({
       id:r.ID, supplier:r['Fornecedor'],description:r['Descrição'],due:r['Vencimento'],
       value:r['Total (€)'],validation:r['Validação'],payment:r['Pagamento'],
-      documentType:r['Tipo'],iban:r['IBAN fornecedor'],entity:r['Entidade MB'],
+      documentType:r['Tipo'],method:r['Método'],iban:r['IBAN fornecedor'],entity:r['Entidade MB'],
       reference:r['Referência MB'],url:r['PDF original']
     })),
     readings:fncData_(FNC.sheet.readings).map(r=>({
@@ -211,12 +212,63 @@ function fncDeactivateFraction_(req,actor){
     return {ok:true};
   });
 }
+function fncValidIban_(s) {
+  if(!/^[A-Z]{2}\d{2}[A-Z0-9]{11,30}$/.test(s))return false;
+  const digits=s.slice(4)+s.slice(0,4);
+  let remainder=0;
+  for(const ch of digits){
+    const numerical=ch>='A'&&ch<='Z'?String(ch.charCodeAt(0)-55):ch;
+    for(const d of numerical)remainder=(remainder*10+Number(d))%97;
+  }
+  return remainder===1;
+}
+function fncUpdateInvoice_(req,actor) {
+  return fncLock_(()=>{
+    const id=fncRequired_(req.id,'Documento');
+    const row=fncData_(FNC.sheet.invoices).find(r=>String(r.ID)===id);
+    if(!row)throw new Error('Documento não encontrado');
+    if(row['Validação']==='Validada'||row['Pagamento']==='Pago')
+      throw new Error('Documento validado ou pago não pode ser editado sem anular a validação');
+    const type=fncRequired_(req.documentType,'Tipo de documento');
+    if(!['Fatura','Fatura + contribuição audiovisual','Nota despesas/honorários','Orçamento / honorários','Documento por classificar'].includes(type))
+      throw new Error('Tipo de documento inválido');
+    const supplier=fncRequired_(req.supplier,'Fornecedor').slice(0,160);
+    const description=fncRequired_(req.description,'Serviço').slice(0,300);
+    const value=fncNumber_(req.value);
+    if(value<0||value>1000000)throw new Error('Valor fora do limite permitido');
+    const due=String(req.due||'').trim();
+    if(due&&!/^\d{4}-\d{2}-\d{2}$/.test(due))throw new Error('Data de vencimento inválida');
+    const iban=String(req.iban||'').toUpperCase().replace(/\s/g,'');
+    if(iban&&!fncValidIban_(iban))throw new Error('IBAN inválido');
+    const entity=String(req.entity||'').replace(/\s/g,''),reference=String(req.reference||'').replace(/\s/g,'');
+    if(entity&&!/^\d{5}$/.test(entity))throw new Error('Entidade Multibanco inválida');
+    if(reference&&!/^\d{9}$/.test(reference))throw new Error('Referência Multibanco inválida');
+    if(Boolean(entity)!==Boolean(reference))throw new Error('Entidade e referência são obrigatórias em conjunto');
+    const method=fncRequired_(req.method,'Método de pagamento');
+    if(!['Transferência','Multibanco','Débito direto','Por confirmar','Transferência apenas após fatura'].includes(method))
+      throw new Error('Método de pagamento inválido');
+    if(method==='Transferência'&&!iban)throw new Error('Indique o IBAN antes de validar a transferência');
+    if(method==='Multibanco'&&!entity)throw new Error('Indique entidade e referência Multibanco');
+    const patch={'Tipo':type,'Fornecedor':supplier,'Descrição':description,'Total (€)':value,
+      'Vencimento':due,'Método':method,'IBAN fornecedor':iban,'Entidade MB':entity,'Referência MB':reference,
+      'Validação':'Por validar','Validado por':''};
+    fncUpdate_(FNC.sheet.invoices,row.row,patch);
+    fncAudit_(id,'Corrigir documento',
+      {tipo:row['Tipo'],valor:row['Total (€)'],metodo:row['Método']},
+      {tipo:type,valor:value,metodo:method},actor,'Correções pendentes de validação');
+    return {ok:true,id};
+  });
+}
+
 function fncValidateInvoice_(req,actor){
   return fncLock_(()=>{
     const id=fncRequired_(req.id,'Fatura');
     const invoice=fncData_(FNC.sheet.invoices).find(r=>String(r.ID)===id);
     if(!invoice)throw new Error('Fatura não encontrada');
-    if(String(invoice['Tipo']).toLowerCase().includes('orçamento'))throw new Error('Orçamento não é fatura');
+    const kind=String(invoice['Tipo']||'').toLowerCase();
+    if(kind.includes('orçamento')||kind.includes('por classificar'))
+      throw new Error('Classificar e validar os dados antes de autorizar o pagamento');
+    if(fncNumber_(invoice['Total (€)'])<=0)throw new Error('Total a pagar inválido');
     if(String(invoice['Validação'])==='Validada')return {ok:true,alreadyValidated:true};
     const isEdp=String(invoice['Fornecedor']).toLowerCase().includes('edp');
     const cycle=isEdp?fncOpenCycle_(invoice,actor):null;
@@ -234,7 +286,8 @@ function fncMarkInvoicePaid_(req,actor){
     if(!row)throw new Error('Fatura não encontrada');
     if(String(row['Validação'])!=='Validada')throw new Error('Validar fatura primeiro');
     if(String(row['Pagamento'])==='Pago')return {ok:true,alreadyPaid:true};
-    if(String(row['Tipo']).toLowerCase().includes('orçamento'))throw new Error('Orçamento não pagável');
+    if(/orçamento|por classificar/i.test(String(row['Tipo']||'')))throw new Error('Documento não pagável');
+    if(fncNumber_(row['Total (€)'])<=0)throw new Error('Valor inválido para pagamento');
     fncUpdate_(FNC.sheet.invoices,row.row,{'Pagamento':'Pago','Data pag.':date});
     fncAudit_(id,'Registar pagamento',row['Pagamento'],'Pago',actor,'Confirmado pelo administrador. Não executa transferência.');
     return {ok:true};
