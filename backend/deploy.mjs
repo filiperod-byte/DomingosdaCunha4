@@ -12,9 +12,21 @@ const target = 'V2/backend-unificado.gs';
 const normalize = source => source.replace(/\r\n/g, '\n').trim();
 const next = normalize(readFileSync(target, 'utf8'));
 
-// Accept the previous committed bundle or the new bundle (retry after interrupted upload).
-const commit = execFileSync('git', ['log', '-1', '--format=%H', '--', target], {encoding:'utf8'}).trim();
-const previous = normalize(execFileSync('git', ['show', commit + '^:' + target], {encoding:'utf8'}));
+// Only accept a published source found in the trusted first-parent main history.
+// After merging a PR, "git log -1 -- <file>" can pick an intermediate feature-branch
+// commit that was never live. That falsely rejects legitimate deployments.
+// Preserve all drift checks: unknown live code and unrelated drafts still abort.
+const commit = execFileSync('git', ['rev-parse', 'HEAD'], {encoding:'utf8'}).trim();
+const mainRevisions = execFileSync('git', ['rev-list', '--first-parent', '--max-count=12', 'HEAD'], {encoding:'utf8'})
+  .trim().split(String.fromCharCode(10)).filter(Boolean);
+const approved = new Set([next]);
+for (const revision of mainRevisions) {
+  try {
+    const source = execFileSync('git', ['show', revision + ':' + target], {encoding:'utf8',stdio:['ignore','pipe','ignore']});
+    approved.add(normalize(source));
+  } catch (_) { /* Revision predates the backend file. */ }
+}
+console.log('A validar implementação face a ' + approved.size + ' versões da main.');
 const credentials = JSON.parse(process.env.CLASPRC_JSON || '{}').tokens?.default;
 assert.ok(credentials?.refresh_token && credentials.client_id && credentials.client_secret,
   'Credencial clasp incompleta. Verifique CLASPRC_JSON.');
@@ -40,7 +52,7 @@ const config = deployment.deploymentConfig;
 assert.ok(config.versionNumber, 'Implementação sem versão.');
 const live = await api('/content?versionNumber=' + config.versionNumber);
 const draft = await api('/content');
-const candidates = live.files.filter(f=>f.type === 'SERVER_JS' && [previous,next].includes(normalize(f.source)));
+const candidates = live.files.filter(f=>f.type === 'SERVER_JS' && approved.has(normalize(f.source)));
 assert.equal(candidates.length,1,'Código publicado diferente da base revista. Publicação suspensa.');
 const name = candidates[0].name;
 function canonical(files, replace) {

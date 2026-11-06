@@ -5,6 +5,7 @@ on:
       - 'backend/src/**'
       - 'backend/tests/**'
       - 'backend/build.cjs'
+      - 'backend/deploy.mjs'
       - 'V2/backend-unificado.gs'
       - '.github/workflows/finance-ci.yml'
 permissions:
@@ -21,7 +22,7 @@ jobs:
         with:
           node-version: '22'
       - name: Verificar bundle e sintaxe
-        run: node backend/build.cjs --check
+        run: node backend/build.cjs --check && node --check backend/deploy.mjs
       - name: Testar backend isoladamente
         run: node --test backend/tests/*.test.cjs
 # Este workflow NUNCA usa CLASPRC_JSON nem publica o Apps Script.
