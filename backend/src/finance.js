@@ -868,11 +868,13 @@ function financeScannerStatus_(){
 }
 function fncScannerPermissionResult_(err){
   const reason=String(err&&err.message||err||'');
+  // Mensagem original apenas nos registos do editor, nunca na resposta pública da App.
+  console.error('Erro ao configurar sincronização de faturas: '+reason);
   const permission=/permiss|authoriz|autoriz|scope|script\\.scriptapp|not allowed|access denied/i.test(reason);
   return {ok:false,requiresAuthorization:permission,
     message:permission?
-      'É necessária uma autorização única do proprietário no editor do Google Apps Script. Executa financeInstallScannerTrigger_ e aceita as permissões.':
-      'Não foi possível gerir a monitorização. Consulta o histórico de execuções do Google Apps Script.'};
+      'Autoriza a gestão de agendamentos no editor Google Apps Script executando ativarSincronizacaoFaturas.':
+      'Não foi possível gerir a monitorização. Consulta os registos de execução do Google Apps Script.'};
 }
 function financeDisableScannerTrigger_(){
   try{
