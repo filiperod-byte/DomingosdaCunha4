@@ -1,0 +1,252 @@
+<!doctype html><html lang="pt-PT"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#1A2F5A"><title>Wallboxes — DC4</title>
+<script src="../session-client.js?v=3.8.1"></script><script src="../app-navigation.js?v=3.8.1" defer></script>
+<link rel="stylesheet" href="finance-ui.css?v=3.8.1"><script src="finance-ui.js?v=3.8.1"></script>
+<style>
+.subnav{display:flex;gap:7px;margin:13px 0}
+.subnav button{flex:1;background:#fff;color:var(--navy);border:1px solid #cbd5e1;padding:12px 7px}
+.subnav button.active{background:var(--navy);color:#fff;border-color:var(--navy)}
+.subview{display:none}.subview.active{display:block}
+.warning{padding:10px 12px;background:#FFF8EC;color:#845219;border:1px solid #F3DCB9;border-radius:11px;font-size:12px}
+</style></head><body><main>
+<header><h1>⚡ Gestão de wallboxes</h1><p>Frações aderentes, leituras, descontos e recebimentos.</p></header>
+<div id="progress" role="status" aria-live="polite"><span class="spinner"></span><span data-progress-text>A processar…</span></div>
+<div id="toast" role="status" aria-live="polite"></div>
+<div id="loading">A carregar informação das wallboxes…</div>
+<div id="app" hidden>
+<div class="stats"><div class="stat"><span>Frações ativas</span><strong id="countActive">0</strong></div>
+<div class="stat"><span>Leituras pendentes</span><strong id="countPending">0</strong></div></div>
+<div class="subnav" aria-label="Área wallboxes"><button data-view="fractions" class="active" type="button">Frações</button>
+<button data-view="readings" type="button">Leituras</button><button data-view="settings" type="button">Regras</button></div>
+<section class="subview active" id="fractions">
+<div class="row"><h2>Frações aderentes</h2><button id="newFraction" type="button">+ Adicionar</button></div>
+<p class="hint">Uma fração desativada mantém o histórico. A leitura inicial pode ser corrigida antes de existirem consumos validados.</p>
+<div id="fractionList"></div></section>
+<section class="subview" id="readings">
+<h2>Leituras submetidas</h2><div id="readingList"></div>
+<div class="section-label">Recebimentos</div><div id="paymentList"></div></section>
+<section class="subview" id="settings">
+<div class="card"><h2>Desconto sobre custos fixos</h2><p class="hint">É uma regra global. O valor anterior mantém-se nos apuramentos fechados.</p>
+<form id="discountForm"><label for="discount">Desconto (%)</label><input id="discount" type="number" min="0" max="100" step="0.01" required>
+<div class="two"><div><label for="effective">A partir de</label><input type="date" id="effective" required></div>
+<div><label for="discountReason">Motivo (opcional)</label><input id="discountReason" maxlength="120"></div></div>
+<div class="actions"><button type="submit">Guardar desconto</button></div></form></div>
+<div class="card"><h2>Notificações automáticas</h2><p id="notificationState" class="muted">Por consultar</p>
+<button class="secondary" id="toggleNotifications" type="button">Alterar notificações</button></div>
+<div class="card"><h2>Ciclos de leitura</h2><div id="cycleList"></div></div>
+<details class="card"><summary>Diagnóstico da configuração</summary>
+<p class="hint">Verificação de acessos e parâmetros. Não altera dados.</p><button type="button" class="secondary" id="preflight">Executar diagnóstico</button><div id="preflightResults"></div></details>
+</section>
+<div class="actions"><button type="button" class="secondary" id="refresh">↻ Atualizar informação</button></div>
+</div>
+<dialog id="fractionDialog"><h2>Ativar wallbox numa fração</h2><p class="hint">O morador tem de estar aprovado na App antes de ativar o serviço.</p>
+<form id="fractionForm"><label for="fractionId">Fração</label><select id="fractionId" required><option value="">Selecionar fração</option></select>
+<label for="fractionEmail">Email do morador autorizado</label><input id="fractionEmail" type="email" autocomplete="off" required>
+<div class="two"><div><label for="initialReading">Leitura inicial (kWh)</label><input id="initialReading" type="number" step="0.01" min="0" required></div>
+<div><label for="initialDate">Data da leitura</label><input id="initialDate" type="date" required></div></div>
+<label for="initialPhoto">Fotografia inicial</label><input id="initialPhoto" type="file" accept="image/jpeg,image/png" capture="environment" required>
+<div class="actions"><button type="submit">Ativar serviço</button><button type="button" class="secondary" data-close="fractionDialog">Cancelar</button></div></form></dialog>
+<dialog id="correctInitialDialog"><h2>Corrigir leitura inicial</h2>
+<p class="warning">Esta correção fica registada no histórico. Se já houver leituras validadas ou pagamentos, não é possível alterar diretamente a base.</p>
+<form id="correctInitialForm"><input type="hidden" id="correctId">
+<label for="correctLabel">Fração</label><input id="correctLabel" disabled>
+<div class="two"><div><label for="correctKwh">Leitura inicial (kWh)</label><input type="number" id="correctKwh" min="0" step="0.01" required></div>
+<div><label for="correctDate">Data da leitura</label><input type="date" id="correctDate" required></div></div>
+<label for="correctPhoto">Nova fotografia (opcional)</label><input id="correctPhoto" type="file" accept="image/jpeg,image/png" capture="environment">
+<label for="correctReason">Motivo da correção</label><textarea id="correctReason" rows="2" maxlength="250" required placeholder="Ex.: valor do contador introduzido incorretamente"></textarea>
+<div class="actions"><button type="submit">Guardar correção</button><button type="button" class="secondary" data-close="correctInitialDialog">Cancelar</button></div></form></dialog>
+<dialog id="deactivateDialog"><h2>Desativar serviço</h2><form id="deactivateForm"><input id="deactivateId" type="hidden"><p id="deactivateLabel" class="hint"></p>
+<div class="two"><div><label for="deactivateKwh">Leitura final (kWh)</label><input id="deactivateKwh" type="number" min="0" step="0.01" required></div><div>
+<label for="deactivateDate">Data final</label><input id="deactivateDate" type="date" required></div></div>
+<label for="deactivatePhoto">Fotografia final</label><input id="deactivatePhoto" type="file" accept="image/jpeg,image/png" capture="environment" required>
+<div class="actions"><button type="submit" class="danger">Desativar</button><button type="button" class="secondary" data-close="deactivateDialog">Cancelar</button></div>
+</form></dialog>
+<dialog id="correctReadingDialog"><h2>Corrigir leitura submetida</h2><p class="hint">Só é possível antes da validação. A alteração fica registada.</p>
+<form id="correctReadingForm"><input id="readId" type="hidden">
+<div class="two"><div><label for="readKwh">Leitura (kWh)</label><input id="readKwh" type="number" min="0" step="0.01" required></div>
+<div><label for="readDate">Data</label><input id="readDate" type="date" required></div></div>
+<label for="readPhoto">Substituir fotografia (opcional)</label><input id="readPhoto" type="file" accept="image/jpeg,image/png" capture="environment">
+<label for="readReason">Motivo</label><input id="readReason" maxlength="150" required>
+<div class="actions"><button type="submit">Guardar correção</button><button type="button" class="secondary" data-close="correctReadingDialog">Cancelar</button></div></form></dialog>
+<dialog id="photoDialog"><h2>Fotografia do contador</h2><p class="hint">Apenas a administração pode consultar esta fotografia.</p>
+<img id="photoImage" alt="Fotografia enviada pelo morador" style="max-width:100%;max-height:65vh">
+<button type="button" class="secondary" data-close="photoDialog">Fechar</button></dialog>
+</main><script>
+(function(){
+'use strict';
+const UI=window.FinUI,$=UI.$;let model={fractions:[],readings:[],payments:[],cycles:[],settings:{}},selection='fractions',structureLoaded=false;
+function info(parent,label,value){const dl=UI.node('dl',undefined,'data'),dt=UI.node('dt',label),dd=UI.node('dd',value||'—');dl.append(dt,dd);parent.append(dl)}
+function btn(label,onClick,style='secondary'){const b=UI.node('button',label,style);b.type='button';b.addEventListener('click',onClick);return b}
+function confirmAction(action,payload,question,success){
+ if(!confirm(question))return;
+ return UI.busy('A guardar a alteração e a atualizar os dados…',async()=>{
+  await UI.api(action,payload);UI.toast(success);await load();
+ });
+}
+function display(){
+ $('countActive').textContent=(model.fractions||[]).filter(f=>f.status==='Ativa').length;
+ $('countPending').textContent=(model.readings||[]).filter(r=>r.state==='Submetida').length;
+ $('fractionList').replaceChildren();$('readingList').replaceChildren();$('paymentList').replaceChildren();$('cycleList').replaceChildren();
+ for(const f of model.fractions||[]){
+  const card=UI.node('article',undefined,'card'),top=UI.node('div',undefined,'row');
+  top.append(UI.node('h3',f.name||f.id),UI.node('span',f.status||'—','status '+(f.status==='Ativa'?'ok':'warn')));card.append(top);
+  info(card,'Email autorizado',f.email);
+  const dl=UI.node('dl',undefined,'data');dl.append(UI.node('dt','Leitura inicial'),UI.node('dd',f.initialReading===''?'Não definida':String(f.initialReading)+' kWh'));
+  dl.append(UI.node('dt','Data'),UI.node('dd',UI.date(f.initialDate)));card.append(dl);
+  const acts=UI.node('div',undefined,'actions');
+  acts.append(btn('Corrigir leitura inicial',()=>editInitial(f)));
+  if(f.status==='Ativa')acts.append(btn('Desativar serviço',()=>deactivate(f),'danger'));
+  card.append(acts);$('fractionList').append(card);
+ }
+ if(!(model.fractions||[]).length)$('fractionList').append(UI.node('p','Ainda não existem frações com wallbox.','muted'));
+ for(const r of model.readings||[]){
+  const card=UI.node('article',undefined,'card'),head=UI.node('div',undefined,'row');
+  head.append(UI.node('h3',r.fractionId+' · '+UI.date(r.date)),
+   UI.node('span',r.state||'—','status '+(r.state==='Validada'?'ok':'warn')));card.append(head);
+  info(card,'Leitura acumulada',r.kwh+' kWh');
+  if(r.state==='Submetida'){
+   const acts=UI.node('div',undefined,'actions');
+   acts.append(btn('Ver fotografia',()=>showPhoto(r.id)));
+   acts.append(btn('Corrigir',()=>editReading(r)));
+   acts.append(btn('Validar',()=>confirmAction('finance.admin.validateReading',{id:r.id},
+    'Confirmaste os kWh, a data e a fotografia?', 'Leitura validada.'),''));
+   card.append(acts);
+  }
+  $('readingList').append(card);
+ }
+ if(!(model.readings||[]).length)$('readingList').append(UI.node('p','Sem leituras submetidas.','muted'));
+ for(const p of model.payments||[]){
+  const card=UI.node('article',undefined,'card'),top=UI.node('div',undefined,'row');
+  top.append(UI.node('h3',p.fractionId+' · '+p.cycle),UI.node('span',p.state,'status'));
+  card.append(top);info(card,'Valor',UI.money(p.total));
+  if(p.state==='A pagar')card.append(btn('Confirmar recebimento',()=>confirmAction('finance.admin.markWallboxPaid',
+    {id:p.id,paidAt:UI.iso()},'Confirmaste a entrada na conta do condomínio?',
+    'Recebimento registado.')));
+  $('paymentList').append(card);
+ }
+ if(!(model.payments||[]).length)$('paymentList').append(UI.node('p','Sem valores apurados.','muted'));
+ for(const c of model.cycles||[]){
+  const row=UI.node('article',undefined,'card');
+  row.append(UI.node('h3',c.id),UI.node('p','Estado: '+c.state+' · Notificação: '+(c.notifiedAt?'Enviada':'Por enviar'),'muted'));
+  if(!c.notifiedAt&&c.state==='Aberto'&&model.settings.notifications)
+   row.append(btn('Enviar pedido de leitura',()=>confirmAction('finance.admin.notifyCycle',
+      {cycleId:c.id},'Enviar emails aos moradores ativos?','Pedidos enviados.')));
+  $('cycleList').append(row);
+ }
+ if(!(model.cycles||[]).length)$('cycleList').append(UI.node('p','Sem ciclos abertos.','muted'));
+ $('discount').value=model.settings.discount??'';
+ $('notificationState').textContent=model.settings.notifications?
+  'Ativas: os pedidos de leitura são enviados para as frações elegíveis.':
+  'Desligadas: não são enviados pedidos de leitura automáticos.';
+ $('toggleNotifications').textContent=model.settings.notifications?'Desativar notificações':'Ativar notificações';
+}
+async function load(){
+ const data=await UI.api('finance.admin.wallboxes');model=data;display();$('loading').hidden=true;$('app').hidden=false;
+}
+async function loadFractions(){
+ if(structureLoaded)return;
+ const cfg=await fetch('config.json',{cache:'no-store'}).then(r=>r.json());
+ const r=await UI.api('garage.publicConfig');const sel=$('fractionId');
+ const structure=r.structure||[];
+ for(const f of structure.filter(x=>Number(x.piso)>=2)){
+  for(const fr of f.fraccoes||[]){
+   const opt=UI.node('option',f.piso+'.º '+fr);opt.value=String(f.piso)+String(fr);sel.append(opt);
+  }
+ }
+ structureLoaded=true;
+}
+function editInitial(f){
+ $('correctId').value=f.id;$('correctLabel').value=f.name||f.id;
+ $('correctKwh').value=f.initialReading??'';
+ $('correctDate').value=String(f.initialDate||'').slice(0,10);
+ $('correctReason').value='';$('correctPhoto').value='';
+ $('correctInitialDialog').showModal();
+}
+function deactivate(f){
+ $('deactivateId').value=f.id;$('deactivateLabel').textContent=f.name;
+ $('deactivateDate').value=UI.iso();$('deactivateKwh').value='';
+ $('deactivatePhoto').value='';$('deactivateDialog').showModal();
+}
+function editReading(r){
+ $('readId').value=r.id;$('readKwh').value=r.kwh??'';
+ $('readDate').value=String(r.date||'').slice(0,10);
+ $('readPhoto').value='';$('readReason').value='';
+ $('correctReadingDialog').showModal();
+}
+async function showPhoto(id){
+ await UI.busy('A consultar a fotografia privada…',async()=>{
+  const r=await UI.api('finance.admin.getReadingPhoto',{id});
+  if(!/^data:image\/(?:jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(r.dataUrl||''))throw Error('Formato de imagem inválido.');
+  $('photoImage').src=r.dataUrl;$('photoDialog').showModal();
+ });
+}
+async function saveForm(event,dialog,action,payload,success,withPhoto){
+ event.preventDefault();
+ await UI.busy('A guardar os dados e a atualizar a fração…',async()=>{
+  if(withPhoto)payload.photoBase64=await UI.imageData(withPhoto.files?.[0]);
+  await UI.api(action,payload);$(dialog).close();UI.toast(success);await load();
+ });
+}
+document.querySelectorAll('[data-close]').forEach(b=>b.addEventListener('click',()=>{
+ const dialog=$(b.dataset.close);dialog.close();if(dialog.id==='photoDialog')$('photoImage').removeAttribute('src');
+}));
+document.querySelectorAll('.subnav button').forEach(b=>b.addEventListener('click',()=>{
+ selection=b.dataset.view;document.querySelectorAll('.subnav button').forEach(x=>x.classList.toggle('active',x===b));
+ document.querySelectorAll('.subview').forEach(x=>x.classList.toggle('active',x.id===selection));
+}));
+$('newFraction').addEventListener('click',()=>{
+ UI.busy('A consultar frações do prédio…',async()=>{
+  await loadFractions();$('initialDate').value=UI.iso();$('fractionDialog').showModal();
+ });
+});
+$('fractionForm').addEventListener('submit',event=>{
+ if(!confirm('Confirmas a fração, a leitura inicial e o morador?')){event.preventDefault();return;}
+ saveForm(event,'fractionDialog','finance.admin.upsertFraction',{
+  fractionId:$('fractionId').value,label:$('fractionId').selectedOptions[0].textContent,
+  email:$('fractionEmail').value,initialReading:$('initialReading').value,initialDate:$('initialDate').value},
+  'Fração ativada.', $('initialPhoto'));
+});
+$('correctInitialForm').addEventListener('submit',event=>{
+ if(!confirm('Corrigir o registo inicial? A alteração fica auditada.')){event.preventDefault();return;}
+ saveForm(event,'correctInitialDialog','finance.admin.correctInitial',{
+  fractionId:$('correctId').value,initialReading:$('correctKwh').value,
+  initialDate:$('correctDate').value,reason:$('correctReason').value},
+  'Leitura inicial corrigida.', $('correctPhoto'));
+});
+$('deactivateForm').addEventListener('submit',event=>{
+ if(!confirm('Desativar mantendo o histórico?')){event.preventDefault();return;}
+ saveForm(event,'deactivateDialog','finance.admin.deactivateFraction',{
+  fractionId:$('deactivateId').value,finalReading:$('deactivateKwh').value,endDate:$('deactivateDate').value},
+  'Serviço desativado. Histórico preservado.', $('deactivatePhoto'))
+});
+$('correctReadingForm').addEventListener('submit',event=>{
+ saveForm(event,'correctReadingDialog','finance.admin.correctReading',{
+  id:$('readId').value,kwh:$('readKwh').value,readingDate:$('readDate').value,
+  reason:$('readReason').value},'Leitura corrigida antes da validação.',$('readPhoto'));
+});
+$('discountForm').addEventListener('submit',event=>{
+ event.preventDefault();
+ if(!confirm('Guardar esta percentagem com a data de vigência indicada?'))return;
+ UI.busy('A guardar a configuração…',async()=>{
+  await UI.api('finance.admin.saveDiscount',{percent:$('discount').value,
+    effectiveFrom:$('effective').value,reason:$('discountReason').value});
+  UI.toast('Desconto guardado.');await load();
+ });
+});
+$('toggleNotifications').addEventListener('click',()=>{
+ const enable=!model.settings.notifications;
+ confirmAction('finance.admin.setNotifications',{enabled:enable},
+  (enable?'Ativar':'Desativar')+' as notificações aos moradores?',
+  'Notificações '+(enable?'ativadas.':'desativadas.'));
+});
+$('preflight').addEventListener('click',()=>UI.busy('A executar o diagnóstico…',async()=>{
+ const r=await UI.api('finance.admin.preflight'),dest=$('preflightResults');dest.replaceChildren();
+ for(const check of r.checks||[])dest.append(UI.node('p',(check.ok?'✓ ':'! ')+check.message,'hint'));
+}));
+$('refresh').addEventListener('click',()=>UI.busy('A atualizar wallboxes…',load));
+$('effective').value=UI.iso();
+if(!dc4HasSession('admin'))location.replace('admin.html');
+else UI.busy('A carregar wallboxes…',load);
+})();
+</script></body></html>
