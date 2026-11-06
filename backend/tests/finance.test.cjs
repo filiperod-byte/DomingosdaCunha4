@@ -282,3 +282,18 @@ test('ativar e desativar regista estado apenas depois da operação real',()=>{
   assert.equal(b.post('finance.admin.disableScanner',{token:admin}).ok,true);
   assert.equal(b.props.FINANCE_SCANNER_ENABLED,'NAO');
 });
+
+test('função pública de configuração aparece no editor e instala apenas um trigger',()=>{
+ const b=setup();
+ const run=b.context.ativarSincronizacaoFaturas;
+ assert.equal(typeof run,'function');
+ assert.equal(run().ok,true);
+ assert.equal(run().alreadyInstalled,true);
+ const admin=tokenAdmin(b);
+ assert.equal(b.post('finance.admin.scannerStatus',{token:admin}).count,1);
+});
+test('configuração no editor informa o erro quando o proprietário ainda não autorizou o ScriptApp',()=>{
+ const b=setup();
+ b.context.ScriptApp.getProjectTriggers=()=>{throw new Error('Authorization required for script.scriptapp')};
+ assert.throws(()=>b.context.ativarSincronizacaoFaturas(),/autoriza/i);
+});
