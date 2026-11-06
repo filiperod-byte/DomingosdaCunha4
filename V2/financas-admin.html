@@ -2,9 +2,9 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1A2F5A">
 <title>Faturas — Domingos da Cunha 4</title>
-<script src="../session-client.js?v=3.8.2"></script><script src="../app-navigation.js?v=3.8.2" defer></script>
-<link rel="stylesheet" href="finance-ui.css?v=3.8.2">
-<script src="finance-ui.js?v=3.8.2"></script>
+<script src="../session-client.js?v=3.8.3"></script><script src="../app-navigation.js?v=3.8.3" defer></script>
+<link rel="stylesheet" href="finance-ui.css?v=3.8.3">
+<script src="finance-ui.js?v=3.8.3"></script>
 </head><body><main>
 <header><h1>🧾 Gestão de faturas</h1><p>Documentos, validação e pagamentos aos fornecedores.</p></header>
 <div id="progress" role="status" aria-live="polite"><span class="spinner"></span><span data-progress-text>A processar…</span></div>
@@ -22,6 +22,14 @@
 </div>
 <div class="actions"><button type="button" id="scannerToggle" class="secondary">Consultar automatização</button></div>
 <p class="muted" id="scannerState">A consultar estado da monitorização…</p>
+<details id="scannerHelp" hidden style="margin-top:12px">
+<summary>Como autorizar a monitorização automática</summary>
+<p class="hint">A gestão dos agendamentos exige uma autorização Google que não pode ser concedida diretamente nesta página.</p>
+<p class="hint">1. Abre o <a href="https://script.google.com/home/projects" target="_blank" rel="noopener noreferrer">Google Apps Script</a> com a conta proprietária do condomínio.</p>
+<p class="hint">2. No projeto que serve esta App, escolhe a função <code>financeInstallScannerTrigger_</code> no seletor de funções e clica em <strong>Executar</strong>.</p>
+<p class="hint">3. Aceita as permissões solicitadas. Depois regressa aqui e atualiza a página.</p>
+<p class="hint">Este processo é necessário apenas uma vez. Podes continuar a importar documentos manualmente.</p>
+</details>
 </section>
 <div class="section-label">Documentos</div><div id="invoiceList"></div>
 </div>
@@ -111,6 +119,18 @@ async function run(action,payload,message){
 }
 async function scannerStatus(){
  const r=await UI.api('finance.admin.scannerStatus');
+ const cannotVerify=Boolean(r.authorizationRequired) || r.verified===false;
+ $('scannerHelp').hidden=!cannotVerify;
+ $('scannerToggle').dataset.mode=cannotVerify?'help':'toggle';
+ if(cannotVerify){
+  $('scannerToggle').textContent='Como autorizar';
+  $('scannerToggle').disabled=false;
+  $('autoStatus').textContent=r.enabled?'Estado não confirmado':'Autorização necessária';
+  $('autoStatus').className='status warn';
+  $('scannerState').textContent=r.message||
+   'Não é possível consultar os agendamentos. A pesquisa manual continua disponível.';
+  return;
+ }
  const enabled=Boolean(r.enabled);
  $('scannerToggle').dataset.enabled=enabled?'yes':'no';
  $('scannerToggle').textContent=enabled?'Desativar monitorização':'Ativar monitorização automática';
@@ -138,6 +158,12 @@ $('scan').addEventListener('click',()=>UI.busy('A procurar ficheiros novos no Dr
  UI.toast((result.newDocuments||0)+' documento(s) novo(s) encontrado(s).');await reload();
 }));
 $('scannerToggle').addEventListener('click',()=>{
+ if($('scannerToggle').dataset.mode==='help'){
+  $('scannerHelp').hidden=false;
+  $('scannerHelp').open=true;
+  $('scannerHelp').scrollIntoView({behavior:'smooth',block:'nearest'});
+  return;
+ }
  const enabled=$('scannerToggle').dataset.enabled==='yes';
  if(!confirm(enabled?'Desativar a monitorização automática?':'Ativar a pesquisa automática de 15 em 15 minutos?'))return;
  UI.busy('A atualizar o agendamento…',async()=>{
@@ -148,9 +174,12 @@ $('scannerToggle').addEventListener('click',()=>{
 if(!dc4HasSession('admin'))location.replace('admin.html');
 else UI.busy('A carregar faturas…',reload).then(()=>
  scannerStatus().catch(err=>{
-  $('autoStatus').textContent='Estado desconhecido';
-  $('scannerState').textContent='Não foi possível consultar a monitorização: '+err.message;
-  $('scannerToggle').disabled=true;
+  $('autoStatus').textContent='Monitorização indisponível';
+  $('autoStatus').className='status warn';
+  $('scannerState').textContent='Não foi possível verificar os agendamentos. A pesquisa manual de documentos continua disponível.';
+  $('scannerToggle').dataset.mode='help';
+  $('scannerToggle').textContent='Como autorizar';
+  $('scannerHelp').hidden=false;
  }));
 })();
 </script></body></html>

@@ -847,20 +847,48 @@ function financeScanFolder_(){
   });
 }
 
+/**
+ * A consulta das faturas não depende do âmbito OAuth de gestão de triggers.
+ * ScriptApp.getProjectTriggers requer script.scriptapp e pode falhar numa Web App
+ * mesmo quando Drive e Sheets estão autorizados. Responder sem lançar erro:
+ * é importante manter a sincronização manual e explicar a autorização em falta.
+ */
 function financeScannerStatus_(){
-  const handlers=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
-  return {ok:true,enabled:handlers.length>0,count:handlers.length};
+  const prop=PropertiesService.getScriptProperties();
+  try{
+    const handlers=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
+    const enabled=handlers.length>0;
+    prop.setProperties({'FINANCE_SCANNER_ENABLED':enabled?'SIM':'NAO'},false);
+    return {ok:true,enabled,count:handlers.length,verified:true,authorizationRequired:false};
+  }catch(err){
+    return {ok:true,enabled:prop.getProperty('FINANCE_SCANNER_ENABLED')==='SIM',
+      verified:false,authorizationRequired:true,
+      message:'Não é possível verificar os agendamentos sem autorização do Google Apps Script. A pesquisa manual de faturas continua disponível.'};
+  }
+}
+function fncScannerPermissionResult_(err){
+  const reason=String(err&&err.message||err||'');
+  const permission=/permiss|authoriz|autoriz|scope|script\\.scriptapp|not allowed|access denied/i.test(reason);
+  return {ok:false,requiresAuthorization:permission,
+    message:permission?
+      'É necessária uma autorização única do proprietário no editor do Google Apps Script. Executa financeInstallScannerTrigger_ e aceita as permissões.':
+      'Não foi possível gerir a monitorização. Consulta o histórico de execuções do Google Apps Script.'};
 }
 function financeDisableScannerTrigger_(){
-  const handlers=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
-  handlers.forEach(t=>ScriptApp.deleteTrigger(t));
-  return {ok:true,enabled:false,removed:handlers.length};
+  try{
+    const handlers=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
+    handlers.forEach(t=>ScriptApp.deleteTrigger(t));
+    PropertiesService.getScriptProperties().setProperties({'FINANCE_SCANNER_ENABLED':'NAO'},false);
+    return {ok:true,enabled:false,removed:handlers.length};
+  }catch(err){return fncScannerPermissionResult_(err);}
 }
 
 /** Criar o trigger uma única vez, após autorizar o projeto Apps Script. */
 function financeInstallScannerTrigger_(){
-  const matches=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
-  if(matches.length)return {ok:true,alreadyInstalled:true};
-  ScriptApp.newTrigger('financeScanFolder_').timeBased().everyMinutes(15).create();
-  return {ok:true,installed:true};
+  try{
+    const matches=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
+    if(!matches.length)ScriptApp.newTrigger('financeScanFolder_').timeBased().everyMinutes(15).create();
+    PropertiesService.getScriptProperties().setProperties({'FINANCE_SCANNER_ENABLED':'SIM'},false);
+    return matches.length?{ok:true,enabled:true,alreadyInstalled:true}:{ok:true,enabled:true,installed:true};
+  }catch(err){return fncScannerPermissionResult_(err);}
 }
