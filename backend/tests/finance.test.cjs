@@ -269,7 +269,7 @@ test('tentativa de instalar trigger sem autorização devolve instrução segura
   const res=b.post('finance.admin.enableScanner',{token:admin});
   assert.equal(res.ok,false);
   assert.equal(res.requiresAuthorization,true);
-  assert.match(res.message,/financeInstallScannerTrigger_/);
+  assert.match(res.message,/ativarSincronizacaoFaturas/);
   assert.equal(b.props.FINANCE_SCANNER_ENABLED,undefined);
 });
 test('ativar e desativar regista estado apenas depois da operação real',()=>{
@@ -312,4 +312,19 @@ test('ativação descreve a falta de ambas as funções sem ReferenceError',()=>
  b.context.financeInstallScannerTrigger_=undefined;
  b.context.financeInstallScannerTrigger=undefined;
  assert.throws(()=>b.context.ativarSincronizacaoFaturas(),/Instalador de faturas não encontrado/);
+});
+
+test('instalador solicita a permissão script.scriptapp antes de procurar ou criar triggers',()=>{
+ const b=setup();
+ const res=b.context.ativarSincronizacaoFaturas();
+ assert.equal(res.ok,true);
+ assert.equal(b.counts.authChecks,1);
+ const admin=tokenAdmin(b);
+ assert.equal(b.post('finance.admin.scannerStatus',{token:admin}).enabled,true);
+});
+test('falta de consentimento interrompe o instalador para exibir o pedido OAuth no editor',()=>{
+ const b=harness(bundled(),{missingScannerConsent:true});b.initialize();
+ assert.throws(()=>b.context.ativarSincronizacaoFaturas(),/Authorization required/);
+ assert.equal(b.counts.authChecks,1);
+ assert.equal(b.props.FINANCE_SCANNER_ENABLED,undefined);
 });

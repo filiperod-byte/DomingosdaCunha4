@@ -6,7 +6,7 @@ const path = require('node:path');
 const FIXED = '2026-09-11T10:00:00.000Z';
 
 function harness(source, options = {}) {
-  const counts = { shares: 0, reads: 0, opens: 0, writes: 0, mails: 0, locks: 0, releases: 0, files: 0 };
+  const counts = { shares: 0, reads: 0, opens: 0, writes: 0, mails: 0, authChecks: 0, locks: 0, releases: 0, files: 0 };
   const sheets = new Map();
   const emails = [];
   const uploads = [];
@@ -85,6 +85,13 @@ function harness(source, options = {}) {
       counts.mails++; emails.push(JSON.parse(JSON.stringify(email)));
     } },
     ScriptApp: {
+      AuthMode: {FULL:'FULL'},
+      requireScopes:(mode,scopes)=>{
+        counts.authChecks++;
+        if(mode!=='FULL'||!scopes.includes('https://www.googleapis.com/auth/script.scriptapp'))
+          throw Error('Incorrect OAuth scope');
+        if(options.missingScannerConsent)throw Error('Authorization required for script.scriptapp');
+      },
       getProjectTriggers:()=>[...triggers],
       deleteTrigger:t=>{const i=triggers.indexOf(t);if(i>=0)triggers.splice(i,1);},
       newTrigger:handler=>{

@@ -68,6 +68,12 @@ function setupGeneralOccurrences() {
  * Repetir a execução não cria triggers duplicados.
  */
 function ativarSincronizacaoFaturas() {
+  // Pedir autorização no EDITOR antes de entrar no instalador. Se faltar consentimento,
+  // o Apps Script interrompe esta execução e mostra o ecrã de permissões.
+  // Não executar isto em pedidos do navegador: é um comando manual de configuração.
+  ScriptApp.requireScopes(ScriptApp.AuthMode.FULL, [
+    'https://www.googleapis.com/auth/script.scriptapp'
+  ]);
   // Compatibilidade: alguns projetos Apps Script tinham o helper sem "_".
   // É feita a deteção sem invocar funções inexistentes (evita ReferenceError).
   const installer=typeof financeInstallScannerTrigger_==='function'
