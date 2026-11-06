@@ -187,7 +187,9 @@ function fncExtractOneInvoice_(invoiceId){
   const set=(field,value,placeholder)=>{
     if(value===null||value===undefined||value==='')return;
     const current=item[field];
-    if(current===''||current==null||(placeholder&&String(current)===placeholder))patch[field]=value;
+    const empty=current===''||current==null||
+      (field==='Total (€)'&&current===0);
+    if(empty||(placeholder&&String(current)===String(placeholder)))patch[field]=value;
   };
   if(parsed.recognized>=2){
     if(parsed.number)set('Tipo','Fatura','Documento por classificar');
