@@ -126,8 +126,23 @@ function fncSettings_(){
   const rows=fncData_(FNC.sheet.settings);
   return Object.fromEntries(rows.map(r=>[String(r['Chave']),r['Valor']]));
 }
+/** Percentagem em vigor na data, sem aplicar alterações agendadas antes da vigência. */
+function fncDiscountAt_(date){
+  const day=fncIsoDate_(date);
+  const history=fncData_(FNC.sheet.discounts)
+    .filter(d=>d['Início vigência'] &&
+      fncIsoDate_(d['Início vigência'])<=day)
+    .sort((a,b)=>fncIsoDate_(a['Início vigência']).localeCompare(fncIsoDate_(b['Início vigência'])));
+  if(history.length)return fncNumber_(history[history.length-1]['Desconto %']);
+  const config=fncData_(FNC.sheet.settings).find(r=>r.Chave==='DESCONTO_FIXOS');
+  if(!config || config.Valor==='' || config.Valor===null || config.Valor===undefined)return '';
+  const when=config['Início vigência'];
+  if(when && fncIsoDate_(when)>day)return '';
+  return fncNumber_(config.Valor);
+}
+
 function fncBootstrap_(){
-  const s=fncSettings_(),discount=s.DESCONTO_FIXOS;
+  const s=fncSettings_(),discount=fncDiscountAt_(fncNow_());
   // O histórico das adesões é mantido na folha; a interface só mostra
   // o estado mais recente de cada fração, sem duplicações visuais.
   const allFractions=fncData_(FNC.sheet.fractions),latest=new Map();
@@ -463,7 +478,8 @@ function fncValidateReading_(req,actor){
     if(!cycle||!tariffs)throw new Error('Ciclo e tarifas ainda não configurados');
     // O desconto é congelado no ciclo para que uma alteração administrativa futura
     // não altere a valorização da eletricidade já faturada a outras frações.
-    const pct=cycle['Desconto aplicado %']==='' ? fncSettings_().DESCONTO_FIXOS : cycle['Desconto aplicado %'];
+    const pct=cycle['Desconto aplicado %']==='' ?
+      fncDiscountAt_(fncNow_()) : cycle['Desconto aplicado %'];
     if(pct===''||pct===null||pct===undefined)throw new Error('Definir desconto antes de validar a leitura');
     const totalActive=fncData_(FNC.sheet.fractions).filter(x=>x['Estado']==='Ativa').length;
     if(totalActive>1)throw new Error('Apuramento com várias wallboxes exige rateio conjunto; nenhuma cobrança é autorizada automaticamente');
@@ -578,14 +594,14 @@ function fncOpenCycle_(invoice,actor){
     'DGEG sem IVA':t['DGEG (sem IVA)'],'IVA DGEG':t['IVA DGEG'],
     'Audiovisual sem IVA':t['Contribuição audiovisual (sem IVA)'],
     'IVA audiovisual':t['IVA audiovisual'],
-    'Desconto %':fncSettings_().DESCONTO_FIXOS,'Criado em':fncNow_,
+    'Desconto %':fncDiscountAt_(fncNow_()),'Criado em':fncNow_,
     'Validado por':actor.email,'Origem EDP':invoice['PDF original']};
   fields['Criado em']=fncNow_();
   fncAppend_(FNC.sheet.rates,fields);
   fncAppend_(FNC.sheet.cycles,{'ID ciclo':id,'Fatura ID':invoice.ID,
     'Início faturação':invoiceStart,'Fim faturação':invoiceEnd,'Estado':'Aberto',
     'Validado por':actor.email,'Criado em':fncNow_(),
-    'Desconto aplicado %':fncSettings_().DESCONTO_FIXOS,
+    'Desconto aplicado %':fncDiscountAt_(fncNow_()),
     'Observações':'Aguardam-se leituras das frações ativas.'});
   return id;
 }
