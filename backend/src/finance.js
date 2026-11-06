@@ -124,9 +124,13 @@ function fncSettings_(){
 }
 function fncBootstrap_(){
   const s=fncSettings_(),discount=s.DESCONTO_FIXOS;
+  // O histórico das adesões é mantido na folha; a interface só mostra
+  // o estado mais recente de cada fração, sem duplicações visuais.
+  const allFractions=fncData_(FNC.sheet.fractions),latest=new Map();
+  allFractions.forEach(r=>latest.set(String(r['ID fração']),r));
   return {ok:true,settings:{discount:discount===''?null:Number(discount),
     notifications:String(s.NOTIFICACOES_ATIVAS).toUpperCase()==='SIM'},
-    fractions:fncData_(FNC.sheet.fractions).map(r=>({
+    fractions:[...latest.values()].map(r=>({
       id:r['ID fração'],name:r['Fração'],status:r['Estado'],email:r['Email autorizado'],
       startDate:r['Data adesão'],initialReading:r['Leitura inicial (kWh)'],
       initialDate:r['Data leitura inicial'],endDate:r['Data desativação'],row:r.row
