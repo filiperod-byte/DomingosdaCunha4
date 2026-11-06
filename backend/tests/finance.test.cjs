@@ -153,3 +153,22 @@ test('admin mostra uma entrada por fração mesmo após reativação, conservand
   assert.equal(r.fractions.find(f=>f.id==='9B').status,'Ativa');
   assert.equal(b.sheets.get('WALLBOX_FRACOES').rows.length,4);
 });
+
+test('monitorização pode ser ativada e desativada pelo administrador sem duplicar triggers',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  assert.equal(b.post('finance.admin.enableScanner').code,'AUTH_REQUIRED');
+  assert.equal(b.post('finance.admin.scannerStatus',{token:admin}).enabled,false);
+  assert.equal(b.post('finance.admin.enableScanner',{token:admin}).installed,true);
+  assert.equal(b.post('finance.admin.enableScanner',{token:admin}).alreadyInstalled,true);
+  assert.equal(b.post('finance.admin.scannerStatus',{token:admin}).count,1);
+  assert.equal(b.post('finance.admin.disableScanner',{token:admin}).removed,1);
+  assert.equal(b.post('finance.admin.scannerStatus',{token:admin}).enabled,false);
+});
+test('a procura manual não inventa faturas quando não há ficheiros no Drive',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  b.props.FINANCE_FATURAS_ROOT_ID='TEST-DRIVE';
+  const r=b.post('finance.admin.scanNow',{token:admin});
+  assert.equal(r.ok,true);
+  assert.equal(r.newDocuments,0);
+  assert.equal(b.sheets.get('FATURAS').rows.length,2);
+});
