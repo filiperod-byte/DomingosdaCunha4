@@ -24,6 +24,10 @@ function financeDispatch_(req, actor) {
   const map = {
     'finance.admin.bootstrap': () => fncBootstrap_(),
     'finance.admin.preflight': () => fncPreflight_(),
+    'finance.admin.scanNow': () => financeScanFolder_(),
+    'finance.admin.scannerStatus': () => financeScannerStatus_(),
+    'finance.admin.enableScanner': () => financeInstallScannerTrigger_(),
+    'finance.admin.disableScanner': () => financeDisableScannerTrigger_(),
     'finance.admin.saveDiscount': () => fncSaveDiscount_(req, actor),
     'finance.admin.notifyCycle': () => fncNotifyCycle_(req,actor),
     'finance.admin.setNotifications': () => fncSetNotifications_(req,actor),
@@ -674,6 +678,17 @@ function financeScanFolder_(){
     return {ok:true,newDocuments:count};
   });
 }
+
+function financeScannerStatus_(){
+  const handlers=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
+  return {ok:true,enabled:handlers.length>0,count:handlers.length};
+}
+function financeDisableScannerTrigger_(){
+  const handlers=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
+  handlers.forEach(t=>ScriptApp.deleteTrigger(t));
+  return {ok:true,enabled:false,removed:handlers.length};
+}
+
 /** Criar o trigger uma única vez, após autorizar o projeto Apps Script. */
 function financeInstallScannerTrigger_(){
   const matches=ScriptApp.getProjectTriggers().filter(t=>t.getHandlerFunction()==='financeScanFolder_');
