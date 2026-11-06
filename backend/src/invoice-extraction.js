@@ -49,10 +49,10 @@ function fncParseInvoiceText_(source){
     /Data\s+Limite\s+(?:de\s+)?Pagamento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i
   ]));
   const gross=fncParseEuro_(fncFirstMatch_(text,[
-    /Total\s+(?:da\s+)?(?:Factura|Fatura)\s*[:\s]+([\d.,]+)\s*€/i,
-    /Total\s+a\s+Pagar\s*[:\s]+([\d.,]+)\s*€/i,
-    /Valor\s+Total\s*[:\s]+([\d.,]+)\s*€/i,
-    /Total\s+(?:do\s+)?Documento\s*[:\s]+([\d.,]+)\s*€/i
+    /^\s*Total\s+(?:da\s+)?(?:Factura|Fatura)\s*[:\s]+([\d.,]+)\s*€/im,
+    /^\s*Total\s+a\s+Pagar\s*[:\s]+([\d.,]+)\s*€/im,
+    /^\s*Valor\s+Total\s*[:\s]+([\d.,]+)\s*€/im,
+    /^\s*Total\s+(?:do\s+)?Documento\s*[:\s]+([\d.,]+)\s*€/im
   ]));
   let subtotal=null,iva=null;
   const tax=text.match(/\bIVA\s*[\d.,]+\s*%\s*\(\s*Incid[eê]ncia\s*:\s*([\d.,]+)\s*\)\s*([\d.,]+)\s*€/i);
