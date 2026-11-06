@@ -28,6 +28,9 @@ input:focus,select:focus{outline:2px solid #2563EB;outline-offset:1px}.grid{disp
 #loading{padding:16px;color:#475569}#onboarding{background:#fff7ed;border:1px solid #fed7aa;border-radius:14px;padding:14px;color:#92400e;margin-bottom:12px;font-size:13px;line-height:1.5}
 code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 0}
 @media(max-width:360px){.grid{grid-template-columns:1fr}.tab{min-width:76px;font-size:12px}}
+.preview{width:min(96vw,550px);border:1px solid #cbd5e1;border-radius:18px;padding:16px}
+.preview::backdrop{background:#0f172ad9}.preview img{display:block;max-width:100%;max-height:70vh;margin:auto;object-fit:contain}
+.preview p{color:#64748b;font-size:12px}
 </style>
 </head>
 <body>
@@ -75,6 +78,7 @@ code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 
 <div class="card"><h2>Notificações</h2><p class="note">Os emails são enviados após uma fatura EDP validada, apenas às frações ativas. O envio ficará desligado até à configuração do backend.</p><div id="notifyState" class="badge">Não configurado</div><div class="btn-row"><button type="button" id="toggleNotifications" class="btn secondary" disabled>Alterar notificações</button></div><div id="cycleList"></div></div>
 </section>
 <section class="section" id="readings"><h2>Leituras submetidas</h2><p class="note">As leituras dos moradores são confirmadas pela administração. A aprovação não executa transferências.</p><div id="readingList"></div><h2>Recebimentos wallbox</h2><div id="paymentList"></div></section>
+<dialog id="readingPhotoDialog" class="preview"><h2>Fotografia do contador</h2><p>Imagem privada — apenas administração</p><img id="readingPhotoImage" alt="Fotografia enviada pelo morador"><button class="btn secondary" id="closePhotoDialog" type="button">Fechar</button></dialog>
 </main>
 <script>
 (function(){
@@ -95,6 +99,15 @@ async function api(action,payload={}){
 }
 async function refresh(){DATA=await api('finance.admin.bootstrap');render();}
 async function act(action,payload,success){try{const r=await api(action,payload);show(success||r.message||'Operação registada');await refresh();}catch(e){show(e.message,true);}}
+async function showReadingPhoto(readingId){
+  try{
+    const response=await api('finance.admin.getReadingPhoto',{id:readingId});
+    if(!/^data:image\/(?:jpeg|png);base64,[A-Za-z0-9+/=]+$/.test(String(response.dataUrl||'')))
+      throw Error('A fotografia devolvida não é válida');
+    $('readingPhotoImage').src=response.dataUrl;
+    $('readingPhotoDialog').showModal();
+  }catch(err){show(err.message,true);}
+}
 function render(){
   $('invoiceList').replaceChildren();$('fractionList').replaceChildren();$('readingList').replaceChildren();$('paymentList').replaceChildren();
   const invoices=DATA.invoices||[],fractions=DATA.fractions||[],readings=DATA.readings||[],payments=DATA.payments||[],cycles=DATA.cycles||[];
@@ -144,7 +157,12 @@ function render(){
   readings.forEach(r=>{
     const card=node('article',null,'card');card.append(node('strong',(r.fractionId||'—')+' · '+(r.cycle||'Ciclo não identificado')));
     field(card,'Leitura',r.kwh+' kWh');field(card,'Data',r.date);field(card,'Estado',r.state);
-    if(r.state==='Submetida')card.append(b('Validar leitura',()=>{if(confirm('Confirmar a fotografia e o valor?'))act('finance.admin.validateReading',{id:r.id},'Leitura validada.');}));
+    if(r.state==='Submetida'){
+      const buttons=node('div',null,'btn-row');
+      buttons.append(b('Ver fotografia',()=>showReadingPhoto(r.id),true));
+      buttons.append(b('Validar leitura',()=>{if(confirm('Já confirmaste a fotografia, a data e o valor?'))act('finance.admin.validateReading',{id:r.id},'Leitura validada.');}));
+      card.append(buttons);
+    }
     $('readingList').append(card);
   });
   if(!payments.length)$('paymentList').append(node('p','Nenhum apuramento fechado.','note'));
@@ -196,6 +214,8 @@ $('tabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
   document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===t.dataset.tab));
 });
+$('closePhotoDialog').addEventListener('click',()=>{$('readingPhotoDialog').close();$('readingPhotoImage').removeAttribute('src');});
+$('readingPhotoDialog').addEventListener('close',()=>{$('readingPhotoImage').removeAttribute('src');});
 $('toggleNotifications').addEventListener('click',async()=>{
  const enabled=!DATA.settings?.notifications;
  if(confirm((enabled?'Ativar':'Desativar')+' notificações automáticas para frações com wallbox?'))
