@@ -83,6 +83,7 @@ test('desconto posterior não altera pagamentos fechados',()=>{
 });
 test('emails controlados por sessão, configuração e par ciclo/fração',()=>{
   const b=setup(),admin=tokenAdmin(b);
+  tokenResident(b,admin);
   assert.equal(b.post('finance.admin.notifyCycle',{token:admin,cycleId:'CYCLE-EDP-1'}).code,'FINANCE_ERROR');
   b.sheets.get('WALLBOX_CONFIG').rows.find(r=>r[0]==='NOTIFICACOES_ATIVAS')[1]='SIM';
   const a=b.post('finance.admin.notifyCycle',{token:admin,cycleId:'CYCLE-EDP-1'});
@@ -109,4 +110,24 @@ test('documento sem classificação e IBAN inválido não podem entrar no circui
   assert.equal(validate().ok,true);
   assert.equal(b.post('finance.admin.markInvoicePaid',{token:admin,id:'DOC-1',paidAt:'2026-11-16'}).ok,true);
   assert.equal(b.post('finance.admin.updateInvoice',request).code,'FINANCE_ERROR');
+});
+
+test('diagnóstico apenas de leitura apresenta bloqueios sem alterar pagamentos ou configuração',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  const before=b.counts.writes;
+  const r=b.post('finance.admin.preflight',{token:admin});
+  assert.equal(r.ok,true);
+  assert.equal(r.ready,false);
+  assert.ok(r.checks.find(c=>c.id==='finance_sheet'&&c.ok));
+  assert.ok(r.checks.find(c=>c.id==='residents'&&!c.ok));
+  assert.ok(r.checks.find(c=>c.id==='edp_invoice'&&!c.ok));
+  assert.equal(b.counts.writes,before);
+});
+test('ativação exige morador previamente aprovado na fração exata',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  const attempt=b.post('finance.admin.upsertFraction',{token:admin,
+    fractionId:'8B',label:'8.º B',email:'unverified@example.invalid',
+    initialReading:0,initialDate:'2026-11-06',initialPhotoBase64:'data:image/jpeg;base64,YWJj'});
+  assert.equal(attempt.code,'FINANCE_ERROR');
+  assert.equal(b.sheets.get('WALLBOX_FRACOES').rows.length,2);
 });
