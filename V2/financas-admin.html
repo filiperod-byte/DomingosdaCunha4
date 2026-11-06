@@ -31,6 +31,8 @@ code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 
 .preview{width:min(96vw,550px);max-height:86vh;overflow-y:auto;border:1px solid #cbd5e1;border-radius:18px;padding:16px}
 .preview::backdrop{background:#0f172ad9}.preview img{display:block;max-width:100%;max-height:70vh;margin:auto;object-fit:contain}
 .preview p{color:#64748b;font-size:12px}
+.preflight-item{display:flex;align-items:flex-start;gap:9px;padding:8px 0;border-bottom:1px solid #e2e8f0;font-size:13px}
+.preflight-item:last-child{border-bottom:0}.preflight-icon{font-weight:900}
 </style>
 </head>
 <body>
@@ -45,7 +47,10 @@ code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 
 <button class="tab" data-tab="settings">Regras</button>
 <button class="tab" data-tab="readings">Leituras</button>
 </nav>
-<section class="section active" id="invoices"><h2>Faturas do condomínio</h2><p class="note">Os pagamentos são efetuados fora da App. Aqui apenas se valida o documento e se regista a confirmação do pagamento.</p><div id="invoiceList"></div></section>
+<section class="section active" id="invoices"><div class="card"><h2>Diagnóstico da configuração</h2>
+<p class="note">Verifica acessos, frações e parâmetros sem alterar faturas nem enviar emails.</p>
+<button class="btn secondary" id="runPreflight" type="button" disabled>Executar diagnóstico</button>
+<div id="preflightResults" role="status" aria-live="polite"></div></div><h2>Faturas do condomínio</h2><p class="note">Os pagamentos são efetuados fora da App. Aqui apenas se valida o documento e se regista a confirmação do pagamento.</p><div id="invoiceList"></div></section>
 <section class="section" id="fractions">
 <h2>Frações com wallbox</h2><p class="note">A desativação preserva o histórico e não elimina pagamentos pendentes.</p><div id="fractionList"></div>
 <div class="card"><h2>Ativar / reativar fração</h2>
@@ -128,6 +133,22 @@ async function showReadingPhoto(readingId){
     $('readingPhotoImage').src=response.dataUrl;
     $('readingPhotoDialog').showModal();
   }catch(err){show(err.message,true);}
+}
+async function runPreflight(){
+  const button=$('runPreflight');button.disabled=true;button.textContent='A verificar…';
+  try{
+    const data=await api('finance.admin.preflight');
+    const container=$('preflightResults');container.replaceChildren();
+    const status=node('p',data.ready?'Configuração operacional completa.':'Existem configurações ou validações pendentes.',
+      data.ready?'':'note');container.append(status);
+    for(const item of (data.checks||[])){
+      const row=node('div',null,'preflight-item');
+      row.append(node('span',item.ok?'✓':'!', 'preflight-icon'),
+        node('span',item.message+(item.ok?' — OK':' — Pendente')));
+      container.append(row);
+    }
+  }catch(error){show('Diagnóstico indisponível: '+error.message,true);}
+  finally{button.disabled=false;button.textContent='Executar diagnóstico';}
 }
 function editInvoice(item){
   const values={
@@ -241,7 +262,7 @@ async function init(){
     const floorResponse=await dc4Fetch(BASE+'?action=garage.publicConfig');
     if(!floorResponse.ok)throw Error('Não foi possível consultar a estrutura do prédio');
     populateFractions(await floorResponse.json());
-    ready=true;await refresh();
+    ready=true;await refresh();$('runPreflight').disabled=false;
     $('tabs').hidden=false;$('loading').hidden=true;$('onboarding').textContent='Ambiente de desenvolvimento: só publicar quando o backend, permissões e testes estiverem concluídos.';
   }catch(e){$('loading').textContent='Não foi possível ligar ao módulo financeiro: '+e.message;show('O módulo financeiro ainda não está instalado no backend.',true);}
 }
@@ -249,6 +270,7 @@ $('tabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if
   document.querySelectorAll('.tab').forEach(x=>x.classList.toggle('active',x===t));
   document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===t.dataset.tab));
 });
+$('runPreflight').addEventListener('click',runPreflight);
 $('invoiceEditCancel').addEventListener('click',()=>{$('invoiceDialog').close();});
 $('invoiceEditForm').addEventListener('submit',async e=>{
  e.preventDefault();
