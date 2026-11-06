@@ -31,7 +31,18 @@ async function busy(text,fn){
  if(inProgress)return null;
  inProgress=true;const el=$('progress');if(el){el.className='active';el.querySelector('[data-progress-text]').textContent=text;}
  document.querySelectorAll('main button').forEach(b=>{b.dataset.wasDisabled=b.disabled?'1':'0';b.disabled=true;});
- try{return await fn()}catch(err){toast(err.message||'Não foi possível concluir.',true);return null}
+ try{return await fn()}catch(err){
+   const reason=err.message||'Não foi possível concluir.';
+   toast(reason,true);
+   const loading=$('loading');
+   if(loading&&!loading.hidden){
+     loading.replaceChildren(node('p','Não foi possível carregar: '+reason));
+     const retry=node('button','Tentar novamente','secondary');
+     retry.type='button';retry.addEventListener('click',()=>location.reload());
+     loading.append(retry);
+   }
+   return null;
+ }
  finally{inProgress=false;if(el)el.className='';document.querySelectorAll('main button').forEach(b=>{b.disabled=b.dataset.wasDisabled==='1';delete b.dataset.wasDisabled;});}
 }
 async function imageData(file){
