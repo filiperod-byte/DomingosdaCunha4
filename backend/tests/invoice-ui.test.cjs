@@ -29,6 +29,6 @@ test('faturas: scripts inline válidos',()=>{
 test('faturas: instruções OAuth visíveis quando o backend não pode consultar triggers',()=>{
  assert.match(html,/id="scannerHelp"/);
  assert.match(html,/authorizationRequired/);
- assert.match(html,/financeInstallScannerTrigger_/);
+ assert.match(html,/ativarSincronizacaoFaturas/);
  assert.match(html,/A pesquisa manual de documentos continua disponível/);
 });

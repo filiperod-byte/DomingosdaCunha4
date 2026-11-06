@@ -59,3 +59,23 @@ function setupGeneralOccurrences() {
   createAppsScriptPorts_(CONFIG,REQUIRED_HEADERS,domain).initializeGeneral();
   Logger.log('Folha OCORRENCIAS_GERAIS preparada. Dados existentes preservados.');
 }
+
+
+/**
+ * Configuração pontual pelo PROPRIETÁRIO no editor do Google Apps Script.
+ * O sufixo "_" da função interna impede a sua apresentação no seletor
+ * "Executar". Este wrapper público não é chamado pela interface HTTP.
+ * Repetir a execução não cria triggers duplicados.
+ */
+function ativarSincronizacaoFaturas() {
+  const result=financeInstallScannerTrigger_();
+  if(!result || !result.ok) {
+    const message=result && result.message || 'Não foi possível ativar a sincronização.';
+    Logger.log(message);
+    throw new Error(message);
+  }
+  Logger.log(result.alreadyInstalled ?
+    'Sincronização de faturas já estava ativa (15 em 15 minutos).' :
+    'Sincronização de faturas ativada (15 em 15 minutos).');
+  return result;
+}
