@@ -1,0 +1,27 @@
+name: Testes — módulo financeiro
+on:
+  pull_request:
+    paths:
+      - 'backend/src/**'
+      - 'backend/tests/**'
+      - 'backend/build.cjs'
+      - 'V2/backend-unificado.gs'
+      - '.github/workflows/finance-ci.yml'
+permissions:
+  contents: read
+jobs:
+  testes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '22'
+      - name: Verificar bundle e sintaxe
+        run: node backend/build.cjs --check
+      - name: Testar backend isoladamente
+        run: node --test backend/tests/*.test.cjs
+# Este workflow NUNCA usa CLASPRC_JSON nem publica o Apps Script.
