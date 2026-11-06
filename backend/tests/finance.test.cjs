@@ -28,7 +28,13 @@ function setup(){
   make('WALLBOX_DESCONTOS',['ID','Início vigência','Fim vigência','Desconto %','Motivo','Definido por','Registado em','Ciclo aplicado','Notas']);
   make('WALLBOX_NOTIFICACOES',['ID','Ciclo','Fração','Email','Estado','Enviado em','Erro','ID leitor','Observações']);
   make('HISTORICO',['Data','ID documento','Ação','Antes','Depois','Utilizador','Notas','Origem']);
-  make('FATURAS',['ID','Tipo','Fornecedor','Descrição','Período início','Período fim','Validação','Pagamento','Validado por','PDF original']);
+  make('FATURAS',
+    ['ID','Tipo','Fornecedor','NIF','Descrição','Documento','Emissão','Vencimento',
+     'Período início','Período fim','Total (€)','Método','IBAN fornecedor','Entidade MB',
+     'Referência MB','Validação','Pagamento','Data pag.','Validado por','PDF original',
+     'Observações','ID Drive'],
+    [['DOC-1','Documento por classificar','Por identificar','','PDF novo','PDF-1','','',
+      '','',0,'Por confirmar','','','','Por validar','Por confirmar','','','','','DRIVE-1']]);
   make('TARIFAS_EDP',['Parâmetro','Valor']);
   return b;
 }
@@ -91,4 +97,16 @@ test('a política HTTP rejeita GET e _method GET para operações financeiras',(
   const b=setup(),admin=tokenAdmin(b);
   assert.equal(b.post('finance.admin.bootstrap',{token:admin,_method:'GET'}).code,'FORBIDDEN');
   assert.equal(b.get('finance.admin.bootstrap').code,'AUTH_REQUIRED');
+});
+test('documento sem classificação e IBAN inválido não podem entrar no circuito de pagamento',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  const validate=()=>b.post('finance.admin.validateInvoice',{token:admin,id:'DOC-1'});
+  assert.equal(validate().code,'FINANCE_ERROR');
+  const request={token:admin,id:'DOC-1',documentType:'Fatura',supplier:'Fornecedor de teste',
+    description:'Serviço de manutenção',value:75.72,due:'2026-11-15',method:'Por confirmar'};
+  assert.equal(b.post('finance.admin.updateInvoice',{...request,iban:'PT50INVALID'}).code,'FINANCE_ERROR');
+  assert.equal(b.post('finance.admin.updateInvoice',request).ok,true);
+  assert.equal(validate().ok,true);
+  assert.equal(b.post('finance.admin.markInvoicePaid',{token:admin,id:'DOC-1',paidAt:'2026-11-16'}).ok,true);
+  assert.equal(b.post('finance.admin.updateInvoice',request).code,'FINANCE_ERROR');
 });
