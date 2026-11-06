@@ -59,7 +59,8 @@ function openEdit(f){
 function render(){
  const list=$('invoiceList');list.replaceChildren();
  $('countPending').textContent=invoices.filter(f=>f.validation!=='Validada'&&f.validation!=='Não é fatura').length;
- $('countUnpaid').textContent=invoices.filter(f=>f.payment!=='Pago'&&f.payment!=='Não autorizado').length;
+ $('countUnpaid').textContent=invoices.filter(f=>f.payment!=='Pago'&&f.payment!=='Não autorizado' &&
+  f.validation!=='Não é fatura'&&!/orçamento|por classificar/i.test(f.documentType||'')).length;
  if(!invoices.length){list.append(UI.node('p','Não existem documentos registados.','muted'));return}
  for(const f of invoices){
   const card=UI.node('article',undefined,'card'),heading=UI.node('div',undefined,'row');
