@@ -900,6 +900,8 @@ function createSecureApplication_(app, ports) {
       // Financeiro: apenas POST autenticado; identidade e fração derivadas da sessão verificada.
       // Não encaminhar dados financeiros pelo router legado, e nunca aceitar roles fornecidas no body.
       if (method === 'POST' && /^finance\.(admin|resident)\./.test(action)) {
+        const requiredRole=action.startsWith('finance.admin.')?'admin':'resident';
+        if(session.role!==requiredRole)return deny('Sem autorização para esta área financeira.','FORBIDDEN');
         const resident = session.resident;
         const actor = session.role === 'admin'
           ? { role:'admin', email:String(ports.settings.get('ADMIN_EMAIL') || '').trim().toLowerCase() }
