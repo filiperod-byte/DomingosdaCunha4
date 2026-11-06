@@ -1,7 +1,7 @@
 /* Versão da interface: atualizar este valor e as referências ?v= em cada publicação. */
 (function () {
   'use strict';
-  const VERSION = '3.8.3';
+  const VERSION = '3.8.4';
   function mount() {
     if (document.getElementById('dc4-version')) return;
     const style = document.createElement('style');
@@ -14,7 +14,7 @@
     badge.title = 'Versão da interface da app';
     badge.setAttribute('aria-label', 'Informação da versão ' + VERSION);
     badge.addEventListener('click', function () {
-      window.alert('App do Condomínio — v' + VERSION + '\nPublicação: 06/11/2026 · correção de permissões da sincronização\n\nIndica este número quando reportares um problema.\nEste indicador identifica a interface; não verifica a versão do serviço de dados.');
+      window.alert('App do Condomínio — v' + VERSION + '\nPublicação: 06/11/2026 · configuração visível da sincronização de faturas\n\nIndica este número quando reportares um problema.\nEste indicador identifica a interface; não verifica a versão do serviço de dados.');
     });
     document.body.appendChild(badge);
   }
