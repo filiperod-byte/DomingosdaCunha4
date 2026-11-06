@@ -50,7 +50,11 @@ code{word-break:break-word}hr{border:0;border-top:1px solid #e2e8f0;margin:15px 
 <section class="section active" id="invoices"><div class="card"><h2>Diagnóstico da configuração</h2>
 <p class="note">Verifica acessos, frações e parâmetros sem alterar faturas nem enviar emails.</p>
 <button class="btn secondary" id="runPreflight" type="button" disabled>Executar diagnóstico</button>
-<div id="preflightResults" role="status" aria-live="polite"></div></div><h2>Faturas do condomínio</h2><p class="note">Os pagamentos são efetuados fora da App. Aqui apenas se valida o documento e se regista a confirmação do pagamento.</p><div id="invoiceList"></div></section>
+<div id="preflightResults" role="status" aria-live="polite"></div></div><div class="card"><h2>Deteção de novas faturas</h2><p class="note">Procura PDFs e imagens na pasta FATURAS/ano/mês. Os novos documentos ficam por classificar e nunca são aprovados automaticamente.</p>
+<div class="btn-row"><button id="scanNow" class="btn secondary" type="button" disabled>Procurar novos documentos</button>
+<button id="scannerToggle" class="btn secondary" type="button" disabled>Verificar automatização</button></div>
+<p class="note" id="scannerState">Automatização por verificar</p></div>
+<h2>Faturas do condomínio</h2><p class="note">Os pagamentos são efetuados fora da App. Aqui apenas se valida o documento e se regista a confirmação do pagamento.</p><div id="invoiceList"></div></section>
 <section class="section" id="fractions">
 <h2>Frações com wallbox</h2><p class="note">A desativação preserva o histórico e não elimina pagamentos pendentes.</p><div id="fractionList"></div>
 <div class="card"><h2>Ativar / reativar fração</h2>
@@ -133,6 +137,15 @@ async function showReadingPhoto(readingId){
     $('readingPhotoImage').src=response.dataUrl;
     $('readingPhotoDialog').showModal();
   }catch(err){show(err.message,true);}
+}
+async function refreshScanner(){
+  try{
+    const r=await api('finance.admin.scannerStatus');
+    const on=Boolean(r.enabled);
+    $('scannerState').textContent=on?'Monitorização de 15 em 15 minutos: ATIVA':'Monitorização automática: DESLIGADA';
+    $('scannerToggle').textContent=on?'Desativar monitorização':'Ativar monitorização';
+    $('scannerToggle').dataset.enabled=on?'yes':'no';
+  }catch(e){$('scannerState').textContent='Estado indisponível: '+e.message;}
 }
 async function runPreflight(){
   const button=$('runPreflight');button.disabled=true;button.textContent='A verificar…';
@@ -263,6 +276,8 @@ async function init(){
     if(!floorResponse.ok)throw Error('Não foi possível consultar a estrutura do prédio');
     populateFractions(await floorResponse.json());
     ready=true;await refresh();$('runPreflight').disabled=false;
+    $('scanNow').disabled=false;$('scannerToggle').disabled=false;
+    await refreshScanner();
     $('tabs').hidden=false;$('loading').hidden=true;$('onboarding').textContent='Ambiente de desenvolvimento: só publicar quando o backend, permissões e testes estiverem concluídos.';
   }catch(e){$('loading').textContent='Não foi possível ligar ao módulo financeiro: '+e.message;show('O módulo financeiro ainda não está instalado no backend.',true);}
 }
@@ -271,6 +286,24 @@ $('tabs').addEventListener('click',e=>{const t=e.target.closest('[data-tab]');if
   document.querySelectorAll('.section').forEach(x=>x.classList.toggle('active',x.id===t.dataset.tab));
 });
 $('runPreflight').addEventListener('click',runPreflight);
+$('scanNow').addEventListener('click',async()=>{
+  $('scanNow').disabled=true;
+  try{const r=await api('finance.admin.scanNow');
+    show((r.newDocuments||0)+' novo(s) documento(s) registado(s) para validação.');
+    await refresh();
+  }catch(e){show(e.message,true);}
+  finally{$('scanNow').disabled=false;}
+});
+$('scannerToggle').addEventListener('click',async()=>{
+  const enabled=$('scannerToggle').dataset.enabled==='yes';
+  if(!confirm(enabled?'Desativar a verificação periódica de novas faturas?':
+      'Ativar a procura automática de documentos a cada 15 minutos?'))return;
+  try{
+    const action=enabled?'finance.admin.disableScanner':'finance.admin.enableScanner';
+    await api(action);await refreshScanner();
+    show(enabled?'Monitorização desativada.':'Monitorização ativada. Novos documentos continuam por validar.');
+  }catch(e){show('Não foi possível alterar o trigger: '+e.message,true);}
+});
 $('invoiceEditCancel').addEventListener('click',()=>{$('invoiceDialog').close();});
 $('invoiceEditForm').addEventListener('submit',async e=>{
  e.preventDefault();
