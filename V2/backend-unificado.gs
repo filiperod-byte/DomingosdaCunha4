@@ -1368,6 +1368,13 @@ function fncCorrectInitial_(req,actor){
     const kwh=fncNumber_(req.initialReading);
     if(kwh<0)throw new Error('Consumo acumulado inválido');
     const reason=fncRequired_(req.reason,'Motivo da correção').slice(0,250);
+    const updatedEmail=String(req.email??membership['Email autorizado']).trim().toLowerCase();
+    if(updatedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updatedEmail))
+      throw new Error('Email inválido');
+    if(membership['Estado']==='Ativa' &&
+       updatedEmail!==String(membership['Email autorizado']||'').trim().toLowerCase() &&
+       !fncApprovedResident_(id,updatedEmail))
+      throw new Error('O novo email não pertence a um morador aprovado nesta fração');
     const membershipStart=fncDateDisplay_(membership['Data adesão']);
     const paid=fncData_(FNC.sheet.payments).some(p=>p['Fração']===id &&
       (!membershipStart||fncDateDisplay_(p['Data inicial'])>=membershipStart));
@@ -1380,13 +1387,13 @@ function fncCorrectInitial_(req,actor){
       throw new Error('A nova base não pode ultrapassar uma leitura pendente nem a respetiva data.');
     const previous={kwh:membership['Leitura inicial (kWh)'],
       date:fncDateDisplay_(membership['Data leitura inicial']),
-      photoId:membership['Foto inicial Drive ID']};
+      photoId:membership['Foto inicial Drive ID'],email:membership['Email autorizado']};
     const patch={'Leitura inicial (kWh)':kwh,'Data leitura inicial':date,'Atualizado em':fncNow_(),
-      'Observações':'Correção administrativa: '+reason};
+      'Email autorizado':updatedEmail,'Observações':'Correção administrativa: '+reason};
     if(req.photoBase64)patch['Foto inicial Drive ID']=fncStorePhoto_(req.photoBase64,actor,'revisao-inicial-'+id);
     fncUpdate_(FNC.sheet.fractions,membership.row,patch);
     fncAudit_(id,'Corrigir leitura inicial',previous,
-      {kwh,date,photoId:patch['Foto inicial Drive ID']||previous.photoId},actor,reason);
+      {kwh,date,email:updatedEmail,photoId:patch['Foto inicial Drive ID']||previous.photoId},actor,reason);
     return {ok:true};
   });
 }
