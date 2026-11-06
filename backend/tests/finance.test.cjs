@@ -34,9 +34,10 @@ function setup(){
     ['ID','Tipo','Fornecedor','NIF','Descrição','Documento','Emissão','Vencimento',
      'Período início','Período fim','Total (€)','Método','IBAN fornecedor','Entidade MB',
      'Referência MB','Validação','Pagamento','Data pag.','Validado por','PDF original',
-     'Observações','ID Drive'],
+     'Observações','ID Drive','IVA (€)','Base tributável (€)','Estado extração','Data extração'],
     [['DOC-1','Documento por classificar','Por identificar','','PDF novo','PDF-1','','',
-      '','',0,'Por confirmar','','','','Por validar','Por confirmar','','','','','DRIVE-1']]);
+      '','',0,'Por confirmar','','','','Por validar','Por confirmar','','','','','DRIVE-1',
+      '', '', 'Extraído — por validar','']]);
   make('TARIFAS_EDP',['Parâmetro','Valor']);
   return b;
 }
@@ -327,4 +328,32 @@ test('falta de consentimento interrompe o instalador para exibir o pedido OAuth 
  assert.throws(()=>b.context.ativarSincronizacaoFaturas(),/Authorization required/);
  assert.equal(b.counts.authChecks,1);
  assert.equal(b.props.FINANCE_SCANNER_ENABLED,undefined);
+});
+
+test('extração manual preenche apenas os dados identificados e mantém por validar',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  const pdf=[
+    'Factura nº1 2026/52','De','Empresa Fictícia Unipessoal. Lda.',
+    'Nº Contribuinte: 500000000','Data de Emissão','2026-10-20',
+    'Data de Vencimento','2026-10-24','Para','Condomínio',
+    'Resumo','Subtotal da Factura 240,00 €',
+    'IVA 23.00% (Incidência: 240,00) 55,20 €',
+    'Total da Factura 295,20 €'
+  ].join('\n');
+  b.context.fncDriveOcrText_=()=>pdf;
+  const r=b.post('finance.admin.extractInvoice',{token:admin,id:'DOC-1'});
+  assert.equal(r.ok,true);
+  assert.equal(r.amount,295.2);
+  const headers=b.sheets.get('FATURAS').rows[0];
+  const row=b.sheets.get('FATURAS').rows[1];
+  assert.equal(row[headers.indexOf('Fornecedor')],'Empresa Fictícia Unipessoal. Lda.');
+  assert.equal(row[headers.indexOf('Total (€)')],295.2);
+  assert.equal(row[headers.indexOf('Validação')],'Por validar');
+  assert.equal(row[headers.indexOf('Pagamento')],'Por confirmar');
+});
+test('extração é proibida a moradores e não altera documentos validados',()=>{
+  const b=setup(),admin=tokenAdmin(b),resident=tokenResident(b,admin);
+  assert.equal(b.post('finance.admin.extractInvoice',{token:resident,id:'DOC-1'}).code,'FORBIDDEN');
+  b.sheets.get('FATURAS').rows[1][15]='Validada';
+  assert.equal(b.post('finance.admin.extractInvoice',{token:admin,id:'DOC-1'}).code,'FINANCE_ERROR');
 });
