@@ -147,7 +147,9 @@ async function load(){
 async function loadFractions(){
  if(structureLoaded)return;
  const cfg=await fetch('config.json',{cache:'no-store'}).then(r=>r.json());
- const r=await UI.api('garage.publicConfig');const sel=$('fractionId');
+ const response=await dc4Fetch(cfg.backendUrl+'?action=garage.publicConfig',{cache:'no-store'});
+ if(!response.ok)throw Error('Não foi possível consultar as frações');
+ const r=await response.json(),sel=$('fractionId');
  const structure=r.structure||[];
  for(const f of structure.filter(x=>Number(x.piso)>=2)){
   for(const fr of f.fraccoes||[]){
@@ -184,7 +186,11 @@ async function showPhoto(id){
 async function saveForm(event,dialog,action,payload,success,withPhoto){
  event.preventDefault();
  await UI.busy('A guardar os dados e a atualizar a fração…',async()=>{
-  if(withPhoto)payload.photoBase64=await UI.imageData(withPhoto.files?.[0]);
+  if(withPhoto && withPhoto.files?.[0]){
+    const key=action==='finance.admin.upsertFraction'?'initialPhotoBase64':
+      action==='finance.admin.deactivateFraction'?'finalPhotoBase64':'photoBase64';
+    payload[key]=await UI.imageData(withPhoto.files[0]);
+  }
   await UI.api(action,payload);$(dialog).close();UI.toast(success);await load();
  });
 }
