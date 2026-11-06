@@ -14,14 +14,18 @@
 <div class="stats"><div class="stat"><span>Por validar</span><strong id="countPending">—</strong></div>
 <div class="stat"><span>Por pagar / confirmar</span><strong id="countUnpaid">—</strong></div></div>
 <section class="card" aria-label="Sincronização com o Drive">
-<div class="row"><h2>Sincronização com Drive</h2><span class="status" id="autoStatus">A verificar…</span></div>
-<p class="hint">Carregar a lista não procura ficheiros novos. Para os importar, usa a pesquisa do Drive ou ativa a monitorização automática.</p>
+<div class="row"><h2>Sincronização com Drive</h2><span class="status ok" id="openSyncStatus">Pesquisa ao abrir ativa</span></div>
+<p class="hint">A App procura novos documentos no Drive quando entras neste menu, mesmo sem agendamento. Também podes atualizar manualmente.</p>
+<p class="muted" id="lastDriveScan" role="status" aria-live="polite">A preparar a pesquisa ao Drive…</p>
 <div class="actions">
 <button type="button" id="scan">Procurar novas faturas no Drive</button>
-<button type="button" class="secondary" id="refresh">↻ Atualizar lista</button>
+<button type="button" class="secondary" id="refresh">↻ Atualizar dados</button>
 </div>
-<div class="actions"><button type="button" id="scannerToggle" class="secondary">Consultar automatização</button></div>
-<p class="muted" id="scannerState">A consultar estado da monitorização…</p>
+<details style="margin-top:12px" id="backgroundSync">
+<summary>Pesquisa automática com a App fechada (opcional)</summary>
+<div class="row" style="margin-top:10px"><span class="muted">Verificação de 15 em 15 minutos</span><span class="status" id="autoStatus">A verificar…</span></div>
+<div class="actions"><button type="button" id="scannerToggle" class="secondary">Consultar agendamento</button></div>
+<p class="muted" id="scannerState">A consultar estado do agendamento…</p>
 <details id="scannerHelp" hidden style="margin-top:12px">
 <summary>Como autorizar a monitorização automática</summary>
 <p class="hint">A gestão dos agendamentos exige uma autorização Google que não pode ser concedida diretamente nesta página.</p>
@@ -29,6 +33,7 @@
 <p class="hint">2. No seletor de funções, escolhe <code>ativarSincronizacaoFaturas</code> (sem _ no final) e clica em <strong>Executar</strong>.</p>
 <p class="hint">3. Aceita as permissões solicitadas. Depois regressa aqui e atualiza a página.</p>
 <p class="hint">Este processo é necessário apenas uma vez. Podes continuar a importar documentos manualmente.</p>
+</details>
 </details>
 </section>
 <div class="section-label">Documentos</div><div id="invoiceList"></div>
@@ -50,7 +55,7 @@
 </main><script>
 (function(){
 'use strict';
-const UI=window.FinUI,$=UI.$;let invoices=[];
+const UI=window.FinUI,$=UI.$;let invoices=[],scanPromise=null;
 function kv(parent,label,value){
  const dt=UI.node('dt',label),dd=UI.node('dd',value??'—');
  parent.append(dt,dd);
@@ -140,7 +145,33 @@ async function scannerStatus(){
   'O condomínio procura novos documentos no Drive de 15 em 15 minutos.':
   'Para importar novas faturas sem pesquisa manual, ativa a monitorização uma vez.';
 }
-$('refresh').addEventListener('click',()=>UI.busy('A atualizar faturas…',reload));
+// A pesquisa usa a sessão de administrador e as permissões Drive/Sheets já existentes.
+ // Não necessita de ScriptApp.getProjectTriggers ou do âmbito OAuth script.scriptapp.
+ async function discoverInvoices({manual=false}={}){
+  if(scanPromise)return scanPromise;
+  $('lastDriveScan').textContent='A pesquisar novas faturas no Drive…';
+  scanPromise=(async()=>{
+   try{
+    const result=await UI.api('finance.admin.scanNow');
+    const added=Number(result.newDocuments||0);
+    if(added>0)await reload();
+    $('lastDriveScan').textContent=added>0?
+     added+' nova(s) fatura(s) importada(s) · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}):
+     'Drive pesquisado: sem documentos novos · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
+    if(manual)UI.toast(added+' documento(s) novo(s) encontrado(s).');
+    else if(added>0)UI.toast(added+' nova(s) fatura(s) importada(s) automaticamente.');
+    return added;
+   }catch(err){
+    $('lastDriveScan').textContent='Não foi possível consultar novos documentos. Podes tentar novamente.';
+    if(manual)UI.toast(err.message||'Falha na pesquisa ao Drive.',true);
+    return null;
+   }finally{scanPromise=null;}
+  })();
+  return scanPromise;
+ }
+ $('refresh').addEventListener('click',()=>UI.busy('A atualizar a lista e procurar novas faturas…',async()=>{
+  await reload();await discoverInvoices({manual:true});
+ }));
 $('editForm').addEventListener('submit',e=>{
  e.preventDefault();
  const patch={id:$('editId').value,documentType:$('editType').value,supplier:$('editSupplier').value,
@@ -153,10 +184,8 @@ $('editForm').addEventListener('submit',e=>{
  });
 });
 $('cancelEdit').addEventListener('click',()=>$('editDialog').close());
-$('scan').addEventListener('click',()=>UI.busy('A procurar ficheiros novos no Drive…',async()=>{
- const result=await UI.api('finance.admin.scanNow');
- UI.toast((result.newDocuments||0)+' documento(s) novo(s) encontrado(s).');await reload();
-}));
+$('scan').addEventListener('click',()=>UI.busy('A procurar ficheiros novos no Drive…',
+ ()=>discoverInvoices({manual:true})));
 $('scannerToggle').addEventListener('click',()=>{
  if($('scannerToggle').dataset.mode==='help'){
   $('scannerHelp').hidden=false;
@@ -172,14 +201,20 @@ $('scannerToggle').addEventListener('click',()=>{
  });
 });
 if(!dc4HasSession('admin'))location.replace('admin.html');
-else UI.busy('A carregar faturas…',reload).then(()=>
+else UI.busy('A carregar faturas…',reload).then(()=>{
+  // A lista é mostrada imediatamente; a pesquisa ao Drive corre a seguir sem bloquear.
+  discoverInvoices();
+});
+$('backgroundSync').addEventListener('toggle',()=>{
+ if(!$('backgroundSync').open)return;
  scannerStatus().catch(err=>{
-  $('autoStatus').textContent='Monitorização indisponível';
+  $('autoStatus').textContent='Agendamento indisponível';
   $('autoStatus').className='status warn';
-  $('scannerState').textContent='Não foi possível verificar os agendamentos. A pesquisa manual de documentos continua disponível.';
+  $('scannerState').textContent='Não foi possível consultar agendamentos: '+err.message;
   $('scannerToggle').dataset.mode='help';
   $('scannerToggle').textContent='Como autorizar';
   $('scannerHelp').hidden=false;
- }));
+ });
+});
 })();
 </script></body></html>
