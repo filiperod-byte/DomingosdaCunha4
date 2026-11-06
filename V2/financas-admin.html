@@ -156,11 +156,13 @@ function render(){
   });
 }
 function populateFractions(config) {
-  const select=$('fractionId'),floors=(config.building?.floors||[]).filter(f=>f.type==='residential' && f.floor>0);
-  floors.sort((a,b)=>b.floor-a.floor).forEach(f=>{for(let i=0;i<(f.fractions||0);i++){
-    const suffix=String.fromCharCode(65+i),opt=node('option',f.floor+'.º '+suffix);
-    opt.value=String(f.floor)+suffix;select.append(opt);
-  }});
+  const select=$('fractionId'),floors=(config.structure||[])
+    .filter(f=>Number(f.piso)>=2&&Array.isArray(f.fraccoes))
+    .sort((a,b)=>Number(b.piso)-Number(a.piso));
+  floors.forEach(f=>(f.fraccoes||[]).forEach(frac=>{
+    const opt=node('option',f.piso+'.º '+frac);
+    opt.value=String(f.piso)+String(frac).toUpperCase();select.append(opt);
+  }));
 }
 function imageData(file){
  if(!file || !['image/jpeg','image/png'].includes(file.type))throw Error('É necessária fotografia JPG ou PNG');
@@ -181,8 +183,12 @@ async function init(){
   if(!dc4HasSession('admin')){location.replace('admin.html');return;}
   $('effective').value=today();$('initialDate').value=today();
   try{
-    const [config,root]=await Promise.all([dc4Fetch('config.json').then(r=>r.json()),dc4Fetch('../config.json').then(r=>r.json())]);
-    BASE=config.backendUrl;populateFractions(root);ready=true;await refresh();
+    const config=await dc4Fetch('config.json').then(r=>r.json());
+    BASE=config.backendUrl;
+    const floorResponse=await dc4Fetch(BASE+'?action=garage.publicConfig');
+    if(!floorResponse.ok)throw Error('Não foi possível consultar a estrutura do prédio');
+    populateFractions(await floorResponse.json());
+    ready=true;await refresh();
     $('tabs').hidden=false;$('loading').hidden=true;$('onboarding').textContent='Ambiente de desenvolvimento: só publicar quando o backend, permissões e testes estiverem concluídos.';
   }catch(e){$('loading').textContent='Não foi possível ligar ao módulo financeiro: '+e.message;show('O módulo financeiro ainda não está instalado no backend.',true);}
 }
