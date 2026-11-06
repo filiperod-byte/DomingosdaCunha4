@@ -29,6 +29,7 @@ function financeDispatch_(req, actor) {
     'finance.admin.correctReading': () => fncCorrectReading_(req, actor),
     'finance.admin.preflight': () => fncPreflight_(),
     'finance.admin.scanNow': () => financeScanFolder_(),
+    'finance.admin.extractInvoice': () => fncExtractOneInvoice_(req.id),
     'finance.admin.scannerStatus': () => financeScannerStatus_(),
     'finance.admin.enableScanner': () => financeInstallScannerTrigger_(),
     'finance.admin.disableScanner': () => financeDisableScannerTrigger_(),
@@ -153,7 +154,9 @@ function fncInvoiceDashboard_(){
   return {ok:true,invoices:fncData_(FNC.sheet.invoices).map(r=>({
     id:r.ID,supplier:r['Fornecedor'],description:r['Descrição'],due:r['Vencimento'],
     value:r['Total (€)'],validation:r['Validação'],payment:r['Pagamento'],
-    documentType:r['Tipo'],method:r['Método'],iban:r['IBAN fornecedor'],
+    documentType:r['Tipo'],method:r['Método'],
+    extraction:r['Estado extração']||'Não processado',
+    iban:r['IBAN fornecedor'],
     entity:r['Entidade MB'],reference:r['Referência MB'],url:r['PDF original']
   }))};
 }
@@ -811,7 +814,7 @@ function fncSetNotifications_(req,actor){
  * Propriedade FINANCE_FATURAS_ROOT_ID = ID da pasta FATURAS privada.
  */
 function financeScanFolder_(){
-  return fncLock_(()=>{
+  const scanned=fncLock_(()=>{
     const root=PropertiesService.getScriptProperties().getProperty('FINANCE_FATURAS_ROOT_ID');
     const folder=root?DriveApp.getFolderById(root):fncPrivateFolder_('FATURAS');
     const seen=new Set(fncData_(FNC.sheet.invoices).map(r=>String(r['ID Drive']||'')));
@@ -845,6 +848,10 @@ function financeScanFolder_(){
     }
     return {ok:true,newDocuments:count};
   });
+  // O registo do ficheiro é independente da extração: mesmo quando o OCR falha,
+  // o documento permanece consultável e não entra automaticamente no circuito de pagamentos.
+  const extraction=fncExtractPendingInvoices_(2);
+  return {...scanned,extraction};
 }
 
 /**
