@@ -124,13 +124,20 @@ function fncDriveOcrText_(fileId){
 }
 /** Aplica somente dados reconhecidos a documento por validar. */
 function fncExtractOneInvoice_(invoiceId){
-  const item=fncData_(FNC.sheet.invoices).find(r=>String(r.ID)===String(invoiceId));
-  if(!item)throw new Error('Documento não encontrado');
-  if(item['Validação']==='Validada'||item['Pagamento']==='Pago')throw new Error('Documento fechado');
-  const fileId=item['ID Drive'];
+  const original=fncData_(FNC.sheet.invoices).find(r=>String(r.ID)===String(invoiceId));
+  if(!original)throw new Error('Documento não encontrado');
+  if(original['Validação']==='Validada'||original['Pagamento']==='Pago')throw new Error('Documento fechado');
+  const fileId=original['ID Drive'];
   if(!fileId)throw new Error('Documento sem ID de Drive');
+  // O OCR não mantém bloqueios globais enquanto aguarda o Google Drive.
   const parsed=fncParseInvoiceText_(fncDriveOcrText_(String(fileId)));
-  const patch={'Estado extração':parsed.state,'Data extração':fncNow_()};
+  return fncLock_(()=>{
+    // Conferir novamente o registo ANTES da escrita; pode ter sido validado enquanto o OCR corria.
+    const item=fncData_(FNC.sheet.invoices).find(r=>String(r.ID)===String(invoiceId));
+    if(!item||item['Validação']==='Validada'||item['Pagamento']==='Pago')
+      throw new Error('Documento foi entretanto validado; extração não aplicada');
+    if(String(item['ID Drive'])!==String(fileId))throw new Error('Documento original alterado');
+    const patch={'Estado extração':parsed.state,'Data extração':fncNow_()};
   const set=(field,value,placeholder)=>{
     if(value===null||value===undefined||value==='')return;
     const current=item[field];
@@ -144,7 +151,7 @@ function fncExtractOneInvoice_(invoiceId){
     set('Emissão',parsed.issued);
     set('Vencimento',parsed.due);
     set('Total (€)',parsed.value);
-    set('Método',parsed.method);
+    if(parsed.method==='Débito direto')set('Método',parsed.method,'Por confirmar');
     set('Descrição',parsed.description,item['Documento']);
     set('IVA (€)',parsed.iva);
     set('Base tributável (€)',parsed.subtotal);
@@ -158,4 +165,5 @@ function fncExtractOneInvoice_(invoiceId){
   for(const k of Object.keys(patch))if(!keys.includes(k))delete patch[k];
   fncUpdate_(FNC.sheet.invoices,item.row,patch);
   return {ok:true,id:item.ID,extraction:parsed.state,recognized:parsed.recognized,amount:parsed.value};
+  });
 }
