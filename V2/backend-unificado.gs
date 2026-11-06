@@ -1190,6 +1190,7 @@ function financeDispatch_(req, actor) {
     },
     'finance.admin.markInvoicePaid': () => fncMarkInvoicePaid_(req, actor),
     'finance.admin.validateReading': () => fncValidateReading_(req, actor),
+    'finance.admin.getReadingPhoto': () => fncGetReadingPhoto_(req,actor),
     'finance.admin.markWallboxPaid': () => fncMarkWallboxPaid_(req, actor),
     'finance.resident.status': () => fncResidentStatus_(actor),
     'finance.resident.submitReading': () => fncSubmitReading_(req, actor)
@@ -1440,6 +1441,20 @@ function fncStorePhoto_(b64,actor,cycle){
   return DriveApp.getFolderById(folderId)
     .createFile(Utilities.newBlob(bytes,mime,'wallbox-'+cycle+'-'+Utilities.getUuid()+ext)).getId();
 }
+function fncGetReadingPhoto_(req,actor){
+  // Apenas administradores com sessão válida podem ler fotografias privadas.
+  // O ficheiro é resolvido pelo ID de leitura registado no Sheets, nunca por ID arbitrário do cliente.
+  const id=fncRequired_(req.id,'ID de leitura');
+  const reading=fncData_(FNC.sheet.readings).find(r=>r['ID leitura']===id);
+  if(!reading || !reading['Foto Drive ID'])throw new Error('Fotografia não encontrada');
+  const file=DriveApp.getFileById(String(reading['Foto Drive ID']));
+  const blob=file.getBlob(),bytes=blob.getBytes();
+  if(bytes.length>3.1*1024*1024)throw new Error('Imagem demasiado grande para visualizar na App');
+  const mime=String(blob.getContentType()||'image/jpeg');
+  if(!['image/jpeg','image/png'].includes(mime))throw new Error('Formato da fotografia não autorizado');
+  return {ok:true,dataUrl:'data:'+mime+';base64,'+Utilities.base64Encode(bytes)};
+}
+
 function fncValidateReading_(req,actor){
   return fncLock_(()=>{
     const rid=fncRequired_(req.id,'Leitura');
