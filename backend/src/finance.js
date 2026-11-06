@@ -44,11 +44,24 @@ function financeDispatch_(req, actor) {
   if (!map[action]) throw new Error('Ação financeira desconhecida');
   return map[action]();
 }
-function fncDb_() {
-  const id=PropertiesService.getScriptProperties().getProperty('FINANCE_SPREADSHEET_ID');
-  if (!id) throw new Error('FINANCE_SPREADSHEET_ID por configurar');
-  return SpreadsheetApp.openById(id);
+function fncPrivateFolder_(name) {
+  const folders=DriveApp.getFolderById(CONFIG.ROOT_FOLDER_ID).getFoldersByName(name);
+  if(!folders.hasNext())throw new Error('Pasta privada não encontrada: '+name);
+  const folder=folders.next();
+  if(folders.hasNext())throw new Error('Existem várias pastas privadas com o mesmo nome: '+name);
+  return folder;
 }
+function fncFinanceFileId_(){
+  const override=PropertiesService.getScriptProperties().getProperty('FINANCE_SPREADSHEET_ID');
+  if(override)return override;
+  // Localização automática dentro da Drive que já é usada pelo backend do condomínio.
+  const files=fncPrivateFolder_('FATURAS').getFilesByName('DC4 — Gestão Financeira (pré-produção)');
+  if(!files.hasNext())throw new Error('Base de dados financeira não encontrada no Drive');
+  const file=files.next();
+  if(files.hasNext())throw new Error('Existem várias bases financeiras com o mesmo nome');
+  return file.getId();
+}
+function fncDb_(){return SpreadsheetApp.openById(fncFinanceFileId_());}
 function fncTab_(name) {
   const sh=fncDb_().getSheetByName(name);
   if (!sh) throw new Error('Separador não encontrado: '+name);
@@ -278,14 +291,13 @@ function fncSubmitReading_(req,actor){
 }
 function fncStorePhoto_(b64,actor,cycle){
   const folderId=PropertiesService.getScriptProperties().getProperty('FINANCE_PHOTOS_FOLDER_ID');
-  if(!folderId)throw new Error('Pasta privada das fotografias por configurar');
+  const folder=folderId?DriveApp.getFolderById(folderId):fncPrivateFolder_('WALLBOX_LEITURAS_PRIVADAS');
   const data=fncRequired_(b64,'Fotografia').replace(/^data:image\/(?:jpeg|png);base64,/,'');
   if(data.length>4300000 || !/^[A-Za-z0-9+/=]+$/.test(data))throw new Error('Imagem inválida ou demasiado grande');
   const isPng=/^data:image\/png;base64,/.test(String(b64));
   const bytes=Utilities.base64Decode(data), mime=isPng?'image/png':'image/jpeg';
   const ext=isPng?'.png':'.jpg';
-  return DriveApp.getFolderById(folderId)
-    .createFile(Utilities.newBlob(bytes,mime,'wallbox-'+cycle+'-'+Utilities.getUuid()+ext)).getId();
+  return folder.createFile(Utilities.newBlob(bytes,mime,'wallbox-'+cycle+'-'+Utilities.getUuid()+ext)).getId();
 }
 function fncGetReadingPhoto_(req,actor){
   // Apenas administradores com sessão válida podem ler fotografias privadas.
@@ -493,10 +505,10 @@ function fncSetNotifications_(req,actor){
 function financeScanFolder_(){
   return fncLock_(()=>{
     const root=PropertiesService.getScriptProperties().getProperty('FINANCE_FATURAS_ROOT_ID');
-    if(!root)throw Error('FINANCE_FATURAS_ROOT_ID por configurar');
+    const folder=root?DriveApp.getFolderById(root):fncPrivateFolder_('FATURAS');
     const seen=new Set(fncData_(FNC.sheet.invoices).map(r=>String(r['ID Drive']||'')));
     let count=0;
-    const years=DriveApp.getFolderById(root).getFolders();
+    const years=folder.getFolders();
     while(years.hasNext()){
       const year=years.next();
       if(!/^\d{4}$/.test(year.getName()))continue;
