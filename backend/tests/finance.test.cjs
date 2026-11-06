@@ -84,6 +84,7 @@ test('desconto posterior não altera pagamentos fechados',()=>{
 test('emails controlados por sessão, configuração e par ciclo/fração',()=>{
   const b=setup(),admin=tokenAdmin(b);
   tokenResident(b,admin);
+  const mailsBefore=b.counts.mails; // Registo e aprovação também geram emails legítimos.
   assert.equal(b.post('finance.admin.notifyCycle',{token:admin,cycleId:'CYCLE-EDP-1'}).code,'FINANCE_ERROR');
   b.sheets.get('WALLBOX_CONFIG').rows.find(r=>r[0]==='NOTIFICACOES_ATIVAS')[1]='SIM';
   const a=b.post('finance.admin.notifyCycle',{token:admin,cycleId:'CYCLE-EDP-1'});
@@ -92,7 +93,7 @@ test('emails controlados por sessão, configuração e par ciclo/fração',()=>{
   const again=b.post('finance.admin.notifyCycle',{token:admin,cycleId:'CYCLE-EDP-1'});
   assert.equal(again.ok,true);
   assert.equal(again.notified,0);
-  assert.equal(b.counts.mails,1);
+  assert.equal(b.counts.mails-mailsBefore,1);
 });
 test('a política HTTP rejeita GET e _method GET para operações financeiras',()=>{
   const b=setup(),admin=tokenAdmin(b);
