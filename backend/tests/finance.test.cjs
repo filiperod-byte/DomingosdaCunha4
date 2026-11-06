@@ -313,3 +313,18 @@ test('ativação descreve a falta de ambas as funções sem ReferenceError',()=>
  b.context.financeInstallScannerTrigger=undefined;
  assert.throws(()=>b.context.ativarSincronizacaoFaturas(),/Instalador de faturas não encontrado/);
 });
+
+test('instalador solicita a permissão script.scriptapp antes de procurar ou criar triggers',()=>{
+ const b=setup();
+ const res=b.context.ativarSincronizacaoFaturas();
+ assert.equal(res.ok,true);
+ assert.equal(b.counts.authChecks,1);
+ const admin=tokenAdmin(b);
+ assert.equal(b.post('finance.admin.scannerStatus',{token:admin}).enabled,true);
+});
+test('falta de consentimento interrompe o instalador para exibir o pedido OAuth no editor',()=>{
+ const b=harness(bundled(),{missingScannerConsent:true});b.initialize();
+ assert.throws(()=>b.context.ativarSincronizacaoFaturas(),/Authorization required/);
+ assert.equal(b.counts.authChecks,1);
+ assert.equal(b.props.FINANCE_SCANNER_ENABLED,undefined);
+});
