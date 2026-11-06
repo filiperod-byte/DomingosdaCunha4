@@ -54,6 +54,12 @@ function fncParseInvoiceText_(source){
     /^\s*Valor\s+Total\s*[:\s]+([\d.,]+)\s*€/im,
     /^\s*Total\s+(?:do\s+)?Documento\s*[:\s]+([\d.,]+)\s*€/im
   ]));
+  // Documentos com várias faturas na mesma página (ex.: eletricidade + audiovisual)
+  // não podem receber um total escolhido arbitrariamente.
+  const totals=[...text.matchAll(/^\s*(?:Total\s+(?:da\s+)?(?:Factura|Fatura)|Total\s+a\s+Pagar|Valor\s+Total|Total\s+(?:do\s+)?Documento)\s*[:\s]+([\d.,]+)\s*€/gim)]
+    .map(m=>fncParseEuro_(m[1])).filter(v=>v!==null);
+  const uniqueTotals=[...new Set(totals)];
+  if(uniqueTotals.length>1)gross=null;
   let subtotal=null,iva=null;
   const tax=text.match(/\bIVA\s*[\d.,]+\s*%\s*\(\s*Incid[eê]ncia\s*:\s*([\d.,]+)\s*\)\s*([\d.,]+)\s*€/i);
   if(tax){subtotal=fncParseEuro_(tax[1]);iva=fncParseEuro_(tax[2]);}
@@ -123,6 +129,46 @@ function fncDriveOcrText_(fileId){
   }
 }
 /** Aplica somente dados reconhecidos a documento por validar. */
+
+/** Acrescenta só os campos técnicos ausentes, sem alterar os já existentes. */
+function fncEnsureExtractionColumns_(){
+  const sheet=fncTab_(FNC.sheet.invoices);
+  const cols=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(String);
+  const extras=['IVA (€)','Base tributável (€)','Estado extração','Data extração'].filter(c=>!cols.includes(c));
+  if(extras.length)sheet.getRange(1,sheet.getLastColumn()+1,1,extras.length).setValues([extras]);
+}
+/** Processa um pequeno lote de faturas não validadas; não precisa de trigger adicional. */
+function fncExtractPendingInvoices_(maxInvoices){
+  const count=Math.min(2,Math.max(0,Number(maxInvoices)||0));
+  if(!count)return {processed:0,extracted:0,failed:0};
+  const pending=fncData_(FNC.sheet.invoices)
+    .filter(r=>r['Validação']==='Por validar' && r['Pagamento']!=='Pago' &&
+      r['ID Drive'] && !r['Estado extração'] &&
+      (r['Fornecedor']==='Por identificar'||!r['Total (€)']))
+    .slice(0,count);
+  if(!pending.length)return {processed:0,extracted:0,failed:0};
+  fncEnsureExtractionColumns_();
+  let success=0,failed=0;
+  for(const invoice of pending){
+    try{
+      const r=fncExtractOneInvoice_(invoice.ID);
+      if(r.ok)success++;
+    }catch(err){
+      failed++;
+      console.error('Falha na extração de '+invoice.ID+': '+String(err.message||err));
+      // Falhas não bloqueiam novas faturas nem repetem OCR em cada abertura.
+      fncLock_(()=>{
+        const row=fncData_(FNC.sheet.invoices).find(x=>x.ID===invoice.ID);
+        if(row && row['Validação']==='Por validar')
+          fncUpdate_(FNC.sheet.invoices,row.row,{
+            'Estado extração':'Falhou — revisão manual',
+            'Data extração':fncNow_()
+          });
+      });
+    }
+  }
+  return {processed:pending.length,extracted:success,failed};
+}
 function fncExtractOneInvoice_(invoiceId){
   const original=fncData_(FNC.sheet.invoices).find(r=>String(r.ID)===String(invoiceId));
   if(!original)throw new Error('Documento não encontrado');
