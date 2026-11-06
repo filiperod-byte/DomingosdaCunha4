@@ -34,5 +34,5 @@ test('faturas: instruções OAuth visíveis quando o backend não pode consultar
  assert.match(html,/id="scannerHelp"/);
  assert.match(html,/authorizationRequired/);
  assert.match(html,/ativarSincronizacaoFaturas/);
- assert.match(html,/A pesquisa manual de documentos continua disponível/);
+ assert.match(html,/A App procura novos documentos no Drive quando entras neste menu/);
 });
