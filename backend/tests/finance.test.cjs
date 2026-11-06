@@ -132,3 +132,12 @@ test('ativação exige morador previamente aprovado na fração exata',()=>{
   assert.equal(attempt.code,'FINANCE_ERROR');
   assert.equal(b.sheets.get('WALLBOX_FRACOES').rows.length,2);
 });
+
+test('um dashboard financeiro reutiliza a referência à spreadsheet e não escreve',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  const before={opens:b.counts.opens,writes:b.counts.writes};
+  const r=b.post('finance.admin.bootstrap',{token:admin});
+  assert.equal(r.ok,true);
+  assert.equal(b.counts.writes,before.writes);
+  assert.ok(b.counts.opens-before.opens<=3,'Muitos acessos repetidos à spreadsheet');
+});
