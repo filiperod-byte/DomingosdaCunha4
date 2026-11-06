@@ -48,7 +48,7 @@ function fncParseInvoiceText_(source){
     /Data\s+de\s+Vencimento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i,
     /Data\s+Limite\s+(?:de\s+)?Pagamento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i
   ]));
-  const gross=fncParseEuro_(fncFirstMatch_(text,[
+  let gross=fncParseEuro_(fncFirstMatch_(text,[
     /^\s*Total\s+(?:da\s+)?(?:Factura|Fatura)\s*[:\s]+([\d.,]+)\s*€/im,
     /^\s*Total\s+a\s+Pagar\s*[:\s]+([\d.,]+)\s*€/im,
     /^\s*Valor\s+Total\s*[:\s]+([\d.,]+)\s*€/im,
