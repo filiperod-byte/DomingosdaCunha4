@@ -23,6 +23,10 @@ function financeDispatch_(req, actor) {
   if (action.indexOf('finance.resident.')===0 && actor.role!=='resident') throw new Error('FORBIDDEN');
   const map = {
     'finance.admin.bootstrap': () => fncBootstrap_(),
+    'finance.admin.invoices': () => fncInvoiceDashboard_(),
+    'finance.admin.wallboxes': () => fncWallboxDashboard_(),
+    'finance.admin.correctInitial': () => fncCorrectInitial_(req, actor),
+    'finance.admin.correctReading': () => fncCorrectReading_(req, actor),
     'finance.admin.preflight': () => fncPreflight_(),
     'finance.admin.scanNow': () => financeScanFolder_(),
     'finance.admin.scannerStatus': () => financeScannerStatus_(),
@@ -44,7 +48,9 @@ function financeDispatch_(req, actor) {
     'finance.admin.validateReading': () => fncValidateReading_(req, actor),
     'finance.admin.getReadingPhoto': () => fncGetReadingPhoto_(req,actor),
     'finance.admin.markWallboxPaid': () => fncMarkWallboxPaid_(req, actor),
+    'finance.resident.eligibility': () => fncResidentEligibility_(actor),
     'finance.resident.status': () => fncResidentStatus_(actor),
+    'finance.resident.amendReading': () => fncAmendReading_(req, actor),
     'finance.resident.submitReading': () => fncSubmitReading_(req, actor)
   };
   if (!map[action]) throw new Error('Ação financeira desconhecida');
@@ -139,6 +145,141 @@ function fncDiscountAt_(date){
   const when=config['Início vigência'];
   if(when && fncIsoDate_(when)>day)return '';
   return fncNumber_(config.Valor);
+}
+
+
+/** Vistas independentes: abrir faturas não lê wallboxes e vice-versa. */
+function fncInvoiceDashboard_(){
+  return {ok:true,invoices:fncData_(FNC.sheet.invoices).map(r=>({
+    id:r.ID,supplier:r['Fornecedor'],description:r['Descrição'],due:r['Vencimento'],
+    value:r['Total (€)'],validation:r['Validação'],payment:r['Pagamento'],
+    documentType:r['Tipo'],method:r['Método'],iban:r['IBAN fornecedor'],
+    entity:r['Entidade MB'],reference:r['Referência MB'],url:r['PDF original']
+  }))};
+}
+function fncWallboxDashboard_(){
+  const latest=new Map();
+  fncData_(FNC.sheet.fractions).forEach(r=>latest.set(String(r['ID fração']),r));
+  const discount=fncDiscountAt_(fncNow_());
+  const config=fncSettings_();
+  return {ok:true,settings:{
+    discount:discount===''?null:Number(discount),
+    notifications:String(config.NOTIFICACOES_ATIVAS).toUpperCase()==='SIM'
+  },fractions:[...latest.values()].map(r=>({
+    id:r['ID fração'],name:r['Fração'],status:r['Estado'],email:r['Email autorizado'],
+    startDate:fncDateDisplay_(r['Data adesão']),
+    initialReading:r['Leitura inicial (kWh)'],initialDate:fncDateDisplay_(r['Data leitura inicial']),
+    endDate:fncDateDisplay_(r['Data desativação'])
+  })),
+  readings:fncData_(FNC.sheet.readings).map(r=>({
+    id:r['ID leitura'],fractionId:r['Fração'],cycle:r['Ciclo EDP'],
+    date:fncDateDisplay_(r['Data leitura']),kwh:r['Leitura acumulada kWh'],
+    state:r['Estado']
+  })),
+  cycles:fncData_(FNC.sheet.cycles).map(r=>({
+    id:r['ID ciclo'],invoiceId:r['Fatura ID'],state:r['Estado'],
+    notifiedAt:fncDateDisplay_(r['Notificado em'])
+  })),
+  payments:fncData_(FNC.sheet.payments).map(r=>({
+    id:r['ID apuramento'],fractionId:r['Fração'],cycle:r['Ciclo EDP'],
+    total:r['Total a pagar €'],state:r['Estado']
+  }))};
+}
+function fncDateDisplay_(value){
+  if(value===null||value===undefined||value==='')return '';
+  if(value instanceof Date)return Utilities.formatDate(value,CONFIG.TZ,'yyyy-MM-dd');
+  return String(value).slice(0,10);
+}
+/** Apenas para mostrar o atalho aos moradores: não carrega o histórico financeiro. */
+function fncResidentEligibility_(actor){
+  const id=String(actor.fractionId||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+  const email=String(actor.email||'').trim().toLowerCase();
+  const latest=new Map();
+  fncData_(FNC.sheet.fractions).forEach(r=>latest.set(String(r['ID fração']),r));
+  const membership=latest.get(id);
+  return {ok:true,eligible:Boolean(membership &&
+    membership['Estado']==='Ativa' &&
+    String(membership['Email autorizado']).trim().toLowerCase()===email)};
+}
+/** Corrigir a base de contagem sem reescrever movimentos financeiros. */
+function fncCorrectInitial_(req,actor){
+  return fncLock_(()=>{
+    const id=fncRequired_(req.fractionId,'Fração');
+    const membership=fncData_(FNC.sheet.fractions).filter(r=>String(r['ID fração'])===id).slice(-1)[0];
+    if(!membership)throw new Error('Fração sem registo de wallbox');
+    const date=fncRequired_(req.initialDate,'Data inicial');
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw new Error('Data inválida');
+    const kwh=fncNumber_(req.initialReading);
+    if(kwh<0)throw new Error('Consumo acumulado inválido');
+    const reason=fncRequired_(req.reason,'Motivo da correção').slice(0,250);
+    const updatedEmail=String(req.email??membership['Email autorizado']).trim().toLowerCase();
+    if(updatedEmail && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(updatedEmail))
+      throw new Error('Email inválido');
+    if(membership['Estado']==='Ativa' &&
+       updatedEmail!==String(membership['Email autorizado']||'').trim().toLowerCase() &&
+       !fncApprovedResident_(id,updatedEmail))
+      throw new Error('O novo email não pertence a um morador aprovado nesta fração');
+    const membershipStart=fncDateDisplay_(membership['Data adesão']);
+    const paid=fncData_(FNC.sheet.payments).some(p=>p['Fração']===id &&
+      (!membershipStart||fncDateDisplay_(p['Data inicial'])>=membershipStart));
+    const approved=fncData_(FNC.sheet.readings).some(r=>r['Fração']===id &&
+      r['Estado']==='Validada' && (!membershipStart||fncDateDisplay_(r['Data leitura'])>=membershipStart));
+    if(paid||approved)throw new Error('Já existem leituras validadas ou apuramentos. Corrigir por regularização auditada, não alterando a base.');
+    const pending=fncData_(FNC.sheet.readings).filter(r=>r['Fração']===id&&r['Estado']==='Submetida');
+    if(pending.some(r=>fncDateDisplay_(r['Data leitura'])<=date ||
+       Number(r['Leitura acumulada kWh'])<kwh))
+      throw new Error('A nova base não pode ultrapassar uma leitura pendente nem a respetiva data.');
+    const previous={kwh:membership['Leitura inicial (kWh)'],
+      date:fncDateDisplay_(membership['Data leitura inicial']),
+      photoId:membership['Foto inicial Drive ID'],email:membership['Email autorizado']};
+    const patch={'Leitura inicial (kWh)':kwh,'Data leitura inicial':date,'Atualizado em':fncNow_(),
+      'Email autorizado':updatedEmail,'Observações':'Correção administrativa: '+reason};
+    if(req.photoBase64)patch['Foto inicial Drive ID']=fncStorePhoto_(req.photoBase64,actor,'revisao-inicial-'+id);
+    fncUpdate_(FNC.sheet.fractions,membership.row,patch);
+    fncAudit_(id,'Corrigir leitura inicial',previous,
+      {kwh,date,email:updatedEmail,photoId:patch['Foto inicial Drive ID']||previous.photoId},actor,reason);
+    return {ok:true};
+  });
+}
+/** Correção de leitura submetida, enquanto aguarda conferência. */
+function fncEditPendingReading_(req,actor,ownedFraction){
+  const id=fncRequired_(req.id,'Leitura');
+  const reading=fncData_(FNC.sheet.readings).find(r=>String(r['ID leitura'])===id);
+  if(!reading||reading['Estado']!=='Submetida')throw new Error('Só é possível corrigir leituras ainda por validar.');
+  if(ownedFraction && reading['Fração']!==ownedFraction)
+    throw new Error('Esta leitura não pertence à tua fração');
+  const date=fncRequired_(req.readingDate,'Data da leitura');
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(date))throw new Error('Data inválida');
+  const kwh=fncNumber_(req.kwh);
+  if(kwh<0)throw new Error('kWh inválidos');
+  const membership=fncData_(FNC.sheet.fractions).filter(r=>r['ID fração']===reading['Fração']).slice(-1)[0];
+  if(!membership)throw new Error('Fração não encontrada');
+  const joined=fncDateDisplay_(membership['Data adesão']);
+  if(joined && date<joined)throw new Error('Data anterior à adesão à wallbox');
+  const earlier=fncData_(FNC.sheet.readings).filter(r=>r['Fração']===reading['Fração']&&
+    r['Estado']==='Validada'&&fncDateDisplay_(r['Data leitura'])>=joined);
+  const reference=earlier.sort((a,b)=>fncDateDisplay_(a['Data leitura']).localeCompare(fncDateDisplay_(b['Data leitura']))).slice(-1)[0];
+  const baseKwh=reference?Number(reference['Leitura acumulada kWh']):Number(membership['Leitura inicial (kWh)']);
+  const baseDate=fncDateDisplay_(reference?reference['Data leitura']:membership['Data leitura inicial']);
+  if(date<=baseDate || kwh<baseKwh)throw new Error('Leitura inferior à anterior ou data inválida');
+  if(fncData_(FNC.sheet.payments).some(p=>p['Fração']===reading['Fração']&&p['Ciclo EDP']===reading['Ciclo EDP']))
+    throw new Error('Já existe apuramento, não é possível corrigir esta leitura.');
+  const prev={kwh:reading['Leitura acumulada kWh'],date:fncDateDisplay_(reading['Data leitura']),
+    photoId:reading['Foto Drive ID']};
+  const patch={'Leitura acumulada kWh':kwh,'Data leitura':date};
+  if(req.photoBase64)patch['Foto Drive ID']=fncStorePhoto_(req.photoBase64,actor,'revisao-'+id);
+  fncUpdate_(FNC.sheet.readings,reading.row,patch);
+  fncAudit_(id,'Corrigir leitura submetida',prev,
+    {kwh,date,photoId:patch['Foto Drive ID']||prev.photoId},actor,
+    String(req.reason||'Correção antes da validação'));
+  return {ok:true};
+}
+function fncCorrectReading_(req,actor){return fncLock_(()=>fncEditPendingReading_(req,actor,null));}
+function fncAmendReading_(req,actor){
+  return fncLock_(()=>{
+    const membership=fncResidentFraction_(actor);
+    return fncEditPendingReading_(req,actor,String(membership['ID fração']));
+  });
 }
 
 function fncBootstrap_(){

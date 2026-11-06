@@ -12,7 +12,9 @@ function setup(){
   const make=(name,columns,rows=[])=>b.sheets.set(name,new Sheet([columns,...rows]));
   make('WALLBOX_CONFIG',['Chave','Valor','Tipo','Unidade','Início vigência','Atualizado em','Atualizado por','Observações'],[['DESCONTO_FIXOS',25],['NOTIFICACOES_ATIVAS','NAO']]);
   make('WALLBOX_FRACOES',
-    ['ID fração','Fração','Estado','Email autorizado','Data adesão','Leitura inicial (kWh)','Data leitura inicial'],
+    ['ID fração','Fração','Estado','Email autorizado','Data adesão','Leitura inicial (kWh)',
+     'Data leitura inicial','Foto inicial Drive ID','Data desativação','Leitura final (kWh)',
+     'Foto final Drive ID','Criado por','Atualizado em','Observações'],
     [['9B','9.º B','Ativa','teste@example.invalid','2026-09-15',0,'2026-09-15']]);
   make('WALLBOX_CICLOS',
     ['ID ciclo','Fatura ID','Início faturação','Fim faturação','Estado','Validado por','Criado em','Notificado em','Desconto aplicado %'],
@@ -179,4 +181,71 @@ test('desconto futuro só entra em vigor na data indicada',()=>{
   assert.equal(saved.ok,true);
   assert.equal(b.context.fncDiscountAt_('2026-09-20'),25);
   assert.equal(b.context.fncDiscountAt_('2026-11-02'),12.5);
+});
+
+test('a abertura de Faturas não carrega todo o histórico Wallbox e vice-versa',()=>{
+ const b=setup(),admin=tokenAdmin(b);
+ const before=b.counts.reads;
+ const invoices=b.post('finance.admin.invoices',{token:admin});
+ const readsInvoices=b.counts.reads-before;
+ assert.equal(invoices.ok,true);assert.equal(invoices.invoices.length,1);
+ assert.equal(Object.hasOwn(invoices,'fractions'),false);
+ const beforeWB=b.counts.reads;
+ const wallboxes=b.post('finance.admin.wallboxes',{token:admin});
+ assert.equal(wallboxes.ok,true);
+ assert.equal(wallboxes.fractions.length,1);
+ assert.equal(Object.hasOwn(wallboxes,'invoices'),false);
+ assert.ok(readsInvoices<8);
+ assert.ok(b.counts.reads-beforeWB<20);
+});
+test('corrigir leitura inicial permite valores de fração inativa sem alterar outros ciclos',()=>{
+ const b=setup(),admin=tokenAdmin(b);
+ b.sheets.get('WALLBOX_FRACOES').rows.push(['3C','3.º C','Inativa','outro@example.invalid','2026-11-01',1777,'2026-11-01']);
+ const res=b.post('finance.admin.correctInitial',{token:admin,fractionId:'3C',
+   initialReading:1765,initialDate:'2026-11-02',
+   email:'emailcorrigido@example.invalid',reason:'Erro na leitura inicial'});
+ assert.equal(res.ok,true);
+ const row=b.sheets.get('WALLBOX_FRACOES').rows[2];
+ assert.equal(row[5],1765);assert.equal(row[6],'2026-11-02');
+ assert.equal(row[3],'emailcorrigido@example.invalid');
+ assert.equal(b.sheets.get('HISTORICO').rows.length,2);
+ assert.equal(b.sheets.get('WALLBOX_PAGAMENTOS').rows.length,1);
+});
+test('leitura inicial não pode ser alterada após leitura aprovada ou pagamento',()=>{
+ const b=setup(),admin=tokenAdmin(b);
+ assert.equal(b.post('finance.admin.validateReading',{token:admin,id:'LR-1'}).ok,true);
+ const res=b.post('finance.admin.correctInitial',{token:admin,fractionId:'9B',
+   initialReading:99,initialDate:'2026-09-15',reason:'Correção após apuramento'});
+ assert.equal(res.code,'FINANCE_ERROR');
+ assert.equal(b.sheets.get('WALLBOX_FRACOES').rows[1][5],0);
+});
+test('morador só consegue corrigir leitura submetida da própria fração antes da validação',()=>{
+ const b=setup(),admin=tokenAdmin(b),resident=tokenResident(b,admin);
+ const r=b.post('finance.resident.amendReading',{token:resident,id:'LR-1',
+   kwh:180,readingDate:'2026-10-28',reason:'Valor digitado errado'});
+ assert.equal(r.ok,true);
+ assert.equal(b.sheets.get('LEITURAS_WALLBOX').rows[1][4],180);
+ assert.equal(b.sheets.get('LEITURAS_WALLBOX').rows[1][6],'Submetida');
+ assert.equal(b.post('finance.resident.amendReading',{token:resident,id:'LR-1',
+   kwh:-1,readingDate:'2026-10-28'}).code,'FINANCE_ERROR');
+ const validated=b.post('finance.admin.validateReading',{token:admin,id:'LR-1'});
+ assert.equal(validated.ok,true);
+ assert.equal(b.post('finance.resident.amendReading',{token:resident,id:'LR-1',
+   kwh:190,readingDate:'2026-10-28'}).code,'FINANCE_ERROR');
+});
+test('morador sem wallbox não consegue acesso financeiro pela simples consulta de elegibilidade',()=>{
+ const b=setup(),admin=tokenAdmin(b),resident=tokenResident(b,admin);
+ assert.equal(b.post('finance.resident.eligibility',{token:resident}).eligible,true);
+ assert.equal(b.post('finance.admin.wallboxes',{token:resident}).code,'FORBIDDEN');
+ const row=b.sheets.get('WALLBOX_FRACOES').rows[1];row[2]='Inativa';
+ assert.equal(b.post('finance.resident.eligibility',{token:resident}).eligible,false);
+});
+
+test('alterar email de wallbox ativa para morador não aprovado é recusado',()=>{
+ const b=setup(),admin=tokenAdmin(b);
+ const result=b.post('finance.admin.correctInitial',{token:admin,fractionId:'9B',
+   initialReading:5,initialDate:'2026-09-15',email:'outra@example.invalid',
+   reason:'Correção do destinatário'});
+ assert.equal(result.code,'FINANCE_ERROR');
+ assert.equal(b.sheets.get('WALLBOX_FRACOES').rows[1][3],'teste@example.invalid');
 });
