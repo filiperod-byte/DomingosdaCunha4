@@ -249,3 +249,36 @@ test('alterar email de wallbox ativa para morador não aprovado é recusado',()=
  assert.equal(result.code,'FINANCE_ERROR');
  assert.equal(b.sheets.get('WALLBOX_FRACOES').rows[1][3],'teste@example.invalid');
 });
+
+test('consulta dos triggers sem scope OAuth não bloqueia o módulo financeiro',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  b.context.ScriptApp.getProjectTriggers=()=>{throw new Error('Authorization is required for script.scriptapp')};
+  const status=b.post('finance.admin.scannerStatus',{token:admin});
+  assert.equal(status.ok,true);
+  assert.equal(status.enabled,false);
+  assert.equal(status.verified,false);
+  assert.equal(status.authorizationRequired,true);
+  assert.match(status.message,/autorização/i);
+  const invoices=b.post('finance.admin.invoices',{token:admin});
+  assert.equal(invoices.ok,true);
+  assert.equal(invoices.invoices.length,1);
+});
+test('tentativa de instalar trigger sem autorização devolve instrução segura',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  b.context.ScriptApp.getProjectTriggers=()=>{throw new Error('You do not have permission to call getProjectTriggers')};
+  const res=b.post('finance.admin.enableScanner',{token:admin});
+  assert.equal(res.ok,false);
+  assert.equal(res.requiresAuthorization,true);
+  assert.match(res.message,/financeInstallScannerTrigger_/);
+  assert.equal(b.props.FINANCE_SCANNER_ENABLED,undefined);
+});
+test('ativar e desativar regista estado apenas depois da operação real',()=>{
+  const b=setup(),admin=tokenAdmin(b);
+  assert.equal(b.post('finance.admin.enableScanner',{token:admin}).ok,true);
+  assert.equal(b.props.FINANCE_SCANNER_ENABLED,'SIM');
+  const state=b.post('finance.admin.scannerStatus',{token:admin});
+  assert.equal(state.enabled,true);
+  assert.equal(state.verified,true);
+  assert.equal(b.post('finance.admin.disableScanner',{token:admin}).ok,true);
+  assert.equal(b.props.FINANCE_SCANNER_ENABLED,'NAO');
+});
