@@ -247,6 +247,17 @@ function fncSaveDiscount_(req,actor){
     const old=record.Valor;
     const effective=fncRequired_(req.effectiveFrom,'Data de vigência');
     const oldDiscounts=fncData_(FNC.sheet.discounts);
+    // Numa configuração preexistente, preservar o valor atual se o novo desconto
+    // só entrar em vigor no futuro, mesmo sem histórico anterior.
+    if(!oldDiscounts.length && old!=='' && old!==null && old!==undefined &&
+       effective>fncIsoDate_(fncNow_()).slice(0,10)){
+      fncAppend_(FNC.sheet.discounts,{'ID':'DESC-BASE-'+Utilities.getUuid(),
+        'Início vigência':fncIsoDate_(fncNow_()).slice(0,10),
+        'Fim vigência':effective,'Desconto %':fncNumber_(old),
+        'Motivo':'Valor anterior à nova vigência',
+        'Definido por':actor.email,'Registado em':fncNow_(),
+        'Notas':'Valor inicial preservado ao agendar alteração futura'});
+    }
     // Vigência global: nunca alterar/apagar descontos que sustentam apuramentos fechados.
     if(oldDiscounts.length){
       const last=oldDiscounts[oldDiscounts.length-1];
