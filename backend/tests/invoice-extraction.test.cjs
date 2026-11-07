@@ -48,12 +48,18 @@ for(const [number,net,tax,total,service,gross,base,iva] of samples){
   assert.match(result.description,/Manutenção/);
  });
 }
-test('nunca extrai o subtotal quando falta o total final',()=>{
+test('soma base e IVA identificados quando o OCR perde a linha do total',()=>{
  const text=invoice('2026/70','240,00','55,20','295,20','Manutenção')
    .replace('Total da Factura 295,20 €','');
  const result=parse(text);
- assert.equal(result.value,null);
- assert.equal(result.state,'Extração parcial — por validar');
+ assert.equal(result.value,295.2);
+ assert.equal(result.iva,55.2);
+});
+test('não deduz montantes se faltar uma das parcelas',()=>{
+ const text=invoice('2026/71','240,00','55,20','295,20','Manutenção')
+  .replace('Total da Factura 295,20 €','')
+  .replace('IVA 23.00% (Incidência: 240,00) 55,20 €','');
+ assert.equal(parse(text).value,null);
 });
 test('valores totais diferentes no mesmo PDF obrigam a revisão',()=>{
  const text=invoice('2026/70','240,00','55,20','295,20','Manutenção')+
@@ -110,4 +116,73 @@ test('se o upload falhar, não é criada uma cópia temporária',()=>{
   const m=mockOcrDrive(403);
   assert.throws(()=>m.run('original'),/HTTP 403/);
   assert.equal(m.calls.filter(x=>x==='trashed:true').length,0);
+});
+
+test('OCR desloca morada para a mesma linha do fornecedor e separa corretamente',()=>{
+ const doc=invoice('2026/52','240,00','55,20','295,20','Manutenção')
+ .replace('Empresa de Manutenção Unipessoal. Lda.',
+   'Empresa de Manutenção Unipessoal. Lda. Impasse Exemplo nº18 1111-222 Lisboa');
+ const v=parse(doc);
+ assert.equal(v.supplier,'Empresa de Manutenção Unipessoal. Lda.');
+});
+test('OCR pode apresentar total na linha seguinte e euro à esquerda',()=>{
+ const doc=invoice('2026/52','240,00','55,20','295,20','Manutenção')
+   .replace('Total da Factura 295,20 €','Total da Factura\n€ 295,20');
+ const v=parse(doc);
+ assert.equal(v.value,295.2);
+});
+test('fatura de administração com IVA em linhas separadas e IBAN observado',()=>{
+ const doc=[
+  'Administração do condomínio', 'Fatura','FT 2026/256',
+  'Gestora Exemplo, Unipessoal Lda Rua Exemplo 8',
+  'Cons. Reg. Comercial: Lisboa - 517817578',
+  'NIF: PT517817578','V/ CONTRIBUINTE','901090409',
+  'DATA DE EMISSÃO','DATA VENCIMENTO 2026-10-26','2026-10-26',
+  'CÓDIGO DESCRIÇÃO QTD. UNI. PREÇO UNI. % DESC. VALOR SEM IVA IVA',
+  'Honorários de administração','referentes ao mês corrente',
+  '1.0 un 221,50 221,50 23 %','Pagamento por transferência bancária para o IBAN:',
+  'BPI: PT50 0010 0000 6261 8490 0011 6',
+  'Taxa','23 %','Base','€ 221,50','Valor','€ 50,95',
+  'Valor ilíquido € 221,50','IVA € 50,95','Total a pagar € 272,45'
+ ].join('\n');
+ const v=parse(doc);
+ assert.equal(v.supplier,'Gestora Exemplo, Unipessoal Lda');
+ assert.equal(v.number,'FT 2026/256');
+ assert.equal(v.nif,'517817578');
+ assert.equal(v.issued,'2026-10-26');
+ assert.equal(v.due,'2026-10-26');
+ assert.equal(v.value,272.45);
+ assert.equal(v.subtotal,221.5);
+ assert.equal(v.iva,50.95);
+ assert.equal(v.documentType,'Fatura');
+ assert.equal(v.iban,'PT50001000006261849000116');
+});
+test('orçamento de honorários não é convertido em fatura e retém o valor c/IVA',()=>{
+ const doc=[
+ 'Empresa Obras Lda','Honorários','Data: 24/06/2026',
+ 'Orc.: Lis24062026','Documento valido por 15 dias',
+ 'DESIGNAÇÃO DOS TRABALHOS UN QUANT. P. UNIT. TOTAL',
+ '1.1 Deslocação – verificação fuga de água garagem un 1 60,00 €',
+ 'Sem/IVA 60,00 €','GRUPONA C/IVA23% 73,80 €','Com fatura',
+ 'NIF: 518 832 287','IBAN: PT50 0036 0081 9910 0149 8890 3'
+ ].join('\n');
+ const v=parse(doc);
+ assert.equal(v.documentType,'Orçamento / honorários');
+ assert.equal(v.value,73.8);
+ assert.equal(v.subtotal,60);
+ assert.equal(v.supplier,'Empresa Obras Lda');
+ assert.equal(v.issued,'2026-06-24');
+ assert.equal(v.iban,'PT50003600819910014988903');
+});
+test('nota de despesas sem NIF não inventa identificação fiscal',()=>{
+ const doc=['ANTÓNIO C. ROSA','FILIPA GERALDES','Advogados',
+ 'NOTA DE DESPESAS E HONORÁRIOS','Cliente: Condomínio',
+ 'Assunto: Carta Câmara','Despesas:','Ctt (1 x 5,72€) 5,72',
+ 'TOTAL 75,72','Estoril, 27 de setembro de 2026'].join('\n');
+ const v=parse(doc);
+ assert.equal(v.documentType,'Nota despesas/honorários');
+ assert.equal(v.supplier,'ANTÓNIO C. ROSA / FILIPA GERALDES');
+ assert.equal(v.value,75.72);
+ assert.equal(v.description,'Carta Câmara');
+ assert.equal(v.nif,'');
 });

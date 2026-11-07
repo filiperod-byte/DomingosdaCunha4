@@ -1308,7 +1308,9 @@ function fncDiscountAt_(date){
 /** Vistas independentes: abrir faturas não lê wallboxes e vice-versa. */
 function fncInvoiceDashboard_(){
   return {ok:true,invoices:fncData_(FNC.sheet.invoices).map(r=>({
-    id:r.ID,supplier:r['Fornecedor'],description:r['Descrição'],due:r['Vencimento'],
+    id:r.ID,supplier:r['Fornecedor'],description:r['Descrição'],
+    number:r['Documento'],issued:r['Emissão'],due:r['Vencimento'],
+    nif:r['NIF'],vat:r['IVA (€)'],subtotal:r['Base tributável (€)'],
     value:r['Total (€)'],validation:r['Validação'],payment:r['Pagamento'],
     documentType:r['Tipo'],method:r['Método'],
     extraction:r['Estado extração']||'Não processado',
@@ -2106,49 +2108,125 @@ function fncParseInvoiceText_(source){
     /Data\s+(?:de\s+)?Emiss[aã]o\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i,
     /\bData\s+(?:da\s+)?Fatura\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i
   ]));
-  const due=fncISOInvoiceDate_(fncFirstMatch_(text,[
-    /Data\s+de\s+Vencimento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i,
+  let due=fncISOInvoiceDate_(fncFirstMatch_(text,[
+    /Data\s+(?:de\s+)?Vencimento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i,
     /Data\s+Limite\s+(?:de\s+)?Pagamento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i
   ]));
-  let gross=fncParseEuro_(fncFirstMatch_(text,[
-    /^\s*Total\s+(?:da\s+)?(?:Factura|Fatura)\s*[:\s]+([\d.,]+)\s*€/im,
-    /^\s*Total\s+a\s+Pagar\s*[:\s]+([\d.,]+)\s*€/im,
-    /^\s*Valor\s+Total\s*[:\s]+([\d.,]+)\s*€/im,
-    /^\s*Total\s+(?:do\s+)?Documento\s*[:\s]+([\d.,]+)\s*€/im
+  // Alguns PDFs extraídos em colunas listam duas datas sob os cabeçalhos
+  // EMISSÃO / VENCIMENTO. Só mapear se houver ambos os valores adjacentes.
+  let issued=issuance;
+  if(!issued){
+    const columns=text.match(/DATA\s+DE\s+EMISS[AÃ]O\s*\n\s*DATA\s+VENCIMENTO\s+(\d{4}-\d{2}-\d{2})\s*\n\s*(\d{4}-\d{2}-\d{2})/i);
+    if(columns){
+      due=fncISOInvoiceDate_(columns[1]);
+      issued=fncISOInvoiceDate_(columns[2]);
+    }
+  }
+  if(!issued)issued=fncISOInvoiceDate_(fncFirstMatch_(text,[
+    /(?:^|\n)\s*Data\s*:\s*(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/im
   ]));
-  // Documentos com várias faturas na mesma página (ex.: eletricidade + audiovisual)
-  // não podem receber um total escolhido arbitrariamente.
-  const totals=[...text.matchAll(/^\s*(?:Total\s+(?:da\s+)?(?:Factura|Fatura)|Total\s+a\s+Pagar|Valor\s+Total|Total\s+(?:do\s+)?Documento)\s*[:\s]+([\d.,]+)\s*€/gim)]
-    .map(m=>fncParseEuro_(m[1])).filter(v=>v!==null);
-  const uniqueTotals=[...new Set(totals)];
-  if(uniqueTotals.length>1)gross=null;
-  let subtotal=null,iva=null;
-  const tax=text.match(/\bIVA\s*[\d.,]+\s*%\s*\(\s*Incid[eê]ncia\s*:\s*([\d.,]+)\s*\)\s*([\d.,]+)\s*€/i);
-  if(tax){subtotal=fncParseEuro_(tax[1]);iva=fncParseEuro_(tax[2]);}
-  else{
-    subtotal=fncParseEuro_(fncFirstMatch_(text,[
-      /Subtotal\s+(?:da\s+)?(?:Factura|Fatura)\s*[:\s]+([\d.,]+)\s*€/i,
-      /Valor\s+sem\s+IVA\s*[:\s]+([\d.,]+)\s*€/i
+  // O OCR pode mover € para antes do valor, ou omiti-lo. Não aceitar
+  // números sem uma etiqueta financeira explícita.
+  const amount='(\\d{1,3}(?:[. ]\\d{3})*,\\d{2}|\\d{1,8}[,.]\\d{2})';
+  function amounts(labels){
+    const vals=[];
+    for(const label of labels){
+      const regex=new RegExp('(?:^|\\n)\\s*'+label+'[ \\t:\\n]{0,15}€?[ \\t]*'+amount,'gim');
+      for(const match of text.matchAll(regex)){
+        const v=fncParseEuro_(match[1]);
+        if(v!==null)vals.push(v);
+      }
+    }
+    return [...new Set(vals)];
+  }
+  const totals=amounts([
+    'Total\\s+(?:da\\s+)?(?:Factura|Fatura)',
+    'Total\\s+a\\s+Pagar','Valor\\s+Total',
+    'Total\\s+(?:do\\s+)?Documento','TOTAL'
+  ]);
+  const ambiguousTotal=totals.length>1;
+  let gross=totals.length===1?totals[0]:null;
+  const net=amounts([
+    'Subtotal\\s+(?:da\\s+)?(?:Factura|Fatura)',
+    'Valor\\s+sem\\s+IVA','Valor\\s+il[ií]quido','Sem\\s*/\\s*IVA'
+  ]);
+  let subtotal=net.length===1?net[0]:null;
+  const tax=text.match(/\bIVA\s*[\d.,]+\s*%\s*\(\s*Incid[eê]ncia\s*:\s*([\d.,]+)\s*\)\s*([\d.,]+)\s*€?/i);
+  let iva=tax?fncParseEuro_(tax[2]):fncParseEuro_(fncFirstMatch_(text,[
+    /(?:^|\n)\s*IVA\s*[:\s]*€\s*([\d.,]+)\s*(?:€|\n|$)/im
+  ]));
+  if(tax&&subtotal===null)subtotal=fncParseEuro_(tax[1]);
+  // Orçamentos podem ter o valor "C/IVA 23%" sem outro campo de total.
+  if(gross===null && !ambiguousTotal &&
+    /(?:^|\n)\s*(?:Orc\.|Honorários|Documento valido por)/im.test(text)){
+    gross=fncParseEuro_(fncFirstMatch_(text,[
+      /C\s*\/\s*IVA\s*\d+(?:[.,]\d+)?%\s*([\d.,]+)\s*€/i
     ]));
   }
-  let vendor='',nif='';
-  const issuer=text.split(/\n\s*Para\s*\n/i)[0].split(/\n\s*De\s*\n/i).slice(-1)[0];
+  // Só calcular a soma quando base e IVA estão ambos identificados no PDF.
+  if(gross===null&&!ambiguousTotal&&subtotal!==null&&iva!==null)
+    gross=Math.round((subtotal+iva)*100)/100;
+  if(gross!==null&&subtotal!==null&&iva!==null&&Math.abs(gross-subtotal-iva)>0.03){
+    gross=null;iva=null;subtotal=null;
+  }
+  // Primeiro a tipologia: uma nota ou orçamento não é automaticamente fatura.
+  const fold=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const documentType=/nota\s+de\s+despesas\s+e\s+honorarios/.test(fold)?
+    'Nota despesas/honorários':
+    /(?:\borc\.?\s*:|documento\s+valido\s+por\s+\d+\s+dias|\borcamento\b)/.test(fold)?
+      'Orçamento / honorários':
+      /(?:\bfactura\b|\bfatura\b|\bFT\s*\d{4}[/_-]\d+)/i.test(text)?
+        'Fatura':'Documento por classificar';
+  if(!number)number=fncFirstMatch_(text,[/\b(FT\s*\d{4}\s*[/_-]\s*\d+)\b/i])
+    .replace(/\s+/g,' ').replace(/\s*\/\s*/g,'/');
+
+  const issuer=text.split(/\n\s*Para\s*\n/i)[0];
   const lines=issuer.split('\n').map(x=>x.trim()).filter(Boolean);
-  vendor=lines.find(x=>/\b(?:unipessoal|Lda\.?|S\.?\s*A\.?|Limitada)\b/i.test(x)&&x.length<=150)||'';
-  nif=fncFirstMatch_(issuer,[
+  const company=lines.find(x=>/\b(?:Lda\.?|Limitada|S\.?\s*A\.?)\b/i.test(x)&&x.length<170)||'';
+  // Nome empresarial até Lda/S.A.; morada do fornecedor pode estar na mesma linha OCR.
+  let vendor=company?(company.match(/^(.{3,130}?\b(?:Lda|Limitada|S\.?\s*A\.?)\.?)(?:\s|$)/i)||[])[1]||company:'';
+  if(!vendor&&documentType==='Nota despesas/honorários'){
+    const pos=lines.findIndex(x=>/^Advogados$/i.test(x));
+    if(pos>=2)vendor=lines[pos-2]+' / '+lines[pos-1];
+  }
+  vendor=vendor.trim().slice(0,150);
+  let nif=fncFirstMatch_(issuer,[
     /N[ºo°.]?\s*Contribuinte\s*:\s*(\d{9})\b/i,
-    /\b(?:NIF|NIPC)\s*[:\s]+(\d{9})\b/i
+    /\b(?:NIF|NIPC)\s*:\s*(?:PT\s*)?(\d{9})\b/i,
+    /Cons\.\s*Reg\.\s*Comercial\s*:\s*[^\n]*?(\d{9})\b/i
   ]);
-  const article=text.match(/Lista\s+de\s+Artigos\s*[\s\S]*?\n[^\n]*(?:DESCRI[CÇ][AÃ]O|ARTIGO)[^\n]*\n\s*([^\n]{8,180})/i);
+  if(!nif&&documentType==='Orçamento / honorários')
+    nif=fncFirstMatch_(text,[
+      /(?:NIF|NIPC)\s*:\s*(?:PT\s*)?(\d[\d ]{8,14})\b/i
+    ]).replace(/\s/g,'').slice(0,9);
+
+  const article=text.match(/Lista\s+de\s+Artigos\s*[\s\S]*?\n[^\n]*(?:DESCRI[CÇ][AÃ]O|ARTIGO)[^\n]*\n\s*([^\n]{8,220})/i);
   let description=article?article[1].trim():'';
-  if(description)description=description.replace(/\s+\d+\.\d{2}\s+[\d.,]+\s+[\d.,]+\s+[\d.,]+\s+[\d.,]+\s*$/,'').slice(0,280);
+  if(description)description=description
+    .replace(/\s+\d+(?:\.\d+)?\s+[\d.,]+\s+[\d.,]+\s+[\d.,]+\s+[\d.,]+\s*$/,'')
+    .slice(0,280);
+  if(!description&&documentType==='Fatura'){
+    const lines=text.match(/C[ÓO]DIGO\s+DESCRI[CÇ][AÃ]O[^\n]*\n\s*([^\n]{5,130})\n([^\n]{0,130})/i);
+    if(lines)description=(lines[1]+' '+lines[2]).replace(/\s+\d+(?:[.,]\d+)?\s+un\b.*$/i,'').trim().slice(0,280);
+  }
+  if(!description&&documentType==='Nota despesas/honorários')
+    description=fncFirstMatch_(text,[/Assunto\s*:\s*([^\n]{3,180})/i]);
+  if(!description&&documentType==='Orçamento / honorários')
+    description=fncFirstMatch_(text,[
+      /(?:^|\n)\s*\d+(?:\.\d+)?\s+([^\n]{8,160}?)\s+un\s+\d+\s+[\d.,]+\s*€/im
+    ]);
+  if(documentType==='Orçamento / honorários'&&gross===null){
+    gross=fncParseEuro_(fncFirstMatch_(text,[/C\s*\/\s*IVA\s*\d+(?:[.,]\d+)?%\s*([\d.,]+)\s*€/i]));
+  }
+  const ibanRaw=fncFirstMatch_(text,[
+    /\b(PT50(?:[ ]*\d){21})\b/i
+  ]).replace(/\s/g,'');
+  const iban=/^PT50\d{21}$/.test(ibanRaw)?ibanRaw:'';
   const method=/D[eé]bito\s+Diret[oa]/i.test(text)?'Débito direto':'Por confirmar';
-  const vatCheck=(gross!==null&&subtotal!==null&&iva!==null&&Math.abs(gross-subtotal-iva)<=0.03);
-  if(subtotal!==null&&iva!==null&&!vatCheck){subtotal=null;iva=null;}
-  const strong=Boolean(vendor&&gross!==null&&number&&issuance);
-  return {supplier:vendor,nif,number,issued:issuance,due,value:gross,iva,subtotal,description,method,
-    state:strong?'Extraído — por validar':'Extração parcial — por validar',
-    recognized:[vendor,number,issuance,due,gross!==null?String(gross):'',description].filter(Boolean).length};
+  const strong=Boolean(vendor&&gross!==null&&number&&issuance&&documentType==='Fatura');
+  return {supplier:vendor,nif,number,issued,due,value:gross,iva,subtotal,description,method,
+    iban,documentType,state:strong?'Extraído — por validar':'Extração parcial — por validar',
+    recognized:[vendor,nif,number,issuance,due,gross!==null?String(gross):'',description].filter(Boolean).length};
 }
 /**
  * Converte PDF/imagem para Docs com OCR da Drive API v3 e exporta texto simples.
@@ -2205,9 +2283,17 @@ function fncExtractPendingInvoices_(maxInvoices){
   const count=Math.min(2,Math.max(0,Number(maxInvoices)||0));
   if(!count)return {processed:0,extracted:0,failed:0};
   const pending=fncData_(FNC.sheet.invoices)
-    .filter(r=>r['Validação']==='Por validar' && r['Pagamento']!=='Pago' &&
-      r['ID Drive'] && !r['Estado extração'] &&
-      (r['Fornecedor']==='Por identificar'||!r['Total (€)']))
+    .filter(r=>{
+      if(r['Validação']!=='Por validar'||r['Pagamento']==='Pago'||!r['ID Drive'])return false;
+      const state=String(r['Estado extração']||'');
+      if(/^Falhou/i.test(state))return false;
+      if(!state)return true;
+      // Reprocessar uma única vez os PDFs que a versão anterior interpretou mal.
+      // Depois marcar "Leitor v2" para não repetir OCR a cada 15 minutos.
+      return !String(r['Observações']||'').includes('Leitor v2') &&
+        (!r['Total (€)']||r['Fornecedor']==='Por identificar'||
+          /\b(?:Rua|Impasse|Avenida)\b/i.test(String(r['Fornecedor']||'')));
+    })
     .slice(0,count);
   if(!pending.length)return {processed:0,extracted:0,failed:0};
   fncEnsureExtractionColumns_();
@@ -2248,18 +2334,27 @@ function fncExtractOneInvoice_(invoiceId){
       throw new Error('Documento foi entretanto validado; extração não aplicada');
     if(String(item['ID Drive'])!==String(fileId))throw new Error('Documento original alterado');
     const patch={'Estado extração':parsed.state,'Data extração':fncNow_()};
+  const prior=String(item['Estado extração']||'');
+  const previousOCR=/^(Extra[ií]d|Extração parcial|Falhou)/i.test(prior);
   const set=(field,value,placeholder)=>{
     if(value===null||value===undefined||value==='')return;
     const current=item[field];
-    const empty=current===''||current==null||
-      (field==='Total (€)'&&current===0);
-    if(empty||(placeholder&&String(current)===String(placeholder)))patch[field]=value;
+    const existing=String(current==null?'':current);
+    const empty=current===''||current==null||(field==='Total (€)'&&current===0);
+    // Só corrigir leituras anteriores da própria App com morada colada ao
+    // fornecedor, nunca substituir nomes que o administrador corrigiu.
+    const contaminated=field==='Fornecedor'&&previousOCR&&
+      existing.startsWith(String(value)+' ')&&
+      /\b(?:Rua|Impasse|Largo|Av\.|Avenida|Pra[cç]a|Travessa)\b/i.test(existing.slice(String(value).length));
+    const filePlaceholder=field==='Descrição'&&/\.(?:pdf|png|jpe?g)$/i.test(existing);
+    if(empty||contaminated||filePlaceholder||
+       (placeholder&&existing===String(placeholder)))patch[field]=value;
   };
   if(parsed.recognized>=2){
-    if(parsed.number)set('Tipo','Fatura','Documento por classificar');
+    set('Tipo',parsed.documentType,'Documento por classificar');
     set('Fornecedor',parsed.supplier,'Por identificar');
     set('NIF',parsed.nif);
-    // Um número de documento corrigido manualmente nunca deve ser substituído.
+    // Número/documento já corrigido pelo administrador é preservado.
     set('Documento',parsed.number,item['Descrição']);
     set('Emissão',parsed.issued);
     set('Vencimento',parsed.due);
@@ -2268,11 +2363,18 @@ function fncExtractOneInvoice_(invoiceId){
     set('Descrição',parsed.description,item['Documento']);
     set('IVA (€)',parsed.iva);
     set('Base tributável (€)',parsed.subtotal);
+    if(parsed.iban && fncValidIban_(parsed.iban))set('IBAN fornecedor',parsed.iban);
   }
-  const details=['Extração automática — confirmar com o PDF original antes de validar'];
+  const details=['Leitor v2: dados extraídos do PDF — CONFIRMAR antes de validar ou pagar'];
   if(parsed.value!==null)details.push('total '+parsed.value.toFixed(2)+' €');
   if(parsed.iva!==null)details.push('IVA '+parsed.iva.toFixed(2)+' €');
-  patch['Observações']=details.join('; ');
+  if(parsed.iban)details.push('IBAN observado no documento — confirmar titularidade no banco');
+  if(parsed.documentType==='Orçamento / honorários')
+    details.push('Orçamento: não tratar como fatura pagável');
+  if(parsed.value===null)details.push('Total por apurar — revisão manual necessária');
+  const oldNotes=String(item['Observações']||'');
+  patch['Observações']=oldNotes && !/^Importado automaticamente|^Extração automática|^Dados extraídos/i.test(oldNotes)?
+    oldNotes+'; '+details.join('; '):details.join('; ');
   const keys=fncTab_(FNC.sheet.invoices).getRange(1,1,1,fncTab_(FNC.sheet.invoices).getLastColumn())
     .getValues()[0].map(String);
   for(const k of Object.keys(patch))if(!keys.includes(k))delete patch[k];

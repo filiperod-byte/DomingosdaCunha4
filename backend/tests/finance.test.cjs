@@ -357,3 +357,32 @@ test('extração é proibida a moradores e não altera documentos validados',()=
   b.sheets.get('FATURAS').rows[1][15]='Validada';
   assert.equal(b.post('finance.admin.extractInvoice',{token:admin,id:'DOC-1'}).code,'FINANCE_ERROR');
 });
+
+test('releitura repara nome do fornecedor com morada sem mexer nos campos manuais',()=>{
+ const b=setup(),admin=tokenAdmin(b);
+ const head=b.sheets.get('FATURAS').rows[0],row=b.sheets.get('FATURAS').rows[1];
+ row[head.indexOf('Fornecedor')]='Empresa Fictícia Unipessoal. Lda. Impasse Exemplo nº1';
+ row[head.indexOf('Descrição')]='fornecedor-original.pdf';
+ row[head.indexOf('Estado extração')]='Extração parcial — por validar';
+ const pdf=[
+  'Factura nº1 2026/52','De','Empresa Fictícia Unipessoal. Lda. Impasse Exemplo nº1',
+  'Nº Contribuinte: 500000000','Data de Emissão','2026-10-20',
+  'Data de Vencimento','2026-10-24','Para','Condomínio',
+  'Lista de Artigos','DESCRIÇÃO DO ARTIGO QUANT. PREÇO DESC. IVA (%) TOTAL',
+  'Manutenção portão 1.00 240,00 0,00 23.00 240,00',
+  'Subtotal da Factura 240,00 €',
+  'IVA 23.00% (Incidência: 240,00) 55,20 €',
+  'Total da Factura 295,20 €'
+ ].join('\n');
+ b.context.fncDriveOcrText_=()=>pdf;
+ const result=b.post('finance.admin.extractInvoice',{token:admin,id:'DOC-1'});
+ assert.equal(result.ok,true);
+ assert.equal(row[head.indexOf('Fornecedor')],'Empresa Fictícia Unipessoal. Lda.');
+ assert.match(row[head.indexOf('Descrição')],/Manutenção portão/);
+ assert.match(row[head.indexOf('Observações')],/Leitor v2/);
+ assert.equal(row[head.indexOf('Validação')],'Por validar');
+ row[head.indexOf('Fornecedor')]='Fornecedor confirmado manualmente';
+ const again=b.post('finance.admin.extractInvoice',{token:admin,id:'DOC-1'});
+ assert.equal(again.ok,true);
+ assert.equal(row[head.indexOf('Fornecedor')],'Fornecedor confirmado manualmente');
+});
