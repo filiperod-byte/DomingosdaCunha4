@@ -412,3 +412,44 @@ test('email de teste recusa destinatário não aprovado e não tenta enviar',()=
  assert.equal(result.code,'FINANCE_ERROR');
  assert.equal(b.counts.mails,0);
 });
+
+test('releitura confirmada corrige total OCR antigo e preserva correção manual posterior',()=>{
+ const b=setup(),admin=tokenAdmin(b),sh=b.sheets.get('FATURAS'),h=sh.rows[0],row=sh.rows[1];
+ row[h.indexOf('Total (€)')]=240;
+ b.context.fncDriveOcrText_=()=> 'Fatura nº 2026/52\nEmpresa Teste Lda.\nData de Emissão: 2026-10-20\nTotal da Fatura 295,20 €';
+ assert.equal(b.post('finance.admin.extractInvoice',{token:admin,id:'DOC-1',replacePrevious:true}).ok,true);
+ assert.equal(row[h.indexOf('Total (€)')],295.2);
+ assert.equal(b.post('finance.admin.updateInvoice',{token:admin,id:'DOC-1',documentType:'Fatura',supplier:'Fornecedor manual',description:'Serviço',value:300,method:'Por confirmar'}).ok,true);
+ b.post('finance.admin.extractInvoice',{token:admin,id:'DOC-1',replacePrevious:true});
+ assert.equal(row[h.indexOf('Total (€)')],300);assert.equal(row[h.indexOf('Fornecedor')],'Fornecedor manual');
+});
+test('ativar alertas envia ciclo pendente e não duplica envios',()=>{
+ const b=setup(),admin=tokenAdmin(b);tokenResident(b,admin);const before=b.counts.mails;
+ const r=b.post('finance.admin.setNotifications',{token:admin,enabled:true});
+ assert.equal(r.notifications.notified,1);assert.equal(b.counts.mails,before+1);
+ b.post('finance.admin.setNotifications',{token:admin,enabled:true});assert.equal(b.counts.mails,before+1);
+});
+test('falha de email fica registada e a sincronização pode recuperar sem duplicar',()=>{
+ const b=setup(),admin=tokenAdmin(b);tokenResident(b,admin);
+ const send=b.context.MailApp.sendEmail;b.context.MailApp.sendEmail=()=>{throw Error('Provider unavailable');};
+ const r=b.post('finance.admin.setNotifications',{token:admin,enabled:true});assert.equal(r.notifications.failed,1);
+ assert.equal(b.sheets.get('WALLBOX_NOTIFICACOES').rows[1][4],'Falhou');
+ b.context.MailApp.sendEmail=send;
+ const result=b.context.fncNotifyPendingCycles_({role:'admin',email:'admin@example.invalid'});
+ assert.equal(result.notified,1);assert.equal(result.failed,0);
+ assert.equal(b.context.fncNotifyPendingCycles_({role:'admin',email:'admin@example.invalid'}).notified,0);
+});
+test('fatura EDP editada abre ciclo com tarifas próprias e envia pedido de leitura',()=>{
+ const b=setup(),admin=tokenAdmin(b);tokenResident(b,admin);
+ const t={'Período início':'2026-08-29','Período fim':'2026-10-28','Consumo prédio':777,
+ 'Energia (sem IVA)':.1671,'IVA energia':.23,'IEC (sem IVA)':.001,'IVA IEC':.23,
+ 'Potência (sem IVA)':.8485,'IVA potência':.23,'DGEG (sem IVA)':.35,'IVA DGEG':.23,
+ 'Contribuição audiovisual (sem IVA)':2.85,'IVA audiovisual':.06};
+ const update=b.post('finance.admin.updateInvoice',{token:admin,id:'DOC-1',documentType:'Fatura',supplier:'EDP Comercial',description:'Eletricidade',value:228.25,method:'Débito direto',periodStart:t['Período início'],periodEnd:t['Período fim'],tariffs:t});
+ assert.equal(update.ok,true);
+ b.post('finance.admin.setNotifications',{token:admin,enabled:true});const before=b.counts.mails;
+ const r=b.post('finance.admin.validateInvoice',{token:admin,id:'DOC-1'});
+ assert.equal(r.cycleId,'CYCLE-DOC-1');assert.equal(r.notifications.notified,1);
+ assert.equal(b.counts.mails,before+1);
+ b.post('finance.admin.validateInvoice',{token:admin,id:'DOC-1'});assert.equal(b.counts.mails,before+1);
+});

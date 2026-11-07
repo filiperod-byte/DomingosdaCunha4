@@ -87,11 +87,16 @@ function fncParseInvoiceText_(source){
     'Valor\\s+sem\\s+IVA','Valor\\s+il[ií]quido','Sem\\s*/\\s*IVA'
   ]);
   let subtotal=net.length===1?net[0]:null;
-  const tax=text.match(/\bIVA\s*[\d.,]+\s*%\s*\(\s*Incid[eê]ncia\s*:\s*([\d.,]+)\s*\)\s*([\d.,]+)\s*€?/i);
-  let iva=tax?fncParseEuro_(tax[2]):fncParseEuro_(fncFirstMatch_(text,[
-    /(?:^|\n)\s*IVA\s*[:\s]*€\s*([\d.,]+)\s*(?:€|\n|$)/im
-  ]));
-  if(tax&&subtotal===null)subtotal=fncParseEuro_(tax[1]);
+  const taxes=[...text.matchAll(/\bIVA\s*[\d.,]+\s*%\s*\(\s*Incid[eê]ncia\s*:\s*([\d.,]+)\s*\)\s*([\d.,]+)\s*€?/gi)];
+  // Somar todas as taxas; uma fatura de eletricidade pode ter várias bases de IVA.
+  const taxValues=taxes.map(t=>fncParseEuro_(t[2]));
+  let iva=taxes.length && taxValues.every(v=>v!==null)?
+    Math.round(taxValues.reduce((a,b)=>a+b,0)*100)/100:
+    fncParseEuro_(fncFirstMatch_(text,[/(?:^|\n)\s*IVA\s*[:\s]*€\s*([\d.,]+)\s*(?:€|\n|$)/im]));
+  if(taxes.length&&subtotal===null){
+    const bases=taxes.map(t=>fncParseEuro_(t[1]));
+    if(bases.every(v=>v!==null))subtotal=Math.round(bases.reduce((a,b)=>a+b,0)*100)/100;
+  }
   // Orçamentos podem ter o valor "C/IVA 23%" sem outro campo de total.
   if(gross===null && !ambiguousTotal &&
     /(?:^|\n)\s*(?:Orc\.|Honorários|Documento valido por)/im.test(text)){
@@ -159,8 +164,11 @@ function fncParseInvoiceText_(source){
   ]).replace(/\s/g,'');
   const iban=/^PT50\d{21}$/.test(ibanRaw)?ibanRaw:'';
   const method=/D[eé]bito\s+Diret[oa]/i.test(text)?'Débito direto':'Por confirmar';
-  const strong=Boolean(vendor&&gross!==null&&number&&issuance&&documentType==='Fatura');
-  return {supplier:vendor,nif,number,issued,due,value:gross,iva,subtotal,description,method,
+  const strong=Boolean(vendor&&gross!==null&&number&&issued&&documentType==='Fatura');
+  const period=text.match(/Per[ií]odo\s+(?:de\s+)?(?:fatura[cç][aã]o|fornecimento|consumo)\s*[:\s]*(\d{2}[-/]\d{2}[-/]\d{4}|\d{4}-\d{2}-\d{2})\s*(?:a|até|[-–])\s*(\d{2}[-/]\d{2}[-/]\d{4}|\d{4}-\d{2}-\d{2})/i);
+  const periodStart=period?fncISOInvoiceDate_(period[1]):'';
+  const periodEnd=period?fncISOInvoiceDate_(period[2]):'';
+  return {periodStart,periodEnd,supplier:vendor,nif,number,issued,due,value:gross,iva,subtotal,description,method,
     iban,documentType,state:strong?'Extraído — por validar':'Extração parcial — por validar',
     recognized:[vendor,nif,number,issuance,due,gross!==null?String(gross):'',description].filter(Boolean).length};
 }
@@ -211,7 +219,7 @@ function fncDriveOcrText_(fileId){
 function fncEnsureExtractionColumns_(){
   const sheet=fncTab_(FNC.sheet.invoices);
   const cols=sheet.getRange(1,1,1,sheet.getLastColumn()).getValues()[0].map(String);
-  const extras=['IVA (€)','Base tributável (€)','Estado extração','Data extração'].filter(c=>!cols.includes(c));
+  const extras=['IVA (€)','Base tributável (€)','Estado extração','Data extração','Campos manuais','Dados OCR','Tarifas JSON','Tentativas OCR'].filter(c=>!cols.includes(c));
   if(extras.length)sheet.getRange(1,sheet.getLastColumn()+1,1,extras.length).setValues([extras]);
 }
 /** Processa um pequeno lote de faturas não validadas; não precisa de trigger adicional. */
@@ -222,7 +230,10 @@ function fncExtractPendingInvoices_(maxInvoices){
     .filter(r=>{
       if(r['Validação']!=='Por validar'||r['Pagamento']==='Pago'||!r['ID Drive'])return false;
       const state=String(r['Estado extração']||'');
-      if(/^Falhou/i.test(state))return false;
+      if(/^Falhou/i.test(state)){
+        const last=new Date(r['Data extração']).getTime();
+        return Number(r['Tentativas OCR']||0)<3&&(!Number.isFinite(last)||Date.now()-last>=15*60*1000);
+      }
       if(!state)return true;
       // Reprocessar uma única vez os PDFs que a versão anterior interpretou mal.
       // Depois marcar "Leitor v2" para não repetir OCR a cada 15 minutos.
@@ -247,6 +258,7 @@ function fncExtractPendingInvoices_(maxInvoices){
         if(row && row['Validação']==='Por validar')
           fncUpdate_(FNC.sheet.invoices,row.row,{
             'Estado extração':'Falhou — revisão manual',
+            'Tentativas OCR':Number(row['Tentativas OCR']||0)+1,
             'Data extração':fncNow_()
           });
       });
@@ -254,7 +266,7 @@ function fncExtractPendingInvoices_(maxInvoices){
   }
   return {processed:pending.length,extracted:success,failed};
 }
-function fncExtractOneInvoice_(invoiceId){
+function fncExtractOneInvoice_(invoiceId,replacePrevious){
   const original=fncData_(FNC.sheet.invoices).find(r=>String(r.ID)===String(invoiceId));
   if(!original)throw new Error('Documento não encontrado');
   if(original['Validação']==='Validada'||original['Pagamento']==='Pago')throw new Error('Documento fechado');
@@ -269,11 +281,16 @@ function fncExtractOneInvoice_(invoiceId){
     if(!item||item['Validação']==='Validada'||item['Pagamento']==='Pago')
       throw new Error('Documento foi entretanto validado; extração não aplicada');
     if(String(item['ID Drive'])!==String(fileId))throw new Error('Documento original alterado');
-    const patch={'Estado extração':parsed.state,'Data extração':fncNow_()};
+    const patch={'Estado extração':parsed.state,'Data extração':fncNow_(),'Tentativas OCR':0};
   const prior=String(item['Estado extração']||'');
+  let manual=[];try{manual=JSON.parse(item['Campos manuais']||'[]');}catch(_){}
+  let priorData={};try{priorData=JSON.parse(item['Dados OCR']||'{}');}catch(_){}
+  const nextData={};
   const previousOCR=/^(Extra[ií]d|Extração parcial|Falhou)/i.test(prior);
   const set=(field,value,placeholder)=>{
     if(value===null||value===undefined||value==='')return;
+    nextData[field]=value;
+    if(manual.includes(field))return;
     const current=item[field];
     const existing=String(current==null?'':current);
     const empty=current===''||current==null||(field==='Total (€)'&&current===0);
@@ -283,7 +300,8 @@ function fncExtractOneInvoice_(invoiceId){
       existing.startsWith(String(value)+' ')&&
       /\b(?:Rua|Impasse|Largo|Av\.|Avenida|Pra[cç]a|Travessa)\b/i.test(existing.slice(String(value).length));
     const filePlaceholder=field==='Descrição'&&/\.(?:pdf|png|jpe?g)$/i.test(existing);
-    if(empty||contaminated||filePlaceholder||
+    if(empty||contaminated||filePlaceholder||(replacePrevious&&previousOCR)||
+       (Object.prototype.hasOwnProperty.call(priorData,field)&&String(current)===String(priorData[field]))||
        (placeholder&&existing===String(placeholder)))patch[field]=value;
   };
   if(parsed.recognized>=2){
@@ -293,6 +311,8 @@ function fncExtractOneInvoice_(invoiceId){
     // Número/documento já corrigido pelo administrador é preservado.
     set('Documento',parsed.number,item['Descrição']);
     set('Emissão',parsed.issued);
+    set('Período início',parsed.periodStart);
+    set('Período fim',parsed.periodEnd);
     set('Vencimento',parsed.due);
     set('Total (€)',parsed.value);
     if(parsed.method==='Débito direto')set('Método',parsed.method,'Por confirmar');
@@ -301,6 +321,7 @@ function fncExtractOneInvoice_(invoiceId){
     set('Base tributável (€)',parsed.subtotal);
     if(parsed.iban && fncValidIban_(parsed.iban))set('IBAN fornecedor',parsed.iban);
   }
+  patch['Dados OCR']=JSON.stringify(nextData);
   const details=['Leitor v2: dados extraídos do PDF — CONFIRMAR antes de validar ou pagar'];
   if(parsed.value!==null)details.push('total '+parsed.value.toFixed(2)+' €');
   if(parsed.iva!==null)details.push('IVA '+parsed.iva.toFixed(2)+' €');
