@@ -76,14 +76,50 @@ function draftChanges(liveFiles,editorFiles) {
 if (!equal(canonical(draft.files),desired)) {
   const differences=draftChanges(live.files,draft.files);
   if(differences.length) {
-    // Diagnóstico seguro: apenas nomes e estado; nunca imprimir código,
-    // tokens, valores de configuração ou conteúdo de ficheiros.
+    // Mostrar apenas nomes e tipos; nunca publicar código ou tokens nos logs.
     console.error('DIVERGÊNCIA NO EDITOR — '+differences.length+' ficheiro(s) por conciliar:');
     for(const item of differences)
       console.error(' - '+item.change+': '+JSON.stringify(item.name)+' ('+item.type+')');
+
+    // Reconciliar APENAS a alteração conhecida no único ficheiro backend.
+    // Se houver manifestos, scripts novos ou qualquer outro ficheiro modificado,
+    // abortar sem alterar o editor ou a implementação.
+    const expectedOne = differences.length===1 &&
+      differences[0].name===name && differences[0].type==='SERVER_JS' &&
+      differences[0].change==='MODIFICADO';
+    assert.ok(expectedOne,
+      'O editor tem alterações não identificadas. Publicação suspensa sem substituir ficheiros.');
+
+    // O handler do trigger existente tem de continuar presente no novo backend.
+    assert.ok(next.includes('function financeScanFolder_('),
+      'O novo backend não contém o handler da monitorização; publicação suspensa.');
+
+    // Backup IMUTÁVEL das alterações locais no histórico do próprio Apps Script.
+    // Criar a versão não altera o URL de produção nem ativa/desativa triggers.
+    console.log('A guardar uma versão de segurança do editor antes de reconciliar Código.gs…');
+    const backup=await api('/versions','POST',{
+      description:'BACKUP editor antes de GitHub '+commit.slice(0,12)});
+    assert.ok(Number.isInteger(backup.versionNumber) && backup.versionNumber>0,
+      'Não foi possível criar o backup; nenhuma alteração foi aplicada.');
+    const backupContent=await api('/content?versionNumber='+backup.versionNumber);
+    assert.ok(equal(canonical(backupContent.files),canonical(draft.files)),
+      'Backup diferente do editor original; publicação cancelada.');
+    console.log('BACKUP CONFIRMADO — versão Apps Script '+backup.versionNumber+
+      ' (não altera a implementação ativa).');
+
+    // Evita substituir trabalho adicional feito no editor durante a operação.
+    const latestDraft=await api('/content');
+    assert.ok(equal(canonical(latestDraft.files),canonical(draft.files)),
+      'O editor mudou entretanto; atualização cancelada.');
   }
-  assert.ok(differences.length===0,'Existem alterações por publicar no editor.');
-  await api('/content','PUT',{files:draft.files.map(({name:n,type,source})=>({name:n,type,source:n===name && type==='SERVER_JS'?next:source}))});
+
+  // Atualizar somente o servidor GitHub conhecido; restantes ficheiros intactos.
+  const updatedFiles=draft.files.map(({name:n,type,source})=>
+    ({name:n,type,source:n===name && type==='SERVER_JS'?next:source}));
+  await api('/content','PUT',{files:updatedFiles});
+  const editorAfter=await api('/content');
+  assert.ok(equal(canonical(editorAfter.files),desired),
+    'O código de destino não ficou guardado corretamente no editor.');
 }
 if (!equal(canonical(live.files),desired)) {
   const {versionNumber} = await api('/versions','POST',{description:'GitHub ' + commit.slice(0,12)});
