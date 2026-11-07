@@ -34,6 +34,14 @@
 <div class="actions"><button type="submit">Guardar desconto</button></div></form></div>
 <div class="card"><h2>Notificações automáticas</h2><p id="notificationState" class="muted">Por consultar</p>
 <button class="secondary" id="toggleNotifications" type="button">Alterar notificações</button></div>
+<div class="card">
+<h2>Testar envio de email</h2>
+<p class="hint">Envia uma mensagem identificada como TESTE para a fração ativa selecionada. Não abre um ciclo EDP, não liga notificações e não pede leituras.</p>
+<label for="testEmailFraction">Fração destinatária</label>
+<select id="testEmailFraction"><option value="">Selecionar fração ativa</option></select>
+<div class="actions"><button type="button" class="secondary" id="testEmailSend">Enviar email de teste</button></div>
+<p class="muted" id="testEmailResult" role="status" aria-live="polite"></p>
+</div>
 <div class="card"><h2>Ciclos de leitura</h2><div id="cycleList"></div></div>
 <details class="card"><summary>Diagnóstico da configuração</summary>
 <p class="hint">Verificação de acessos e parâmetros. Não altera dados.</p><button type="button" class="secondary" id="preflight">Executar diagnóstico</button><div id="preflightResults"></div></details>
@@ -89,6 +97,16 @@ function display(){
  $('countActive').textContent=(model.fractions||[]).filter(f=>f.status==='Ativa').length;
  $('countPending').textContent=(model.readings||[]).filter(r=>r.state==='Submetida').length;
  $('fractionList').replaceChildren();$('readingList').replaceChildren();$('paymentList').replaceChildren();$('cycleList').replaceChildren();
+ const testSelect=$('testEmailFraction'),saved=testSelect.value;
+ testSelect.replaceChildren();
+ const emptyOption=UI.node('option','Selecionar fração ativa');emptyOption.value='';testSelect.append(emptyOption);
+ for(const f of model.fractions||[]){
+  if(f.status!=='Ativa')continue;
+  const opt=UI.node('option',f.name||f.id);opt.value=f.id;testSelect.append(opt);
+ }
+ if([...testSelect.options].some(option=>option.value===saved))testSelect.value=saved;
+ else if(testSelect.options.length===2)testSelect.selectedIndex=1;
+ $('testEmailSend').disabled=testSelect.options.length<=1;
  for(const f of model.fractions||[]){
   const card=UI.node('article',undefined,'card'),top=UI.node('div',undefined,'row');
   top.append(UI.node('h3',f.name||f.id),UI.node('span',f.status||'—','status '+(f.status==='Ativa'?'ok':'warn')));card.append(top);
@@ -248,6 +266,17 @@ $('toggleNotifications').addEventListener('click',()=>{
  confirmAction('finance.admin.setNotifications',{enabled:enable},
   (enable?'Ativar':'Desativar')+' as notificações aos moradores?',
   'Notificações '+(enable?'ativadas.':'desativadas.'));
+});
+$('testEmailSend').addEventListener('click',()=>{
+ const fractionId=$('testEmailFraction').value;
+ if(!fractionId)return UI.toast('Seleciona uma fração ativa.',true);
+ const label=$('testEmailFraction').selectedOptions[0]?.textContent||fractionId;
+ if(!confirm('Enviar um email de TESTE para a fração '+label+'? Não será pedido nenhum pagamento ou leitura.'))return;
+ UI.busy('A enviar email de teste…',async()=>{
+  const result=await UI.api('finance.admin.testWallboxEmail',{fractionId});
+  $('testEmailResult').textContent=result.message||'Pedido de envio aceite pelo Google MailApp.';
+  UI.toast('Pedido de email de teste aceite. Confirma a receção.');
+ });
 });
 $('preflight').addEventListener('click',()=>UI.busy('A executar o diagnóstico…',async()=>{
  const r=await UI.api('finance.admin.preflight'),dest=$('preflightResults');dest.replaceChildren();
