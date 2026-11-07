@@ -44,9 +44,22 @@ function fncParseInvoiceText_(source){
     /Data\s+(?:de\s+)?Emiss[aã]o\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i,
     /\bData\s+(?:da\s+)?Fatura\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i
   ]));
-  const due=fncISOInvoiceDate_(fncFirstMatch_(text,[
-    /Data\s+de\s+Vencimento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i,
+  let due=fncISOInvoiceDate_(fncFirstMatch_(text,[
+    /Data\s+(?:de\s+)?Vencimento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i,
     /Data\s+Limite\s+(?:de\s+)?Pagamento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i
+  ]));
+  // Alguns PDFs extraídos em colunas listam duas datas sob os cabeçalhos
+  // EMISSÃO / VENCIMENTO. Só mapear se houver ambos os valores adjacentes.
+  let issued=issuance;
+  if(!issued){
+    const columns=text.match(/DATA\s+DE\s+EMISS[AÃ]O\s*\n\s*DATA\s+VENCIMENTO\s+(\d{4}-\d{2}-\d{2})\s*\n\s*(\d{4}-\d{2}-\d{2})/i);
+    if(columns){
+      due=fncISOInvoiceDate_(columns[1]);
+      issued=fncISOInvoiceDate_(columns[2]);
+    }
+  }
+  if(!issued)issued=fncISOInvoiceDate_(fncFirstMatch_(text,[
+    /(?:^|\n)\s*Data\s*:\s*(\d{2}\/\d{2}\/\d{4}|\d{4}-\d{2}-\d{2})/im
   ]));
   // O OCR pode mover € para antes do valor, ou omiti-lo. Não aceitar
   // números sem uma etiqueta financeira explícita.
@@ -147,7 +160,7 @@ function fncParseInvoiceText_(source){
   const iban=/^PT50\d{21}$/.test(ibanRaw)?ibanRaw:'';
   const method=/D[eé]bito\s+Diret[oa]/i.test(text)?'Débito direto':'Por confirmar';
   const strong=Boolean(vendor&&gross!==null&&number&&issuance&&documentType==='Fatura');
-  return {supplier:vendor,nif,number,issued:issuance,due,value:gross,iva,subtotal,description,method,
+  return {supplier:vendor,nif,number,issued,due,value:gross,iva,subtotal,description,method,
     iban,documentType,state:strong?'Extraído — por validar':'Extração parcial — por validar',
     recognized:[vendor,nif,number,issuance,due,gross!==null?String(gross):'',description].filter(Boolean).length};
 }
