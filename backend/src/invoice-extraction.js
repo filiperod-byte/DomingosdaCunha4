@@ -262,18 +262,27 @@ function fncExtractOneInvoice_(invoiceId){
       throw new Error('Documento foi entretanto validado; extração não aplicada');
     if(String(item['ID Drive'])!==String(fileId))throw new Error('Documento original alterado');
     const patch={'Estado extração':parsed.state,'Data extração':fncNow_()};
+  const prior=String(item['Estado extração']||'');
+  const previousOCR=/^(Extra[ií]d|Extração parcial|Falhou)/i.test(prior);
   const set=(field,value,placeholder)=>{
     if(value===null||value===undefined||value==='')return;
     const current=item[field];
-    const empty=current===''||current==null||
-      (field==='Total (€)'&&current===0);
-    if(empty||(placeholder&&String(current)===String(placeholder)))patch[field]=value;
+    const existing=String(current==null?'':current);
+    const empty=current===''||current==null||(field==='Total (€)'&&current===0);
+    // Só corrigir leituras anteriores da própria App com morada colada ao
+    // fornecedor, nunca substituir nomes que o administrador corrigiu.
+    const contaminated=field==='Fornecedor'&&previousOCR&&
+      existing.startsWith(String(value)+' ')&&
+      /\b(?:Rua|Impasse|Largo|Av\.|Avenida|Pra[cç]a|Travessa)\b/i.test(existing.slice(String(value).length));
+    const filePlaceholder=field==='Descrição'&&/\.(?:pdf|png|jpe?g)$/i.test(existing);
+    if(empty||contaminated||filePlaceholder||
+       (placeholder&&existing===String(placeholder)))patch[field]=value;
   };
   if(parsed.recognized>=2){
-    if(parsed.number)set('Tipo','Fatura','Documento por classificar');
+    set('Tipo',parsed.documentType,'Documento por classificar');
     set('Fornecedor',parsed.supplier,'Por identificar');
     set('NIF',parsed.nif);
-    // Um número de documento corrigido manualmente nunca deve ser substituído.
+    // Número/documento já corrigido pelo administrador é preservado.
     set('Documento',parsed.number,item['Descrição']);
     set('Emissão',parsed.issued);
     set('Vencimento',parsed.due);
@@ -282,11 +291,18 @@ function fncExtractOneInvoice_(invoiceId){
     set('Descrição',parsed.description,item['Documento']);
     set('IVA (€)',parsed.iva);
     set('Base tributável (€)',parsed.subtotal);
+    if(parsed.iban && fncValidIban_(parsed.iban))set('IBAN fornecedor',parsed.iban);
   }
-  const details=['Extração automática — confirmar com o PDF original antes de validar'];
+  const details=['Dados extraídos do PDF — CONFIRMAR antes de validar ou pagar'];
   if(parsed.value!==null)details.push('total '+parsed.value.toFixed(2)+' €');
   if(parsed.iva!==null)details.push('IVA '+parsed.iva.toFixed(2)+' €');
-  patch['Observações']=details.join('; ');
+  if(parsed.iban)details.push('IBAN observado no documento — confirmar titularidade no banco');
+  if(parsed.documentType==='Orçamento / honorários')
+    details.push('Orçamento: não tratar como fatura pagável');
+  if(parsed.value===null)details.push('Total por apurar — revisão manual necessária');
+  const oldNotes=String(item['Observações']||'');
+  patch['Observações']=oldNotes && !/^Importado automaticamente|^Extração automática|^Dados extraídos/i.test(oldNotes)?
+    oldNotes+'; '+details.join('; '):details.join('; ');
   const keys=fncTab_(FNC.sheet.invoices).getRange(1,1,1,fncTab_(FNC.sheet.invoices).getLastColumn())
     .getValues()[0].map(String);
   for(const k of Object.keys(patch))if(!keys.includes(k))delete patch[k];
