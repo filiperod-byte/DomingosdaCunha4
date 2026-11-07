@@ -186,3 +186,12 @@ test('nota de despesas sem NIF não inventa identificação fiscal',()=>{
  assert.equal(v.description,'Carta Câmara');
  assert.equal(v.nif,'');
 });
+
+test('soma IVA de várias taxas sem descartar o total correto',()=>{
+ const r=parse('Fatura nº 2026/52\nEmpresa Teste Lda.\nData de Emissão: 2026-10-20\nSubtotal da Fatura 200,00 €\nIVA 6% (Incidência: 100,00) 6,00 €\nIVA 23% (Incidência: 100,00) 23,00 €\nTotal da Fatura 229,00 €');
+ assert.equal(r.value,229);assert.equal(r.iva,29);assert.equal(r.subtotal,200);
+});
+test('extrai período explicitamente identificado sem usar emissão como consumo',()=>{
+ const r=parse('Período de faturação: 29/08/2026 a 28/10/2026\nData de Emissão: 02/11/2026');
+ assert.equal(r.periodStart,'2026-08-29');assert.equal(r.periodEnd,'2026-10-28');
+});

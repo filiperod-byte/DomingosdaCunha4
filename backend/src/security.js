@@ -94,7 +94,11 @@ function createSecureApplication_(app, ports) {
               fractionId:String(resident.floor || '')+String(resident.fraction || '') };
         if (!actor.email) return deny('Utilizador sem email autorizado.', 'FORBIDDEN');
         try { return financeDispatch_(p, actor); }
-        catch (err) { return deny('Não foi possível executar o pedido financeiro.', 'FINANCE_ERROR'); }
+        catch (err) {
+          const message=String(err.message||'');
+          const safe=/^(Preencher tarifa:|Tarifa inválida:|Rever tarifas|Rever período|Período da (?:tabela|fatura)|Data inválida:|Notificações ainda|Ciclo não está|Total a pagar inválido|Classificar e validar)/.test(message);
+          return deny(safe?message:'Não foi possível executar o pedido financeiro.', 'FINANCE_ERROR');
+        }
       }
       if (method === 'POST' && ['general.report','general.confirm'].includes(action)) return app.dispatch(method,action,p);
       if (method === 'POST' && action === 'auth.logout') {
