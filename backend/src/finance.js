@@ -152,7 +152,9 @@ function fncDiscountAt_(date){
 /** Vistas independentes: abrir faturas não lê wallboxes e vice-versa. */
 function fncInvoiceDashboard_(){
   return {ok:true,invoices:fncData_(FNC.sheet.invoices).map(r=>({
-    id:r.ID,supplier:r['Fornecedor'],description:r['Descrição'],due:r['Vencimento'],
+    id:r.ID,supplier:r['Fornecedor'],description:r['Descrição'],
+    number:r['Documento'],issued:r['Emissão'],due:r['Vencimento'],
+    nif:r['NIF'],vat:r['IVA (€)'],subtotal:r['Base tributável (€)'],
     value:r['Total (€)'],validation:r['Validação'],payment:r['Pagamento'],
     documentType:r['Tipo'],method:r['Método'],
     extraction:r['Estado extração']||'Não processado',
