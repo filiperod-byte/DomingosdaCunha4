@@ -48,26 +48,49 @@ function fncParseInvoiceText_(source){
     /Data\s+de\s+Vencimento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i,
     /Data\s+Limite\s+(?:de\s+)?Pagamento\s*[:\s]+(\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})/i
   ]));
-  let gross=fncParseEuro_(fncFirstMatch_(text,[
-    /^\s*Total\s+(?:da\s+)?(?:Factura|Fatura)\s*[:\s]+([\d.,]+)\s*€/im,
-    /^\s*Total\s+a\s+Pagar\s*[:\s]+([\d.,]+)\s*€/im,
-    /^\s*Valor\s+Total\s*[:\s]+([\d.,]+)\s*€/im,
-    /^\s*Total\s+(?:do\s+)?Documento\s*[:\s]+([\d.,]+)\s*€/im
+  // O OCR pode mover € para antes do valor, ou omiti-lo. Não aceitar
+  // números sem uma etiqueta financeira explícita.
+  const amount='(\\d{1,3}(?:[. ]\\d{3})*,\\d{2}|\\d{1,8}[,.]\\d{2})';
+  function amounts(labels){
+    const vals=[];
+    for(const label of labels){
+      const regex=new RegExp('(?:^|\\n)\\s*'+label+'[ \\t:\\n]{0,15}€?[ \\t]*'+amount,'gim');
+      for(const match of text.matchAll(regex)){
+        const v=fncParseEuro_(match[1]);
+        if(v!==null)vals.push(v);
+      }
+    }
+    return [...new Set(vals)];
+  }
+  const totals=amounts([
+    'Total\\s+(?:da\\s+)?(?:Factura|Fatura)',
+    'Total\\s+a\\s+Pagar','Valor\\s+Total',
+    'Total\\s+(?:do\\s+)?Documento','TOTAL'
+  ]);
+  const ambiguousTotal=totals.length>1;
+  let gross=totals.length===1?totals[0]:null;
+  const net=amounts([
+    'Subtotal\\s+(?:da\\s+)?(?:Factura|Fatura)',
+    'Valor\\s+sem\\s+IVA','Valor\\s+il[ií]quido','Sem\\s*/\\s*IVA'
+  ]);
+  let subtotal=net.length===1?net[0]:null;
+  const tax=text.match(/\bIVA\s*[\d.,]+\s*%\s*\(\s*Incid[eê]ncia\s*:\s*([\d.,]+)\s*\)\s*([\d.,]+)\s*€?/i);
+  let iva=tax?fncParseEuro_(tax[2]):fncParseEuro_(fncFirstMatch_(text,[
+    /(?:^|\n)\s*IVA\s*[:\s]*€\s*([\d.,]+)\s*(?:€|\n|$)/im
   ]));
-  // Documentos com várias faturas na mesma página (ex.: eletricidade + audiovisual)
-  // não podem receber um total escolhido arbitrariamente.
-  const totals=[...text.matchAll(/^\s*(?:Total\s+(?:da\s+)?(?:Factura|Fatura)|Total\s+a\s+Pagar|Valor\s+Total|Total\s+(?:do\s+)?Documento)\s*[:\s]+([\d.,]+)\s*€/gim)]
-    .map(m=>fncParseEuro_(m[1])).filter(v=>v!==null);
-  const uniqueTotals=[...new Set(totals)];
-  if(uniqueTotals.length>1)gross=null;
-  let subtotal=null,iva=null;
-  const tax=text.match(/\bIVA\s*[\d.,]+\s*%\s*\(\s*Incid[eê]ncia\s*:\s*([\d.,]+)\s*\)\s*([\d.,]+)\s*€/i);
-  if(tax){subtotal=fncParseEuro_(tax[1]);iva=fncParseEuro_(tax[2]);}
-  else{
-    subtotal=fncParseEuro_(fncFirstMatch_(text,[
-      /Subtotal\s+(?:da\s+)?(?:Factura|Fatura)\s*[:\s]+([\d.,]+)\s*€/i,
-      /Valor\s+sem\s+IVA\s*[:\s]+([\d.,]+)\s*€/i
+  if(tax&&subtotal===null)subtotal=fncParseEuro_(tax[1]);
+  // Orçamentos podem ter o valor "C/IVA 23%" sem outro campo de total.
+  if(gross===null && !ambiguousTotal &&
+    /(?:^|\n)\s*(?:Orc\.|Honorários|Documento valido por)/im.test(text)){
+    gross=fncParseEuro_(fncFirstMatch_(text,[
+      /C\s*\/\s*IVA\s*\d+(?:[.,]\d+)?%\s*([\d.,]+)\s*€/i
     ]));
+  }
+  // Só calcular a soma quando base e IVA estão ambos identificados no PDF.
+  if(gross===null&&!ambiguousTotal&&subtotal!==null&&iva!==null)
+    gross=Math.round((subtotal+iva)*100)/100;
+  if(gross!==null&&subtotal!==null&&iva!==null&&Math.abs(gross-subtotal-iva)>0.03){
+    gross=null;iva=null;subtotal=null;
   }
   let vendor='',nif='';
   const issuer=text.split(/\n\s*Para\s*\n/i)[0].split(/\n\s*De\s*\n/i).slice(-1)[0];
