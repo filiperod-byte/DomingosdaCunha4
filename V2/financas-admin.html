@@ -73,7 +73,7 @@ function render(){
  const list=$('invoiceList');list.replaceChildren();
  $('countPending').textContent=invoices.filter(f=>f.validation!=='Validada'&&f.validation!=='Não é fatura').length;
  $('countUnpaid').textContent=invoices.filter(f=>f.payment!=='Pago'&&f.payment!=='Não autorizado' &&
-  f.validation!=='Não é fatura'&&!/orçamento|por classificar/i.test(f.documentType||'')).length;
+  f.validation!=='Não é fatura'&&Number(f.value)>0&&!/orçamento|por classificar/i.test(f.documentType||'')).length;
  if(!invoices.length){list.append(UI.node('p','Não existem documentos registados.','muted'));return}
  for(const f of invoices){
   const card=UI.node('article',undefined,'card'),heading=UI.node('div',undefined,'row');
@@ -91,9 +91,15 @@ function render(){
     details.append(extraction);
   }
   const data=UI.node('dl',undefined,'data');
+  kv(data,'Tipo',f.documentType||'Por classificar');
+  kv(data,'Documento',f.number||'—');
+  kv(data,'Emissão',UI.date(f.issued));
+  kv(data,'NIF',f.nif||'—');
+  if(f.subtotal!==''&&f.subtotal!=null)kv(data,'Base tributável',UI.money(f.subtotal));
+  if(f.vat!==''&&f.vat!=null)kv(data,'IVA',UI.money(f.vat));
   kv(data,'Método',f.method||'Por confirmar');
   kv(data,'Estado',f.payment||'Por confirmar');
-  if(f.iban)kv(data,'IBAN',f.iban);
+  if(f.iban)kv(data,'IBAN observado — confirmar',f.iban);
   if(f.entity)kv(data,'Multibanco',f.entity+' · '+(f.reference||''));
   details.append(data);
   if(f.url&&/^https:\/\/drive\.google\.com\//.test(f.url)){
@@ -110,7 +116,8 @@ function render(){
    }));
    btns.append(extract);
    const edit=UI.node('button','Corrigir dados','secondary');edit.type='button';edit.addEventListener('click',()=>openEdit(f));btns.append(edit);
-   if(!/orçamento|por classificar/i.test(f.documentType||'')){
+   if(!/orçamento|por classificar/i.test(f.documentType||'') &&
+      Number(f.value)>0 && f.supplier && f.supplier!=='Por identificar'){
     const validate=UI.node('button','Validar fatura');validate.type='button';
     validate.addEventListener('click',()=>{if(confirm('Confirmas que os dados desta fatura estão corretos?'))
       run('finance.admin.validateInvoice',{id:f.id},'Fatura validada.');});btns.append(validate);
