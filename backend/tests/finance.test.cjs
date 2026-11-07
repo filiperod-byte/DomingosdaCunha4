@@ -395,7 +395,8 @@ test('email de teste de wallbox usa MailApp sem abrir ciclo nem ativar notifica�
  assert.equal(first.ok,true);
  assert.equal(first.requested,true);
  assert.equal(b.counts.mails,beforeMails+1);
- const testMessage=b.emails[b.emails.length-1];
+ const messages=b.snapshot().emails;
+ const testMessage=messages[messages.length-1];
  assert.equal(testMessage.to,'teste@example.invalid');
  assert.match(testMessage.subject,/\[TESTE\]/);
  assert.match(testMessage.body,/Não é necessário submeter leituras/);
