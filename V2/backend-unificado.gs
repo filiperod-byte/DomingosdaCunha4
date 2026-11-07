@@ -1191,6 +1191,7 @@ function financeDispatch_(req, actor) {
     'finance.admin.disableScanner': () => financeDisableScannerTrigger_(),
     'finance.admin.saveDiscount': () => fncSaveDiscount_(req, actor),
     'finance.admin.notifyCycle': () => fncNotifyCycle_(req,actor),
+    'finance.admin.testWallboxEmail': () => fncTestWallboxEmail_(req,actor),
     'finance.admin.setNotifications': () => fncSetNotifications_(req,actor),
     'finance.admin.upsertFraction': () => fncUpsertFraction_(req, actor),
     'finance.admin.deactivateFraction': () => fncDeactivateFraction_(req, actor),
@@ -1950,6 +1951,38 @@ function fncNotifyCycle_(req,actor){
     if(count)fncAudit_(id,'Enviar pedidos de leitura','',count+' email(s)',actor);
     return {ok:true,notified:count,eligible:active.length};
   });
+}
+
+/**
+ * Envio isolado de diagnóstico MailApp. Não valida faturas, não abre ciclos,
+ * não altera notificações e não apresenta pedidos de leitura como se fossem reais.
+ * Apenas administradores autenticados podem escolher frações ativas e aprovadas.
+ */
+function fncTestWallboxEmail_(req,actor){
+  const id=fncRequired_(req.fractionId,'Fração');
+  const active=fncData_(FNC.sheet.fractions)
+    .filter(f=>String(f['ID fração'])===id).slice(-1)[0];
+  if(!active||active['Estado']!=='Ativa')
+    throw new Error('Fração sem wallbox ativa.');
+  const email=String(active['Email autorizado']||'').trim().toLowerCase();
+  if(!email||!fncApprovedResident_(id,email))
+    throw new Error('O email da fração não pertence a um morador aprovado.');
+  // Limitador por fração: evita vários testes ao tocar repetidamente no botão.
+  const prop=PropertiesService.getScriptProperties(),key='WALLBOX_TEST_LAST_'+id;
+  const now=Date.now(),last=Number(prop.getProperty(key)||0);
+  if(last&&now-last<5*60*1000)
+    throw new Error('Já foi enviado um email de teste para esta fração nos últimos 5 minutos.');
+  const text='Este é um EMAIL DE TESTE da aplicação do Condomínio Domingos da Cunha 4.\n\n'+
+    'Destino: '+String(active['Fração']||id)+'.\n'+
+    'Apenas estamos a verificar o envio de mensagens.\n'+
+    'Não é necessário submeter leituras nem efetuar pagamentos.\n\n'+
+    'A fatura EDP ainda não foi validada e as notificações reais continuam desativadas.';
+  MailApp.sendEmail({to:email,subject:'[TESTE] Domingos da Cunha 4 — Wallbox',body:text});
+  prop.setProperties({[key]:String(now)},false);
+  fncAudit_('TESTE_EMAIL_'+id,'Teste email Wallbox','',
+    'MailApp aceitou o pedido de envio',actor,'Teste sem ciclo EDP e sem pagamentos.');
+  return {ok:true,requested:true,fraction:active['Fração']||id,
+    message:'A Google aceitou o pedido de envio. Verifica a caixa de entrada e Spam; não confirma a entrega.'};
 }
 
 /** Ativação/desativação das notificações no backend, auditada. */
