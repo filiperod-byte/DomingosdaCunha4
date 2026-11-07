@@ -66,3 +66,48 @@ test('rejeita datas impossíveis',()=>{
  const text=invoice('2026/52','240,00','55,20','295,20','Manutenção').replace('2026-10-24','2026-02-30');
  assert.equal(parse(text).due,'');
 });
+
+function mockOcrDrive(uploadStatus=200, exportStatus=200){
+  const calls=[], files=new Map(), original={
+    getMimeType:()=> 'application/pdf',
+    getBlob:()=>({getBytes:()=>[37,80,68,70,45]})
+  };
+  const temp={setTrashed:value=>{calls.push('trashed:'+value)}};
+  files.set('original',original);files.set('tmp-ocr',temp);
+  const DriveApp={getFileById:id=>{if(!files.has(id))throw Error('File missing');return files.get(id)}};
+  const Utilities={getUuid:()=> '1234-abcd',newBlob:value=>({getBytes:()=>[...Buffer.from(value)]})};
+  const ScriptApp={getOAuthToken:()=> 'FAKE-TEST-TOKEN'};
+  const UrlFetchApp={fetch:(url,opts)=>{
+    calls.push(url);
+    assert.match(opts.headers.Authorization,/^Bearer FAKE-TEST-TOKEN$/);
+    if(url.includes('/upload/drive/v3/files')){
+      assert.equal(opts.method,'post');
+      assert.match(opts.contentType,/multipart\/related/);
+      assert.ok(opts.payload.length>5);
+      return {getResponseCode:()=>uploadStatus,
+        getContentText:()=>JSON.stringify({id:'tmp-ocr'})};
+    }
+    assert.match(url,/\/export\?mimeType=text%2Fplain/);
+    return {getResponseCode:()=>exportStatus,getContentText:()=>invoice(
+      '2026/52','240,00','55,20','295,20','Manutenção portão')};
+  }};
+  const run=new Function('DriveApp','Utilities','ScriptApp','UrlFetchApp',
+    src+'\nreturn fncDriveOcrText_;')(DriveApp,Utilities,ScriptApp,UrlFetchApp);
+  return {run,calls};
+}
+test('OCR copia o PDF para Docs, exporta texto e elimina o documento temporário',()=>{
+  const m=mockOcrDrive();
+  const text=m.run('original');
+  assert.match(text,/295,20/);
+  assert.equal(m.calls.filter(x=>x==='trashed:true').length,1);
+});
+test('se a exportação falhar, o documento temporário ainda é eliminado',()=>{
+  const m=mockOcrDrive(200,403);
+  assert.throws(()=>m.run('original'),/exportação OCR/i);
+  assert.equal(m.calls.filter(x=>x==='trashed:true').length,1);
+});
+test('se o upload falhar, não é criada uma cópia temporária',()=>{
+  const m=mockOcrDrive(403);
+  assert.throws(()=>m.run('original'),/HTTP 403/);
+  assert.equal(m.calls.filter(x=>x==='trashed:true').length,0);
+});
