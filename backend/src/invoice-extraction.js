@@ -92,24 +92,64 @@ function fncParseInvoiceText_(source){
   if(gross!==null&&subtotal!==null&&iva!==null&&Math.abs(gross-subtotal-iva)>0.03){
     gross=null;iva=null;subtotal=null;
   }
-  let vendor='',nif='';
-  const issuer=text.split(/\n\s*Para\s*\n/i)[0].split(/\n\s*De\s*\n/i).slice(-1)[0];
+  // Primeiro a tipologia: uma nota ou orçamento não é automaticamente fatura.
+  const fold=text.normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase();
+  const documentType=/nota\s+de\s+despesas\s+e\s+honorarios/.test(fold)?
+    'Nota despesas/honorários':
+    /(?:\borc\.?\s*:|documento\s+valido\s+por\s+\d+\s+dias|\borcamento\b)/.test(fold)?
+      'Orçamento / honorários':
+      /(?:\bfactura\b|\bfatura\b|\bFT\s*\d{4}[/_-]\d+)/i.test(text)?
+        'Fatura':'Documento por classificar';
+  if(!number)number=fncFirstMatch_(text,[/\b(FT\s*\d{4}\s*[/_-]\s*\d+)\b/i])
+    .replace(/\s+/g,' ').replace(/\s*\/\s*/g,'/');
+
+  const issuer=text.split(/\n\s*Para\s*\n/i)[0];
   const lines=issuer.split('\n').map(x=>x.trim()).filter(Boolean);
-  vendor=lines.find(x=>/\b(?:unipessoal|Lda\.?|S\.?\s*A\.?|Limitada)\b/i.test(x)&&x.length<=150)||'';
-  nif=fncFirstMatch_(issuer,[
+  const company=lines.find(x=>/\b(?:Lda\.?|Limitada|S\.?\s*A\.?)\b/i.test(x)&&x.length<170)||'';
+  // Nome empresarial até Lda/S.A.; morada do fornecedor pode estar na mesma linha OCR.
+  let vendor=company?(company.match(/^(.{3,130}?\b(?:Lda|Limitada|S\.?\s*A\.?)\.?)(?:\s|$)/i)||[])[1]||company:'';
+  if(!vendor&&documentType==='Nota despesas/honorários'){
+    const pos=lines.findIndex(x=>/^Advogados$/i.test(x));
+    if(pos>=2)vendor=lines[pos-2]+' / '+lines[pos-1];
+  }
+  vendor=vendor.trim().slice(0,150);
+  let nif=fncFirstMatch_(issuer,[
     /N[ºo°.]?\s*Contribuinte\s*:\s*(\d{9})\b/i,
-    /\b(?:NIF|NIPC)\s*[:\s]+(\d{9})\b/i
+    /\b(?:NIF|NIPC)\s*:\s*(?:PT\s*)?(\d{9})\b/i,
+    /Cons\.\s*Reg\.\s*Comercial\s*:\s*[^\n]*?(\d{9})\b/i
   ]);
-  const article=text.match(/Lista\s+de\s+Artigos\s*[\s\S]*?\n[^\n]*(?:DESCRI[CÇ][AÃ]O|ARTIGO)[^\n]*\n\s*([^\n]{8,180})/i);
+  if(!nif&&documentType==='Orçamento / honorários')
+    nif=fncFirstMatch_(text,[
+      /(?:NIF|NIPC)\s*:\s*(?:PT\s*)?(\d[\d ]{8,14})\b/i
+    ]).replace(/\s/g,'').slice(0,9);
+
+  const article=text.match(/Lista\s+de\s+Artigos\s*[\s\S]*?\n[^\n]*(?:DESCRI[CÇ][AÃ]O|ARTIGO)[^\n]*\n\s*([^\n]{8,220})/i);
   let description=article?article[1].trim():'';
-  if(description)description=description.replace(/\s+\d+\.\d{2}\s+[\d.,]+\s+[\d.,]+\s+[\d.,]+\s+[\d.,]+\s*$/,'').slice(0,280);
+  if(description)description=description
+    .replace(/\s+\d+(?:\.\d+)?\s+[\d.,]+\s+[\d.,]+\s+[\d.,]+\s+[\d.,]+\s*$/,'')
+    .slice(0,280);
+  if(!description&&documentType==='Fatura'){
+    const lines=text.match(/C[ÓO]DIGO\s+DESCRI[CÇ][AÃ]O[^\n]*\n\s*([^\n]{5,130})\n([^\n]{0,130})/i);
+    if(lines)description=(lines[1]+' '+lines[2]).replace(/\s+\d+(?:[.,]\d+)?\s+un\b.*$/i,'').trim().slice(0,280);
+  }
+  if(!description&&documentType==='Nota despesas/honorários')
+    description=fncFirstMatch_(text,[/Assunto\s*:\s*([^\n]{3,180})/i]);
+  if(!description&&documentType==='Orçamento / honorários')
+    description=fncFirstMatch_(text,[
+      /(?:^|\n)\s*\d+(?:\.\d+)?\s+([^\n]{8,160}?)\s+un\s+\d+\s+[\d.,]+\s*€/im
+    ]);
+  if(documentType==='Orçamento / honorários'&&gross===null){
+    gross=fncParseEuro_(fncFirstMatch_(text,[/C\s*\/\s*IVA\s*\d+(?:[.,]\d+)?%\s*([\d.,]+)\s*€/i]));
+  }
+  const ibanRaw=fncFirstMatch_(text,[
+    /\b(PT50(?:[ ]*\d){21})\b/i
+  ]).replace(/\s/g,'');
+  const iban=/^PT50\d{21}$/.test(ibanRaw)?ibanRaw:'';
   const method=/D[eé]bito\s+Diret[oa]/i.test(text)?'Débito direto':'Por confirmar';
-  const vatCheck=(gross!==null&&subtotal!==null&&iva!==null&&Math.abs(gross-subtotal-iva)<=0.03);
-  if(subtotal!==null&&iva!==null&&!vatCheck){subtotal=null;iva=null;}
-  const strong=Boolean(vendor&&gross!==null&&number&&issuance);
+  const strong=Boolean(vendor&&gross!==null&&number&&issuance&&documentType==='Fatura');
   return {supplier:vendor,nif,number,issued:issuance,due,value:gross,iva,subtotal,description,method,
-    state:strong?'Extraído — por validar':'Extração parcial — por validar',
-    recognized:[vendor,number,issuance,due,gross!==null?String(gross):'',description].filter(Boolean).length};
+    iban,documentType,state:strong?'Extraído — por validar':'Extração parcial — por validar',
+    recognized:[vendor,nif,number,issuance,due,gross!==null?String(gross):'',description].filter(Boolean).length};
 }
 /**
  * Converte PDF/imagem para Docs com OCR da Drive API v3 e exporta texto simples.
