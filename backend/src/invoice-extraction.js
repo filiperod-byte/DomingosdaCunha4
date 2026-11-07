@@ -219,9 +219,17 @@ function fncExtractPendingInvoices_(maxInvoices){
   const count=Math.min(2,Math.max(0,Number(maxInvoices)||0));
   if(!count)return {processed:0,extracted:0,failed:0};
   const pending=fncData_(FNC.sheet.invoices)
-    .filter(r=>r['Validação']==='Por validar' && r['Pagamento']!=='Pago' &&
-      r['ID Drive'] && !r['Estado extração'] &&
-      (r['Fornecedor']==='Por identificar'||!r['Total (€)']))
+    .filter(r=>{
+      if(r['Validação']!=='Por validar'||r['Pagamento']==='Pago'||!r['ID Drive'])return false;
+      const state=String(r['Estado extração']||'');
+      if(/^Falhou/i.test(state))return false;
+      if(!state)return true;
+      // Reprocessar uma única vez os PDFs que a versão anterior interpretou mal.
+      // Depois marcar "Leitor v2" para não repetir OCR a cada 15 minutos.
+      return !String(r['Observações']||'').includes('Leitor v2') &&
+        (!r['Total (€)']||r['Fornecedor']==='Por identificar'||
+          /\b(?:Rua|Impasse|Avenida)\b/i.test(String(r['Fornecedor']||'')));
+    })
     .slice(0,count);
   if(!pending.length)return {processed:0,extracted:0,failed:0};
   fncEnsureExtractionColumns_();
@@ -293,7 +301,7 @@ function fncExtractOneInvoice_(invoiceId){
     set('Base tributável (€)',parsed.subtotal);
     if(parsed.iban && fncValidIban_(parsed.iban))set('IBAN fornecedor',parsed.iban);
   }
-  const details=['Dados extraídos do PDF — CONFIRMAR antes de validar ou pagar'];
+  const details=['Leitor v2: dados extraídos do PDF — CONFIRMAR antes de validar ou pagar'];
   if(parsed.value!==null)details.push('total '+parsed.value.toFixed(2)+' €');
   if(parsed.iva!==null)details.push('IVA '+parsed.iva.toFixed(2)+' €');
   if(parsed.iban)details.push('IBAN observado no documento — confirmar titularidade no banco');
