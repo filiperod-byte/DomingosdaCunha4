@@ -2174,7 +2174,8 @@ function fncDriveOcrText_(fileId){
     'https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart&ocrLanguage=pt&fields=id,mimeType',
     options);
   if(upload.getResponseCode()<200||upload.getResponseCode()>=300)
-    throw new Error('Conversão do PDF indisponível (Google Drive HTTP '+upload.getResponseCode()+')');
+    throw new Error('Conversão do PDF indisponível (Google Drive HTTP '+upload.getResponseCode()+
+      '). Verificar OAuth Drive e UrlFetchApp no editor.');
   let tempId='';
   try{tempId=JSON.parse(upload.getContentText()).id;}catch(_){}
   if(!tempId)throw new Error('Google Drive não devolveu documento OCR');
@@ -2238,6 +2239,7 @@ function fncExtractOneInvoice_(invoiceId){
   const fileId=original['ID Drive'];
   if(!fileId)throw new Error('Documento sem ID de Drive');
   // O OCR não mantém bloqueios globais enquanto aguarda o Google Drive.
+  fncEnsureExtractionColumns_();
   const parsed=fncParseInvoiceText_(fncDriveOcrText_(String(fileId)));
   return fncLock_(()=>{
     // Conferir novamente o registo ANTES da escrita; pode ter sido validado enquanto o OCR corria.
@@ -2257,7 +2259,8 @@ function fncExtractOneInvoice_(invoiceId){
     if(parsed.number)set('Tipo','Fatura','Documento por classificar');
     set('Fornecedor',parsed.supplier,'Por identificar');
     set('NIF',parsed.nif);
-    set('Documento',parsed.number,item['Documento']);
+    // Um número de documento corrigido manualmente nunca deve ser substituído.
+    set('Documento',parsed.number,item['Descrição']);
     set('Emissão',parsed.issued);
     set('Vencimento',parsed.due);
     set('Total (€)',parsed.value);
