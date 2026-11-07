@@ -61,8 +61,28 @@ function canonical(files, replace) {
 }
 const equal = (a,b)=>JSON.stringify(a)===JSON.stringify(b);
 const desired = canonical(live.files,true);
+function draftChanges(liveFiles,editorFiles) {
+  const key = f => JSON.stringify([f.name,f.type]);
+  const published = new Map(liveFiles.map(f=>[key(f),f]));
+  const editor = new Map(editorFiles.map(f=>[key(f),f]));
+  return [...new Set([...published.keys(),...editor.keys()])].sort().flatMap(k=>{
+    const before=published.get(k),after=editor.get(k);
+    if(!before)return [{name:after.name,type:after.type,change:'ADICIONADO'}];
+    if(!after)return [{name:before.name,type:before.type,change:'REMOVIDO'}];
+    return normalize(before.source)===normalize(after.source)?[]:
+      [{name:before.name,type:before.type,change:'MODIFICADO'}];
+  });
+}
 if (!equal(canonical(draft.files),desired)) {
-  assert.ok(equal(canonical(draft.files),canonical(live.files)),'Existem alterações por publicar no editor.');
+  const differences=draftChanges(live.files,draft.files);
+  if(differences.length) {
+    // Diagnóstico seguro: apenas nomes e estado; nunca imprimir código,
+    // tokens, valores de configuração ou conteúdo de ficheiros.
+    console.error('DIVERGÊNCIA NO EDITOR — '+differences.length+' ficheiro(s) por conciliar:');
+    for(const item of differences)
+      console.error(' - '+item.change+': '+JSON.stringify(item.name)+' ('+item.type+')');
+  }
+  assert.ok(differences.length===0,'Existem alterações por publicar no editor.');
   await api('/content','PUT',{files:draft.files.map(({name:n,type,source})=>({name:n,type,source:n===name && type==='SERVER_JS'?next:source}))});
 }
 if (!equal(canonical(live.files),desired)) {
