@@ -5,7 +5,7 @@ const vm = require('node:vm');
 
 const files = [
   '../../occurrence-catalog.js', 'config.js', 'domain.js', 'notifications.js', 'occurrences.js', 'legacy-pin.js',
-  'residents.js', 'accesses.js', 'general-occurrences.js', 'application.js', 'security.js', 'apps-script-ports.js', 'finance.js', 'entrypoints.js'
+  'residents.js', 'accesses.js', 'general-occurrences.js', 'application.js', 'security.js', 'apps-script-ports.js', 'finance.js', 'invoice-extraction.js', 'entrypoints.js'
 ];
 const banner = '// GERADO por node backend/build.cjs. Editar backend/src, não este ficheiro.\n'
   + '// Refatoração de compatibilidade: consultar backend/README.md antes de publicar.\n';

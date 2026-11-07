@@ -2,9 +2,9 @@
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#1A2F5A">
 <title>Faturas — Domingos da Cunha 4</title>
-<script src="../session-client.js?v=3.8.5"></script><script src="../app-navigation.js?v=3.8.5" defer></script>
-<link rel="stylesheet" href="finance-ui.css?v=3.8.5">
-<script src="finance-ui.js?v=3.8.5"></script>
+<script src="../session-client.js?v=3.9.0"></script><script src="../app-navigation.js?v=3.9.0" defer></script>
+<link rel="stylesheet" href="finance-ui.css?v=3.9.0">
+<script src="finance-ui.js?v=3.9.0"></script>
 </head><body><main>
 <header><h1>🧾 Gestão de faturas</h1><p>Documentos, validação e pagamentos aos fornecedores.</p></header>
 <div id="progress" role="status" aria-live="polite"><span class="spinner"></span><span data-progress-text>A processar…</span></div>
@@ -86,6 +86,10 @@ function render(){
   card.append(primary);
   const details=UI.node('details'),summary=UI.node('summary','Ver detalhes e pagamento');details.append(summary);
   const desc=UI.node('p',f.description||'Sem descrição','muted');details.append(desc);
+  if(f.extraction&&f.extraction!=='Não processado'){
+    const extraction=UI.node('p','Leitura do documento: '+f.extraction,'hint');
+    details.append(extraction);
+  }
   const data=UI.node('dl',undefined,'data');
   kv(data,'Método',f.method||'Por confirmar');
   kv(data,'Estado',f.payment||'Por confirmar');
@@ -98,6 +102,13 @@ function render(){
   card.append(details);
   const btns=UI.node('div',undefined,'actions');
   if(f.validation!=='Validada'&&f.payment!=='Pago'){
+   const extract=UI.node('button','Ler PDF automaticamente','secondary');
+   extract.type='button';extract.addEventListener('click',()=>UI.busy('A ler o PDF e a extrair dados…',async()=>{
+     const result=await UI.api('finance.admin.extractInvoice',{id:f.id});
+     UI.toast(result.extraction||'Extração concluída; confirma todos os dados.');
+     await reload();
+   }));
+   btns.append(extract);
    const edit=UI.node('button','Corrigir dados','secondary');edit.type='button';edit.addEventListener('click',()=>openEdit(f));btns.append(edit);
    if(!/orçamento|por classificar/i.test(f.documentType||'')){
     const validate=UI.node('button','Validar fatura');validate.type='button';
@@ -154,12 +165,14 @@ async function scannerStatus(){
    try{
     const result=await UI.api('finance.admin.scanNow');
     const added=Number(result.newDocuments||0);
-    if(added>0)await reload();
+    const extracted=Number(result.extraction?.extracted||0);
+    const failed=Number(result.extraction?.failed||0);
+    if(added>0||extracted>0||failed>0)await reload();
     $('lastDriveScan').textContent=added>0?
      added+' nova(s) fatura(s) importada(s) · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'}):
      'Drive pesquisado: sem documentos novos · '+new Date().toLocaleTimeString('pt-PT',{hour:'2-digit',minute:'2-digit'});
-    if(manual)UI.toast(added+' documento(s) novo(s) encontrado(s).');
-    else if(added>0)UI.toast(added+' nova(s) fatura(s) importada(s) automaticamente.');
+    if(manual)UI.toast(added+' documento(s) novo(s); '+extracted+' fatura(s) com dados extraídos.'+(failed?' '+failed+' para revisão manual.':''));
+    else if(added>0)UI.toast(added+' nova(s) fatura(s) importada(s); '+extracted+' com dados extraídos.');
     return added;
    }catch(err){
     $('lastDriveScan').textContent='Não foi possível consultar novos documentos. Podes tentar novamente.';
