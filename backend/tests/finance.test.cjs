@@ -386,3 +386,26 @@ test('releitura repara nome do fornecedor com morada sem mexer nos campos manuai
  assert.equal(again.ok,true);
  assert.equal(row[head.indexOf('Fornecedor')],'Fornecedor confirmado manualmente');
 });
+
+test('email de teste de wallbox usa MailApp sem abrir ciclo nem ativar notificações',()=>{
+ const b=setup(),admin=tokenAdmin(b),resident=tokenResident(b,admin);
+ const beforeCycles=b.sheets.get('WALLBOX_CICLOS').rows.length;
+ const first=b.post('finance.admin.testWallboxEmail',{token:admin,fractionId:'9B'});
+ assert.equal(first.ok,true);
+ assert.equal(first.requested,true);
+ assert.equal(b.counts.mails,1);
+ assert.equal(b.emails[0].to,'teste@example.invalid');
+ assert.match(b.emails[0].subject,/\[TESTE\]/);
+ assert.match(b.emails[0].body,/Não é necessário submeter leituras/);
+ assert.equal(b.sheets.get('WALLBOX_CICLOS').rows.length,beforeCycles);
+ assert.equal(b.sheets.get('WALLBOX_CONFIG').rows.find(r=>r[0]==='NOTIFICACOES_ATIVAS')[1],'NAO');
+ assert.equal(b.post('finance.admin.testWallboxEmail',{token:admin,fractionId:'9B'}).code,'FINANCE_ERROR');
+ assert.equal(b.counts.mails,1);
+ assert.equal(b.post('finance.admin.testWallboxEmail',{token:resident,fractionId:'9B'}).code,'FORBIDDEN');
+});
+test('email de teste recusa destinatário não aprovado e não tenta enviar',()=>{
+ const b=setup(),admin=tokenAdmin(b);
+ const result=b.post('finance.admin.testWallboxEmail',{token:admin,fractionId:'9B'});
+ assert.equal(result.code,'FINANCE_ERROR');
+ assert.equal(b.counts.mails,0);
+});
